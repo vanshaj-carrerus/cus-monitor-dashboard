@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stream from "@/models/stream";
+import User from "@/models/user";
 import DBConnect from "../../../../lib/DB_Connect";
+
+/**
+ * Resolves a userId input (could be username, ObjectId string, or OS username)
+ * into a consistent identifier used for Stream documents.
+ * Returns an array of possible userId values to match against.
+ */
+async function resolveUserIds(userId: string): Promise<string[]> {
+    const ids = [userId];
+
+    try {
+        // Try to find in User collection by _id or username
+        const user = (userId.length === 24)
+            ? await User.findById(userId).select("username").lean()
+            : await User.findOne({ username: userId }).select("_id username").lean();
+
+        if (user) {
+            const u = user as any;
+            if (u._id) ids.push(u._id.toString());
+            if (u.username) ids.push(u.username);
+        }
+    } catch {
+        // If lookup fails, we still have the original userId
+    }
+
+    // Return unique values
+    return [...new Set(ids)];
+}
 
 export async function GET(req: NextRequest) {
     try {
@@ -14,7 +42,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing userId or action" }, { status: 400 });
         }
 
-        const stream = await Stream.findOne({ userId });
+        // Resolve all possible userId representations
+        const possibleIds = await resolveUserIds(userId);
+        const stream = await Stream.findOne({ userId: { $in: possibleIds } });
 
         if (action === "status") {
             return NextResponse.json(
@@ -55,11 +85,22 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "Missing userId or isActive" }, { status: 400 });
             }
 
-            const stream = await Stream.findOneAndUpdate(
-                { userId },
-                { $set: { isActive, updatedAt: new Date() } },
-                { new: true, upsert: true }
-            );
+            // First check if a stream doc already exists under any alias
+            const possibleIds = await resolveUserIds(userId);
+            let stream = await Stream.findOne({ userId: { $in: possibleIds } });
+
+            if (stream) {
+                stream.isActive = isActive;
+                stream.updatedAt = new Date();
+                await stream.save();
+            } else {
+                // Create new — use the userId as-is (usually the username from the dashboard)
+                stream = await Stream.create({
+                    userId,
+                    isActive,
+                    updatedAt: new Date()
+                });
+            }
 
             return NextResponse.json({ success: true, stream }, { status: 200 });
         }
@@ -71,12 +112,18 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: "Missing userId or frame" }, { status: 400 });
             }
 
-            // Only update if they exist and are active (or just create them if they somehow got orphaned)
-            await Stream.findOneAndUpdate(
-                { userId },
+            // Find existing stream doc using all possible userId aliases
+            const possibleIds = await resolveUserIds(userId);
+            const result = await Stream.findOneAndUpdate(
+                { userId: { $in: possibleIds } },
                 { $set: { latestFrame: frame, updatedAt: new Date() } },
-                { upsert: true } // Upsert is fine just in case
+                { upsert: false } // Don't upsert — only update if toggled on by admin
             );
+
+            if (!result) {
+                // If no stream doc exists yet, create one (edge case)
+                await Stream.create({ userId, latestFrame: frame, isActive: true, updatedAt: new Date() });
+            }
 
             return NextResponse.json({ success: true }, { status: 200 });
         }

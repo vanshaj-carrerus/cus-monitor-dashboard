@@ -26,7 +26,7 @@ import { cn } from '../../../lib/utils';
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: Users2, label: 'My Team', href: '/my-team' },
-  { icon: UserCog, label: 'Change Manager', href: '/manager' },
+  // { icon: UserCog, label: 'Change Manager', href: '/manager' },
   {
     icon: Activity,
     label: 'Live Tracking',
@@ -49,7 +49,6 @@ const sidebarItems = [
       { label: 'Attendance', href: '/reports/attendance' },
       { label: 'Daily Time Entry', href: '/reports/daily-entry' },
       { label: 'Project Report', href: '/reports/project-report' },
-      { label: 'User Task', href: '/reports/tasks' },
       { label: 'Productive vs Unproductive', href: '/reports/productivity-vs-unproductive' },
       { label: 'Application Usage', href: '/reports/app-usage' },
     ]

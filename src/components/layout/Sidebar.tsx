@@ -119,7 +119,7 @@ export function Sidebar({ isOpen, onClose, onToggle }: { isOpen: boolean, onClos
                   </div>
                   <ul className={cn(
                     "ml-9 space-y-1 overflow-auto transition-all duration-300",
-                    openMenus[item.label] && isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                    openMenus[item.label] && isOpen ? "max-h-auto opacity-100" : "max-h-0 opacity-0"
                   )}>
                     {item.subItems.map((subItem) => (
                       <li key={subItem.href}>

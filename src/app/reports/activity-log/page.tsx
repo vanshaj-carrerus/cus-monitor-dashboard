@@ -1,16 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   Upload,
   ChevronDown,
-  Info
+  ChevronRight,
+  Globe,
+  Monitor
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../../lib/utils';
 import { formatTimeSpent } from '../../../../lib/utils';
+
+interface LogEntry {
+  _id: string;
+  userId: string;
+  userName: string;
+  title: string;
+  app_name: string;
+  site?: string;
+  start_time: string;
+  duration_seconds: number;
+}
+
+interface UserSummary {
+  userId: string;
+  userName: string;
+  working: number;
+  idle: number;
+  stopped: number;
+  total: number;
+  logs: LogEntry[];
+}
 
 interface DaySummary {
   date: string;
@@ -18,11 +41,16 @@ interface DaySummary {
   idle: number;
   stopped: number;
   total: number;
+  users: Record<string, UserSummary>;
 }
 
 export default function ActivityLogPage() {
-  const [logs, setLogs] = useState<DaySummary[]>([]);
+  const [logsByDate, setLogsByDate] = useState<DaySummary[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Expanded states
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
+  const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function fetchLogs() {
@@ -30,23 +58,49 @@ export default function ActivityLogPage() {
         const res = await fetch('/api/activity-log');
         const json = await res.json();
         if (json.success) {
-          // Group by date
           const summaryMap: Record<string, DaySummary> = {};
-          
-          json.data.forEach((log: any) => {
+
+          json.data.forEach((log: LogEntry) => {
             const dateObj = new Date(log.start_time);
             const dateStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-            
+
             if (!summaryMap[dateStr]) {
-              summaryMap[dateStr] = { date: dateStr, working: 0, idle: 0, stopped: 0, total: 0 };
+              summaryMap[dateStr] = { date: dateStr, working: 0, idle: 0, stopped: 0, total: 0, users: {} };
             }
-            // For now, treat all time as 'working'
-            summaryMap[dateStr].working += log.duration_seconds;
-            summaryMap[dateStr].total += log.duration_seconds;
+
+            const dayEntry = summaryMap[dateStr];
+            dayEntry.working += log.duration_seconds;
+            dayEntry.total += log.duration_seconds;
+
+            if (!dayEntry.users[log.userId]) {
+              dayEntry.users[log.userId] = {
+                userId: log.userId,
+                userName: log.userName || log.userId,
+                working: 0,
+                idle: 0,
+                stopped: 0,
+                total: 0,
+                logs: []
+              };
+            }
+
+            const userEntry = dayEntry.users[log.userId];
+            userEntry.working += log.duration_seconds;
+            userEntry.total += log.duration_seconds;
+            userEntry.logs.push(log);
           });
 
+          // Sort days descending
           const sortedLogs = Object.values(summaryMap).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          setLogs(sortedLogs);
+
+          // Sort logs within users descending
+          sortedLogs.forEach(day => {
+            Object.values(day.users).forEach(user => {
+              user.logs.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+            });
+          });
+
+          setLogsByDate(sortedLogs);
         }
       } catch (err) {
         console.error("Failed to fetch activity logs", err);
@@ -56,6 +110,15 @@ export default function ActivityLogPage() {
     }
     fetchLogs();
   }, []);
+
+  const toggleDate = (date: string) => {
+    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  const toggleUser = (date: string, userId: string) => {
+    const key = `${date}-${userId}`;
+    setExpandedUsers(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
     <DashboardLayout>
@@ -74,17 +137,12 @@ export default function ActivityLogPage() {
         {/* Legend and Actions Bar */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-end p-8 border-b border-slate-50">
           <div className="flex items-center gap-8 rounded-xl border border-blue-100 bg-white px-6 py-3 shadow-sm">
-            <LegendItem color="bg-slate-200" label="Offline" />
             <LegendItem color="bg-[#22C55E]" label="Working" />
             <LegendItem color="bg-[#A05E2C]" label="Stopped" />
             <LegendItem color="bg-[#FBBF24]" label="Idle" />
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 px-5 py-3 bg-white border border-slate-100 rounded-xl shadow-sm cursor-pointer min-w-[240px]">
-              <span className="text-[14px] text-slate-400 flex-1">All members</span>
-              <ChevronDown className="h-5 w-5 text-slate-300" />
-            </div>
             <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-slate-100/50 text-slate-400 px-6 py-3 rounded-xl border-none font-bold text-[13px] h-auto">
               <Upload className="h-5 w-5 rotate-180" />
               Export
@@ -97,13 +155,13 @@ export default function ActivityLogPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/4">
-                  Date
+                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3">
+                  Date / User / Activity
                 </th>
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/2 text-center">
-                  Activity Breakdown (24 Hr Time line)
+                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3 text-center">
+                  Duration / Details
                 </th>
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/4 text-center">
+                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3 text-right">
                   Total Time
                 </th>
               </tr>
@@ -113,41 +171,101 @@ export default function ActivityLogPage() {
                 <tr>
                   <td colSpan={3} className="px-8 py-8 text-center text-slate-500">Loading activity logs...</td>
                 </tr>
-              ) : logs.length === 0 ? (
+              ) : logsByDate.length === 0 ? (
                 <tr>
                   <td colSpan={3} className="px-8 py-8 text-center text-slate-500">No activity logs found.</td>
                 </tr>
               ) : (
-                logs.map((log, idx) => (
-                  <tr key={idx} className="group hover:bg-slate-50/30 transition-colors">
-                    <td className="px-8 py-8">
-                      <div className="flex items-center gap-6">
-                        <ChevronDown className="h-5 w-5 text-slate-400 cursor-pointer" />
-                        <span className="text-[13px] font-bold text-[#0D1B3E]">{log.date}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-8 py-8">
-                      <div className="space-y-4">
-                        {/* Timeline Bar Placeholder */}
-                        <div className="h-5 w-full rounded-full border border-slate-200 bg-white shadow-sm relative overflow-hidden">
-                          {/* Emulate a timeline by showing 100% green width */}
-                          <div className="absolute left-0 top-0 h-full bg-[#22C55E]" style={{ width: '100%' }}></div>
+                logsByDate.map((dayLog) => (
+                  <React.Fragment key={dayLog.date}>
+                    {/* Date Row */}
+                    <tr
+                      className="group hover:bg-slate-50/50 transition-colors cursor-pointer bg-slate-50/20"
+                      onClick={() => toggleDate(dayLog.date)}
+                    >
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          {expandedDates[dayLog.date] ? (
+                            <ChevronDown className="h-5 w-5 text-slate-400" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-slate-400" />
+                          )}
+                          <span className="text-[14px] font-bold text-[#0D1B3E]">{dayLog.date}</span>
                         </div>
+                      </td>
+                      <td className="px-8 py-6 text-center text-slate-500 text-[13px]">
+                        {Object.keys(dayLog.users).length} Users Logged
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <span className="text-[14px] font-bold text-[#22C55E]">{formatTimeSpent(dayLog.total)}</span>
+                      </td>
+                    </tr>
 
-                        {/* Durations */}
-                        <div className="flex justify-start gap-8 pl-2">
-                          <DurationItem color="bg-[#22C55E]" value={formatTimeSpent(log.working)} />
-                          <DurationItem color="bg-[#FBBF24]" value={formatTimeSpent(log.idle)} />
-                          <DurationItem color="bg-[#A05E2C]" value={formatTimeSpent(log.stopped)} />
-                        </div>
-                      </div>
-                    </td>
+                    {/* Users Rows (Expanded Date) */}
+                    {expandedDates[dayLog.date] && Object.values(dayLog.users).map((user) => (
+                      <React.Fragment key={`${dayLog.date}-${user.userId}`}>
+                        <tr
+                          className="group hover:bg-slate-50 transition-colors cursor-pointer"
+                          onClick={() => toggleUser(dayLog.date, user.userId)}
+                        >
+                          <td className="px-8 py-5 pl-14">
+                            <div className="flex items-center gap-3">
+                              {expandedUsers[`${dayLog.date}-${user.userId}`] ? (
+                                <ChevronDown className="h-4 w-4 text-slate-400" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                              )}
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                                  {user.userName.substring(0, 2)}
+                                </div>
+                                <span className="text-[14px] font-semibold text-[#0D1B3E]">{user.userName}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5 text-center">
+                            <div className="flex justify-center gap-6">
+                              <DurationItem color="bg-[#22C55E]" value={formatTimeSpent(user.working)} />
+                            </div>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <span className="text-[13px] font-semibold text-slate-600">{formatTimeSpent(user.total)}</span>
+                          </td>
+                        </tr>
 
-                    <td className="px-8 py-8 text-center">
-                      <span className="text-[13px] font-medium text-slate-500">{formatTimeSpent(log.total)}</span>
-                    </td>
-                  </tr>
+                        {/* Logs Rows (Expanded User) */}
+                        {expandedUsers[`${dayLog.date}-${user.userId}`] && user.logs.map((log) => (
+                          <tr key={log._id} className="bg-slate-50/40 hover:bg-slate-50 transition-colors">
+                            <td className="px-8 py-4 pl-[5.5rem]">
+                              <div className="flex items-start gap-3 max-w-[350px]">
+                                <div className="mt-0.5 min-w-5">
+                                  {log.site ? <Globe className="h-4 w-4 text-blue-400" /> : <Monitor className="h-4 w-4 text-slate-400" />}
+                                </div>
+                                <div>
+                                  <p className="text-[13px] font-medium text-[#0D1B3E] truncate" title={log.title}>
+                                    {log.title}
+                                  </p>
+                                  <p className="text-[12px] text-slate-500 mt-0.5">
+                                    {log.site ? `Website: ${log.site}` : log.app_name}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-4 text-center">
+                              <p className="text-[12px] font-medium text-slate-500">
+                                {new Date(log.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                              </p>
+                            </td>
+                            <td className="px-8 py-4 text-right">
+                              <span className="text-[13px] font-medium text-slate-600 bg-white border border-slate-100 rounded-md px-2 py-1 shadow-sm">
+                                {formatTimeSpent(log.duration_seconds)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
                 ))
               )}
             </tbody>

@@ -290,7 +290,7 @@ function WebAppsSection({
         <div className="rounded-2xl border-none bg-white p-8 flex flex-col items-center shadow-sm">
           <h4 className="mb-8 text-sm font-bold text-slate-900">Websites</h4>
           <div className="h-[200px] w-full mb-8">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
                 <PieComponent
                   data={wPie}
@@ -341,7 +341,7 @@ function WebAppsSection({
         <div className="rounded-2xl border-none bg-white p-8 flex flex-col items-center shadow-sm">
           <h4 className="mb-8 text-sm font-bold text-slate-900">Applications</h4>
           <div className="h-[200px] w-full mb-8">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
               <PieChart>
                 <PieComponent
                   data={aPie}
@@ -410,7 +410,7 @@ function AttendanceSection() {
         <LegendDot color="bg-pink-400" label="On Leave" />
       </div>
       <div className="h-[260px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <BarChart data={attendanceData} barGap={6}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dy={8} />
@@ -447,7 +447,7 @@ function ProductiveGraph({ data }: { data: typeof lineDataOrg }) {
         <LegendDot color="bg-orange-400" label="Neutral" />
       </div>
       <div className="h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dy={8} />

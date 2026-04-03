@@ -3,25 +3,32 @@
 import * as React from 'react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
-const SidebarContext = React.createContext<{isOpen: boolean; toggle: () => void; close: () => void}>({
+const SidebarContext = React.createContext<{ isOpen: boolean; toggle: () => void; close: () => void }>({
   isOpen: false,
-  toggle: () => {},
-  close: () => {},
+  toggle: () => { },
+  close: () => { },
 });
 
 export const useSidebar = () => React.useContext(SidebarContext);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  // Use useEffect to ensure the component is mounted on the client
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <SidebarContext.Provider value={{ isOpen, toggle: () => setIsOpen(prev => !prev), close: () => setIsOpen(false) }}>
-      <NextThemesProvider 
-        attribute="class" 
-        defaultTheme="light" 
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false} // Try setting this to false if not needed
         disableTransitionOnChange
-        enableColorScheme={false}
       >
+        {/* Only render children that depend on theme after mounting to avoid hydration mismatch */}
         {children}
       </NextThemesProvider>
     </SidebarContext.Provider>

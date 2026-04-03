@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Calendar,
@@ -17,34 +17,33 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { cn } from '../../../../lib/utils';
-
-const orgData = [
-  { name: '', avg: '1hrs 22Min 50Sec', active: '4hrs 8Min 28Sec', productive: '0hrs 1Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '4hrs 7Min 28Sec', idle: '0hrs 39Min 21Sec' },
-  { name: '', avg: '2hrs 1Min 56Sec', active: '10hrs 9Min 40Sec', productive: '7hrs 11Min 9Sec', unproductive: '0hrs 0Min 0Sec', neutral: '2hrs 58Min 31Sec', idle: '13hrs 42Min 46Sec' },
-  { name: '', avg: '4hrs 18Min 18Sec', active: '21rs 31Min 29Sec', productive: '0hrs 12Min 24Sec', unproductive: '0hrs 0Min 0Sec', neutral: '21hrs 19Min 5Sec', idle: '4hrs 35Min 15Sec' },
-  { name: '', avg: '3hrs 56Min 36Sec', active: '19hrs 43Min 0Sec', productive: '16hrs 16Min 49Sec', unproductive: '0hrs 0Min 0Sec', neutral: '3hrs 26Min 11Sec', idle: '3hrs 55Min 4Sec' },
-  { name: '', avg: '4hrs 13Min 26Sec', active: '21hrs 7Min 7Sec', productive: '12hrs 26Min 42Sec', unproductive: '0hrs 0Min 0Sec', neutral: '8hrs 40Min 25Sec', idle: '4hrs 30Min 29Sec' },
-  { name: '', avg: '0hrs 0Min 0Sec', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec' },
-  { name: 'Abhishek Sadhu', avg: '2hrs 39Min 37Sec', active: '10hrs 38Min 25Sec', productive: '0hrs 2Min 33Sec', unproductive: '0hrs 0Min 0Sec', neutral: '10hrs 35Min 52Sec', idle: '1hrs 17Min 20Sec' },
-  { name: 'Adikate', avg: '4hrs 53Min 28Sec', active: '24hrs 27Min 16Sec', productive: '16hrs 0Min 33Sec', unproductive: '0hrs 0Min 0Sec', neutral: '8hrs 26Min 43Sec', idle: '2hrs 42Min 49Sec' },
-  { name: 'Adoreen', dept: 'Sales', avg: '5hrs 36Min 4Sec', active: '28hrs 0Min 18Sec', productive: '22hrs 45Min 2Sec', unproductive: '0hrs 0Min 0Sec', neutral: '5hrs 15Min 16Sec', idle: '2hrs 38Min 53Sec' },
-  { name: 'Alfaiz khatri', avg: '6hrs 13Min 18Sec', active: '37hrs 19Min 47Sec', productive: '0hrs 2Min 30Sec', unproductive: '0hrs 0Min 0Sec', neutral: '37hrs 17Min 17Sec', idle: '9hrs 41Min 51Sec' },
-];
-
-const indData = [
-  { date: '26 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '27 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '28 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '29 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '30 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '31 Mar 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-  { date: '1 Apr 2026', span: '-', active: '0hrs 0Min 0Sec', productive: '0hrs 0Min 0Sec', unproductive: '0hrs 0Min 0Sec', neutral: '0hrs 0Min 0Sec', idle: '0hrs 0Min 0Sec', away: '0hrs 0Min 0Sec', total: '0hrs 0Min 0Sec' },
-];
+import { cn, formatTimeSpent } from '../../../../lib/utils';
 
 export default function TimeTrackerPage() {
   const [activeView, setActiveView] = useState<'org' | 'ind'>('org');
   const [orgFilter, setOrgFilter] = useState<'manager' | 'loc_dept'>('manager');
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  console.log(reports);
+
+
+  useEffect(() => {
+    async function fetchReports() {
+      try {
+        const res = await fetch('/api/reports');
+        const json = await res.json();
+        if (json.success) {
+          setReports(json.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReports();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -271,35 +270,33 @@ export default function TimeTrackerPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {activeView === 'org' ? (
-                orgData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-5 text-center text-slate-500">Loading data...</td>
+                </tr>
+              ) : reports.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-5 text-center text-slate-500">No data found.</td>
+                </tr>
+              ) : activeView === 'org' ? (
+                reports.map((row: any, idx: number) => (
+                  <tr key={row._id || idx} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-4 py-5 font-bold text-[#0D1B3E] text-[13px]">
-                      {row.name || ' '}
-                      {row.dept && <div className="text-[10px] font-medium text-slate-400 mt-1">{row.dept}</div>}
+                      {row.username || ' '}
+                      {row.role && <div className="text-[10px] font-medium text-slate-400 mt-1 capitalize">{row.role}</div>}
                     </td>
-                    <td className="px-4 py-5 text-right font-bold text-slate-400 text-[13px]">{row.avg}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#3B82F6] text-[13px]">{row.active}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#10B981] text-[13px]">{row.productive}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#EF4444] text-[13px]">{row.unproductive}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#F59E0B] text-[13px]">{row.neutral}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#FBBF24] text-[13px]">{row.idle}</td>
+                    <td className="px-4 py-5 text-right font-bold text-slate-400 text-[13px]">{formatTimeSpent(row.trackedTimeSeconds || 0)}</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#3B82F6] text-[13px]">{formatTimeSpent(row.trackedTimeSeconds || 0)}</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#10B981] text-[13px]">0h 0m</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#EF4444] text-[13px]">0h 0m</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#F59E0B] text-[13px]">0h 0m</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#FBBF24] text-[13px]">0h 0m</td>
                   </tr>
                 ))
               ) : (
-                indData.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-4 py-5 font-bold text-[#0D1B3E] text-[13px]">{row.date}</td>
-                    <td className="px-4 py-5 text-center font-bold text-slate-400 text-[13px]">{row.span}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#3B82F6] text-[13px]">{row.active}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#10B981] text-[13px]">{row.productive}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#EF4444] text-[13px]">{row.unproductive}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#F59E0B] text-[13px]">{row.neutral}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#FBBF24] text-[13px]">{row.idle}</td>
-                    <td className="px-4 py-5 text-right font-bold text-slate-400 text-[13px]">{row.away}</td>
-                    <td className="px-4 py-5 text-right font-bold text-slate-400 text-[13px]">{row.total}</td>
-                  </tr>
-                ))
+                <tr>
+                  <td colSpan={9} className="px-4 py-5 text-center text-slate-500">Individual view not yet populated with dynamic data</td>
+                </tr>
               )}
             </tbody>
           </table>

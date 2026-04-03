@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     try {
         await DBConnect();
         const body = await request.json();
-        const { email, role, invitedBy } = body;
+        const { email, role, name, departmentId, locationId, invitedBy } = body;
 
         if (!email || !role) {
             return NextResponse.json({ success: false, error: "Email and role are required." }, { status: 400 });
@@ -16,15 +16,20 @@ export async function POST(request: Request) {
 
         const token = crypto.randomBytes(32).toString("hex");
 
+        const updateData: any = {
+            email: email.toLowerCase(),
+            role: role.toLowerCase(),
+            token,
+            status: 'pending',
+            expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+        };
+        if (name) updateData.name = name;
+        if (departmentId) updateData.departmentId = departmentId;
+        if (locationId) updateData.locationId = locationId;
+
         const invite = await Invite.findOneAndUpdate(
             { email: email.toLowerCase() },
-            {
-                email: email.toLowerCase(),
-                role: role.toLowerCase(),
-                token,
-                status: 'pending',
-                expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
-            },
+            updateData,
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 

@@ -33,7 +33,7 @@ const sidebarItems = [
     href: '#',
     subItems: [
       { label: 'Live Stream', href: '/live-stream' },
-      // { label: 'Screenshot', href: '/screenshots' }
+      { label: 'Screenshot', href: '/screenshots' }
     ]
   },
   {
@@ -54,23 +54,6 @@ const sidebarItems = [
       { label: 'Application Usage', href: '/reports/app-usage' },
     ]
   },
-  {
-    icon: FolderKanban,
-    label: 'Project & Task',
-    href: '#',
-    subItems: []
-  },
-  { icon: CreditCard, label: 'Pricing and Billing', href: '/billing' },
-  {
-    icon: FileCheck,
-    label: 'Time Claim',
-    href: '#',
-    subItems: []
-  },
-  { icon: History, label: 'Time Entry', href: '/time-entry' },
-  { icon: CalendarDays, label: 'Holiday', href: '/holidays' },
-  { icon: Zap, label: 'Trial', href: '/trial' },
-  { icon: Settings, label: 'Configuration', href: '/config' },
 ];
 
 export function Sidebar({ isOpen, onClose, onToggle }: { isOpen: boolean, onClose: () => void, onToggle?: () => void }) {

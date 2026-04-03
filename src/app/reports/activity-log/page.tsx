@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   Upload,
@@ -9,15 +10,53 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../../lib/utils';
+import { formatTimeSpent } from '../../../../lib/utils';
 
-const activityLogs = [
-  { date: 'Wed - 01 Apr 2026', working: '00:00:00', idle: '00:00:00', stopped: '00:00:00', total: '00:00:00' },
-  { date: 'Tue - 31 Mar 2026', working: '00:00:00', idle: '00:00:00', stopped: '00:00:00', total: '00:00:00' },
-  { date: 'Mon - 30 Mar 2026', working: '00:00:00', idle: '00:00:00', stopped: '00:00:00', total: '00:00:00' },
-  { date: 'Sun - 29 Mar 2026', working: '00:00:00', idle: '00:00:00', stopped: '00:00:00', total: '00:00:00' },
-];
+interface DaySummary {
+  date: string;
+  working: number;
+  idle: number;
+  stopped: number;
+  total: number;
+}
 
 export default function ActivityLogPage() {
+  const [logs, setLogs] = useState<DaySummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        const res = await fetch('/api/activity-log');
+        const json = await res.json();
+        if (json.success) {
+          // Group by date
+          const summaryMap: Record<string, DaySummary> = {};
+          
+          json.data.forEach((log: any) => {
+            const dateObj = new Date(log.start_time);
+            const dateStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            
+            if (!summaryMap[dateStr]) {
+              summaryMap[dateStr] = { date: dateStr, working: 0, idle: 0, stopped: 0, total: 0 };
+            }
+            // For now, treat all time as 'working'
+            summaryMap[dateStr].working += log.duration_seconds;
+            summaryMap[dateStr].total += log.duration_seconds;
+          });
+
+          const sortedLogs = Object.values(summaryMap).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setLogs(sortedLogs);
+        }
+      } catch (err) {
+        console.error("Failed to fetch activity logs", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLogs();
+  }, []);
+
   return (
     <DashboardLayout>
       {/* Header Controls */}
@@ -43,7 +82,7 @@ export default function ActivityLogPage() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 px-5 py-3 bg-white border border-slate-100 rounded-xl shadow-sm cursor-pointer min-w-[240px]">
-              <span className="text-[14px] text-slate-400 flex-1">Yash sapkale</span>
+              <span className="text-[14px] text-slate-400 flex-1">All members</span>
               <ChevronDown className="h-5 w-5 text-slate-300" />
             </div>
             <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-slate-100/50 text-slate-400 px-6 py-3 rounded-xl border-none font-bold text-[13px] h-auto">
@@ -70,36 +109,47 @@ export default function ActivityLogPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {activityLogs.map((log, idx) => (
-                <tr key={idx} className="group hover:bg-slate-50/30 transition-colors">
-                  <td className="px-8 py-8">
-                    <div className="flex items-center gap-6">
-                      <ChevronDown className="h-5 w-5 text-slate-400 cursor-pointer" />
-                      <span className="text-[13px] font-bold text-[#0D1B3E]">{log.date}</span>
-                    </div>
-                  </td>
-
-                  <td className="px-8 py-8">
-                    <div className="space-y-4">
-                      {/* Timeline Bar Placeholder */}
-                      <div className="h-5 w-full rounded-full border border-slate-200 bg-white shadow-sm relative overflow-hidden">
-                        {/* Empty timeline as per screenshot */}
-                      </div>
-
-                      {/* Durations */}
-                      <div className="flex justify-start gap-8 pl-2">
-                        <DurationItem color="bg-[#22C55E]" value={log.working} />
-                        <DurationItem color="bg-[#FBBF24]" value={log.idle} />
-                        <DurationItem color="bg-[#A05E2C]" value={log.stopped} />
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-8 py-8 text-center">
-                    <span className="text-[13px] font-medium text-slate-500">{log.total}</span>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="px-8 py-8 text-center text-slate-500">Loading activity logs...</td>
                 </tr>
-              ))}
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-8 py-8 text-center text-slate-500">No activity logs found.</td>
+                </tr>
+              ) : (
+                logs.map((log, idx) => (
+                  <tr key={idx} className="group hover:bg-slate-50/30 transition-colors">
+                    <td className="px-8 py-8">
+                      <div className="flex items-center gap-6">
+                        <ChevronDown className="h-5 w-5 text-slate-400 cursor-pointer" />
+                        <span className="text-[13px] font-bold text-[#0D1B3E]">{log.date}</span>
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-8">
+                      <div className="space-y-4">
+                        {/* Timeline Bar Placeholder */}
+                        <div className="h-5 w-full rounded-full border border-slate-200 bg-white shadow-sm relative overflow-hidden">
+                          {/* Emulate a timeline by showing 100% green width */}
+                          <div className="absolute left-0 top-0 h-full bg-[#22C55E]" style={{ width: '100%' }}></div>
+                        </div>
+
+                        {/* Durations */}
+                        <div className="flex justify-start gap-8 pl-2">
+                          <DurationItem color="bg-[#22C55E]" value={formatTimeSpent(log.working)} />
+                          <DurationItem color="bg-[#FBBF24]" value={formatTimeSpent(log.idle)} />
+                          <DurationItem color="bg-[#A05E2C]" value={formatTimeSpent(log.stopped)} />
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-8 text-center">
+                      <span className="text-[13px] font-medium text-slate-500">{formatTimeSpent(log.total)}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

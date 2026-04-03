@@ -1,18 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Image as ImageIcon,
   BarChart3,
-  Search,
-  Calendar
+  Calendar,
+  X
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { cn } from '../../../lib/utils';
-cn
+
+interface User {
+  _id: string;
+  username: string;
+  email: string;
+}
+
+interface Screenshot {
+  _id: string;
+  imageUrl: string;
+  createdAt: string;
+}
+
 export default function ScreenshotsPage() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'productivity'>('gallery');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userScreenshots, setUserScreenshots] = useState<Screenshot[]>([]);
+  const [screenshotsLoading, setScreenshotsLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch('/api/screenshots');
+        const json = await res.json();
+        if (json.success) {
+          setUsers(json.data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
+  const handleUserClick = async (user: User) => {
+    setSelectedUser(user);
+    setScreenshotsLoading(true);
+    try {
+      const res = await fetch(`/api/screenshots?userId=${user._id}`);
+      const json = await res.json();
+      if (json.success) {
+        setUserScreenshots(json.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setScreenshotsLoading(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -78,13 +128,71 @@ export default function ScreenshotsPage() {
 
         {/* User Card */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          <div className="rounded-2xl border border-slate-100 bg-[#F9FAFB] p-6 dark:border-slate-800  /50">
-            <p className="break-all text-sm text-slate-500">
-              aswanijayesh500@gmail.c<br />om
-            </p>
-          </div>
+          {loading ? (
+            <p className="text-sm text-slate-500">Loading users...</p>
+          ) : users.length === 0 ? (
+            <p className="text-sm text-slate-500">No users found.</p>
+          ) : (
+            users.map((user) => (
+              <div
+                key={user._id}
+                onClick={() => handleUserClick(user)}
+                className="cursor-pointer rounded-2xl border border-slate-100 bg-[#F9FAFB] p-6 dark:border-slate-800/50 hover:bg-slate-50 shadow-sm transition-all"
+              >
+                <p className="break-all text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  {user.username}
+                </p>
+                <p className="break-all text-xs text-slate-500">
+                  {user.email}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </Card>
+
+      {/* Screenshots Popup Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                  Screenshots - {selectedUser.username}
+                </h3>
+                <p className="text-sm text-slate-500">{selectedUser.email}</p>
+              </div>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto">
+              {screenshotsLoading ? (
+                <p className="text-center text-slate-500">Loading screenshots...</p>
+              ) : userScreenshots.length === 0 ? (
+                <p className="text-center text-slate-500">No screenshots available for this user.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {userScreenshots.map((shot) => (
+                    <div key={shot._id} className="rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+                      <img src={shot.imageUrl || '/placeholder.png'} alt="Screenshot" className="w-full h-auto object-cover bg-slate-100" />
+                      <div className="p-3 bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-xs text-slate-500">
+                          {new Date(shot.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

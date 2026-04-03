@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   Plus,
@@ -21,30 +21,77 @@ import {
   ChevronLeft,
   ChevronRight,
   Ban,
-  Activity
+  Activity,
+  X
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../lib/utils';
 
-const membersData = [
-  { id: 1, name: 'yashsolankar', email: 'yashsolankar@careerruresolution.com', manager: 'Muttalib Saiyed', activationDate: '25/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 2, name: 'saimise402', email: 'saimise402@gmail.com', manager: 'Not Assigned', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 3, name: 'arbazsaiyed', email: 'arbazsaiyed@careerruresolution.com', manager: 'Not Assigned', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 4, name: 'therizwan02', email: 'therizwan02@gmail.com', manager: 'Not Assigned', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 5, name: 'mohammedkaif', email: 'mohammedkaif@careerruresolution.com', manager: 'Not Assigned', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 6, name: 'mdsakib.bagwan.cus', email: 'mdsakib.bagwan.cus@gamil.com', manager: 'Not Assigned', activationDate: '-', appVersion: '-', activation: false, tracking: true },
-  { id: 7, name: 'aswanijayesh555', email: 'aswanijayesh555@gmail.com', manager: 'Not Assigned', activationDate: '01/04/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 8, name: 'Abhishek Sadhu', email: 'abhisheksadhu@careerruresolution.com', manager: 'Muttalib Saiyed', activationDate: '25/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 9, name: 'Aditkale', email: 'aditkale402@gmail.com', manager: 'Muttalib Saiyed', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true },
-  { id: 10, name: 'Adoreen', email: 'adoreenlangdoh4@gmail.com', manager: 'Yuvraj sinh', activationDate: '26/03/2026', appVersion: 'Win(S) 2.1.8', activation: true, tracking: true, dept: 'Sales' },
-];
-
 export default function EmployeesPage() {
   const [activeTab, setActiveTab] = useState<'members' | 'departments' | 'location'>('members');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'enable' | 'disable'>('all');
+
+  const [members, setMembers] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [locations, setLocations] = useState<any[]>([]);
+
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isAddDeptOpen, setIsAddDeptOpen] = useState(false);
+  const [isAddLocOpen, setIsAddLocOpen] = useState(false);
+
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'sales', departmentId: '', locationId: '' });
+  const [deptForm, setDeptForm] = useState({ name: '', description: '' });
+  const [locForm, setLocForm] = useState({ name: '', address: '' });
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const [uRes, dRes, lRes] = await Promise.all([
+        fetch('/api/users'), fetch('/api/departments'), fetch('/api/locations')
+      ]);
+      const uData = await uRes.json();
+      const dData = await dRes.json();
+      const lData = await lRes.json();
+      if (uData.success) setMembers(uData.data);
+      if (dData.departments) setDepartments(dData.departments);
+      if (lData.locations) setLocations(lData.locations);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/auth/invite', { method: 'POST', body: JSON.stringify(inviteForm) });
+      if (res.ok) { setIsAddMemberOpen(false); setInviteForm({ name: '', email: '', role: 'sales', departmentId: '', locationId: '' }); alert('Invited successfully'); }
+    } catch (err) { alert('Failed to invite user'); }
+  };
+
+  const handleAddDept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/departments', { method: 'POST', body: JSON.stringify(deptForm) });
+      if (res.ok) { setIsAddDeptOpen(false); setDeptForm({ name: '', description: '' }); fetchData(); }
+    } catch (err) { alert('Failed to add department'); }
+  };
+
+  const handleAddLoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/locations', { method: 'POST', body: JSON.stringify(locForm) });
+      if (res.ok) { setIsAddLocOpen(false); setLocForm({ name: '', address: '' }); fetchData(); }
+    } catch (err) { alert('Failed to add location'); }
+  };
 
   const tabs = [
     { id: 'members', label: 'Members', icon: Users },
@@ -96,7 +143,7 @@ export default function EmployeesPage() {
                       <ChevronDown className="h-4 w-4" />
                     </button>
                   </div>
-                  <Button className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                  <Button onClick={() => setIsAddMemberOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                     <Plus className="h-5 w-5" />
                     Add Member
                   </Button>
@@ -152,55 +199,50 @@ export default function EmployeesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {membersData.map((member) => (
-                      <tr key={member.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-4 py-4"><div className="w-4 h-4 rounded border border-slate-200" /></td>
-                        <td className="px-4 py-4">
-                          <div>
-                            <span className="text-sm font-medium text-slate-700 block">{member.name}</span>
-                            {member.dept && <span className="text-[10px] text-slate-400">{member.dept}</span>}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-sm text-slate-500">{member.email}</td>
-                        <td className="px-4 py-4 text-sm text-slate-500">{member.manager}</td>
-                        <td className="px-4 py-4 text-sm text-slate-500">{member.activationDate}</td>
-                        <td className="px-4 py-4 text-sm text-slate-500">{member.appVersion}</td>
-                        <td className="px-4 py-4">
-                          <div className="flex justify-center">
-                            {member.activation ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-500" />
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex justify-center">
-                            {member.tracking ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-red-500" />
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center justify-end gap-1">
-                            <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                              <XCircle className="h-4 w-4" />
-                            </button>
-                            <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                            <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                              <Activity className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
+                    {members.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">No members found.</td>
                       </tr>
-                    ))}
+                    ) : (
+                      members.map((member: any) => (
+                        <tr key={member._id} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="px-4 py-4"><div className="w-4 h-4 rounded border border-slate-200" /></td>
+                          <td className="px-4 py-4">
+                            <div>
+                              <span className="text-sm font-medium text-slate-700 block">{member.username}</span>
+                              {member.departmentId && <span className="text-[10px] text-slate-400 capitalize">{member.departmentId?.name || 'Department'}</span>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-500">{member.email}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500 capitalize">{member.role}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">-</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">-</td>
+                          <td className="px-4 py-4">
+                            <div className="flex justify-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex justify-center">
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                                <XCircle className="h-4 w-4" />
+                              </button>
+                              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                              <button className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -241,39 +283,37 @@ export default function EmployeesPage() {
                     className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/10"
                   />
                 </div>
-                <Button className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                <Button onClick={() => setIsAddDeptOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                   <Plus className="h-5 w-5" />
                   Add Department
                 </Button>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-shadow">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-[#0D1B3E]">Sales <span className="font-normal text-slate-400 ml-1">(14 Members)</span></h3>
-                    <div className="flex items-center gap-4 text-sm text-slate-400">
-                      <span className="flex items-center gap-1.5">
-                        <UserIcon className="h-4 w-4" />
-                        Global Manager: Yuvraj sinh
-                      </span>
+                {departments.length === 0 ? (
+                  <p className="text-center text-slate-400 py-6">No departments found.</p>
+                ) : (
+                  departments.map((dept: any) => (
+                    <div key={dept._id} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-shadow">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-lg text-[#0D1B3E]">{dept.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            {dept.description || 'No description available'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
+                          Edit
+                        </Button>
+                        <Button variant="ghost" className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50">
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                    <button className="flex items-center gap-1.5 text-sm text-[#5E35B1] font-bold mt-4">
-                      <Plus className="h-4 w-4" />
-                      Add New Member
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
-                      Edit
-                    </Button>
-                    <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
-                      View Members
-                    </Button>
-                    <Button variant="ghost" className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50">
-                      Delete
-                    </Button>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -291,18 +331,142 @@ export default function EmployeesPage() {
                     className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/10"
                   />
                 </div>
-                <Button className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                <Button onClick={() => setIsAddLocOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                   <Plus className="h-5 w-5" />
                   Add Location
                 </Button>
               </div>
-              <div className="h-64 flex items-center justify-center text-slate-300">
-                {/* Empty State */}
+              <div className="space-y-4">
+                {locations.length === 0 ? (
+                  <p className="text-center text-slate-400 py-6">No locations found.</p>
+                ) : (
+                  locations.map((loc: any) => (
+                    <div key={loc._id} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-shadow">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-lg text-[#0D1B3E]">{loc.name}</h3>
+                        <div className="flex items-center gap-4 text-sm text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            {loc.address || 'No address available'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
+                          Edit
+                        </Button>
+                        <Button variant="ghost" className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50">
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Add Member Modal */}
+      {isAddMemberOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Invite Member</h3>
+              <button onClick={() => setIsAddMemberOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleInvite} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                <input required type="text" value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input required type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
+                <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="sales">Sales</option>
+                  <option value="marketing">Marketing</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">None</option>
+                  {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
+                <select value={inviteForm.locationId} onChange={e => setInviteForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">None</option>
+                  {locations.map((l: any) => (<option key={l._id} value={l._id}>{l.name}</option>))}
+                </select>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Send Invite</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Department Modal */}
+      {isAddDeptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Department</h3>
+              <button onClick={() => setIsAddDeptOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleAddDept} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
+                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => setIsAddDeptOpen(false)}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Location Modal */}
+      {isAddLocOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Add Location</h3>
+              <button onClick={() => setIsAddLocOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleAddLoc} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location Name</label>
+                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => setIsAddLocOpen(false)}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

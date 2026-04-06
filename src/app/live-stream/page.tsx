@@ -149,7 +149,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="w-full max-w-5xl overflow-hidden rounded-3xl border-none bg-white p-0 shadow-2xl">
+      <Card className="w-full max-w-5xl max-h-[80vh] overflow-hidden rounded-3xl border-none bg-white p-0 shadow-2xl">
         <div className="flex h-16 items-center justify-between border-b border-slate-50 px-8">
           <div className="flex items-center gap-4">
             <div className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center">

@@ -10,11 +10,6 @@ type ActiveProfile = {
     userId: { toString: () => string };
 };
 
-type TimeEntryLite = {
-    userId: { toString: () => string };
-    sessions?: Array<{ lastHeartbeat?: Date | string | null }>;
-};
-
 export async function POST() {
     try {
         await DBConnect();
@@ -35,30 +30,20 @@ export async function POST() {
             return NextResponse.json({ success: true, checked: 0, deactivated: 0 }, { status: 200 });
         }
 
-        const now = new Date();
-        const cutoff = new Date(now.getTime() - INACTIVITY_WINDOW_MS);
-        const dateStr = now.toISOString().split("T")[0];
-        const dayStart = new Date(`${dateStr}T00:00:00.000Z`);
+        const cutoff = new Date(Date.now() - INACTIVITY_WINDOW_MS);
 
-        const todayEntries = (await TimeEntry.find({
+        // Look for any active user's time entry that has at least one recent heartbeat,
+        // regardless of day bucket, to avoid timezone/date-boundary mismatches.
+        const recentlyActiveEntries = (await TimeEntry.find({
             userId: { $in: activeUserIdStrings },
-            date: dayStart,
+            sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
         })
-            .select("userId sessions.lastHeartbeat")
-            .lean()) as TimeEntryLite[];
+            .select("userId")
+            .lean()) as Array<{ userId: { toString: () => string } }>;
 
-        const recentlyActiveUserIds = new Set<string>();
-        for (const entry of todayEntries) {
-            const userKey = entry.userId.toString();
-            for (const session of entry.sessions ?? []) {
-                if (!session?.lastHeartbeat) continue;
-                const lastBeat = new Date(session.lastHeartbeat);
-                if (!Number.isNaN(lastBeat.getTime()) && lastBeat >= cutoff) {
-                    recentlyActiveUserIds.add(userKey);
-                    break;
-                }
-            }
-        }
+        const recentlyActiveUserIds = new Set(
+            recentlyActiveEntries.map((entry) => entry.userId.toString())
+        );
 
         const staleUserIds = activeUserIdStrings.filter((id) => !recentlyActiveUserIds.has(id));
         if (staleUserIds.length === 0) {

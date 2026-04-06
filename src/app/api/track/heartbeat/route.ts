@@ -2,6 +2,9 @@
 
 import { NextResponse } from "next/server";
 import TimeEntry from "@/models/time_entry";
+import User from "@/models/user";
+import SalesUser from "@/models/sales_user";
+import MarketingUser from "@/models/marketing_user";
 import DBConnect from "../../../../../lib/DB_Connect";
 
 export async function POST(request: Request) {
@@ -18,6 +21,21 @@ export async function POST(request: Request) {
         const dateStr = dateObj.toISOString().split('T')[0];
         const dayStart = new Date(dateStr + "T00:00:00.000Z");
         const now = new Date();
+
+        const user = await User.findById(userId).select("role").lean() as { role?: string } | null;
+        if (user?.role === "sales") {
+            await SalesUser.findOneAndUpdate(
+                { userId },
+                { $set: { active: true, lastLogin: now } },
+                { upsert: true, new: true }
+            );
+        } else if (user?.role === "marketing") {
+            await MarketingUser.findOneAndUpdate(
+                { userId },
+                { $set: { active: true, lastLogin: now } },
+                { upsert: true, new: true }
+            );
+        }
 
         let entry = await TimeEntry.findOne({ userId, date: dayStart });
 

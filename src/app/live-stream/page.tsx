@@ -423,31 +423,38 @@ export default function LiveStreamPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    async function fetchUsers() {
-      try {
-        const res = await fetch('/api/users');
-        const json = await res.json();
-        if (alive && json.success) {
-          setUsers((json.data || []).filter((u: User) => u.role !== 'manager'));
-        }
-      } catch (err) {
-        console.error("Fetch users failed", err);
-      } finally {
-        if (alive) setLoading(false);
-      }
+  const refreshUserStatuses = useCallback(async (showRefreshing = false) => {
+    if (showRefreshing) setRefreshing(true);
+    try {
+      await fetch('/api/users/inactivity-sweep', {
+        method: 'POST',
+        cache: 'no-store',
+      });
+    } catch (err) {
+      console.error("Inactivity sweep failed", err);
     }
-    fetchUsers();
-    const timer = setInterval(fetchUsers, 10_000);
-    return () => {
-      alive = false;
-      clearInterval(timer);
-    };
+
+    try {
+      const res = await fetch('/api/users', { cache: 'no-store' });
+      const json = await res.json();
+      if (json.success) {
+        setUsers((json.data || []).filter((u: User) => u.role !== 'manager'));
+      }
+    } catch (err) {
+      console.error("Fetch users failed", err);
+    } finally {
+      setLoading(false);
+      if (showRefreshing) setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    refreshUserStatuses(false);
+  }, [refreshUserStatuses]);
 
   useEffect(() => {
     const lower = search.toLowerCase();
@@ -478,17 +485,28 @@ export default function LiveStreamPage() {
           </p>
         </div>
 
-        <div className="relative group">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 pr-12 text-[14px] text-slate-600 shadow-sm transition-all focus:border-[#5E35B1] focus:ring-4 focus:ring-purple-50 focus:outline-none sm:w-80"
-          />
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 bg-[#5E35B1] rounded-xl text-white">
-            <Search className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-3.5 pr-12 text-[14px] text-slate-600 shadow-sm transition-all focus:border-[#5E35B1] focus:ring-4 focus:ring-purple-50 focus:outline-none sm:w-80"
+            />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 bg-[#5E35B1] rounded-xl text-white">
+              <Search className="h-4 w-4" />
+            </div>
           </div>
+          <Button
+            type="button"
+            onClick={() => refreshUserStatuses(true)}
+            disabled={refreshing}
+            className="gap-2 rounded-xl bg-[#5E35B1] px-4 py-3 text-[12px] font-bold text-white hover:bg-[#4527A0]"
+          >
+            <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
         </div>
       </div>
 

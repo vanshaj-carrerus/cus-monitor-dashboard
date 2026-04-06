@@ -18,6 +18,7 @@ type ActivityProfileDoc = {
 type StreamToggleBody = {
     userId?: string;
     isActive?: boolean;
+    frame?: string;
     controlEnabled?: boolean;
     controllerId?: string;
     reasonStopped?: string;

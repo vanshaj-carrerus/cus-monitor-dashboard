@@ -122,6 +122,12 @@ export async function GET(req: NextRequest) {
         // Get userId from query params if available
         const url = new URL(req.url);
         const filterUserId = url.searchParams.get("userId");
+        const startDate = url.searchParams.get("startDate");
+        const endDate = url.searchParams.get("endDate");
+        const search = (url.searchParams.get("search") || "").trim();
+        const appName = (url.searchParams.get("app") || "").trim();
+        const page = Math.max(1, Number(url.searchParams.get("page") || 1));
+        const limit = Math.min(500, Math.max(1, Number(url.searchParams.get("limit") || 200)));
 
         let filter: any = {};
         if (filterUserId) {
@@ -142,8 +148,31 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // Fetch logs (limit search to last 100 for performance)
-        const logs = await ActivityLog.find(filter).sort({ start_time: -1 }).limit(100).lean();
+        if (startDate || endDate) {
+            filter.start_time = {};
+            if (startDate) {
+                filter.start_time.$gte = new Date(`${startDate}T00:00:00.000Z`);
+            }
+            if (endDate) {
+                filter.start_time.$lte = new Date(`${endDate}T23:59:59.999Z`);
+            }
+        }
+
+        if (search) {
+            filter.$or = [
+                { title: { $regex: search, $options: "i" } },
+                { site: { $regex: search, $options: "i" } },
+                { app_name: { $regex: search, $options: "i" } },
+            ];
+        }
+
+        if (appName) {
+            filter.app_name = { $regex: appName, $options: "i" };
+        }
+
+        const skip = (page - 1) * limit;
+        const total = await ActivityLog.countDocuments(filter);
+        const logs = await ActivityLog.find(filter).sort({ start_time: -1 }).skip(skip).limit(limit).lean();
 
         // Resolve user names for each item
         const data = await Promise.all(logs.map(async (log: any) => {
@@ -155,7 +184,7 @@ export async function GET(req: NextRequest) {
         }));
 
         return NextResponse.json(
-            { success: true, count: data.length, data },
+            { success: true, count: data.length, total, page, limit, data },
             { status: 200 }
         );
 

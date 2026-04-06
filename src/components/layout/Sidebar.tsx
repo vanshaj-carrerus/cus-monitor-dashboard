@@ -26,7 +26,6 @@ import { cn } from '../../../lib/utils';
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
   { icon: Users2, label: 'My Team', href: '/my-team' },
-  // { icon: UserCog, label: 'Change Manager', href: '/manager' },
   {
     icon: Activity,
     label: 'Live Tracking',
@@ -42,15 +41,11 @@ const sidebarItems = [
     href: '#',
     subItems: [
       { label: 'Time Tracker', href: '/reports/time-tracker' },
-      { label: 'Shift Tracker', href: '/reports/shift-tracker' },
       { label: 'Productivity Breakdown', href: '/reports/productivity' },
       { label: 'Activity Log', href: '/reports/activity-log' },
       { label: 'Web And Apps', href: '/reports/web-apps' },
       { label: 'Attendance', href: '/reports/attendance' },
-      { label: 'Daily Time Entry', href: '/reports/daily-entry' },
-      { label: 'Project Report', href: '/reports/project-report' },
       { label: 'Productive vs Unproductive', href: '/reports/productivity-vs-unproductive' },
-      { label: 'Application Usage', href: '/reports/app-usage' },
     ]
   },
 ];

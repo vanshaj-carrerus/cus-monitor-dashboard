@@ -24,24 +24,32 @@ export default function TimeTrackerPage() {
   const [orgFilter, setOrgFilter] = useState<'manager' | 'loc_dept'>('manager');
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  console.log(reports);
+  const totalProductive = reports.reduce((acc, row) => acc + Number(row.productiveSeconds || 0), 0);
 
+  async function fetchReports() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+      const res = await fetch(`/api/reports?${params.toString()}`);
+      const json = await res.json();
+      if (json.success) {
+        setReports(json.data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function fetchReports() {
-      try {
-        const res = await fetch('/api/reports');
-        const json = await res.json();
-        if (json.success) {
-          setReports(json.data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchReports();
   }, []);
 
@@ -81,11 +89,12 @@ export default function TimeTrackerPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 px-5 py-2.5 shadow-sm cursor-pointer">
-            <span className="text-[14px] font-medium text-slate-500">2026-03-27</span>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-2.5 shadow-sm">
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-[13px] text-slate-600 outline-none" />
             <span className="text-slate-300">—</span>
-            <span className="text-[14px] font-medium text-slate-500">2026-04-02</span>
-            <Calendar className="ml-4 h-5 w-5 text-slate-300" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-[13px] text-slate-600 outline-none" />
+            <Calendar className="h-5 w-5 text-slate-300" />
+            <Button size="sm" onClick={fetchReports} className="rounded-lg bg-[#5E35B1] text-white hover:bg-[#4527A0] px-3 py-1.5 h-auto">Apply</Button>
           </div>
         </div>
       </div>
@@ -100,6 +109,8 @@ export default function TimeTrackerPage() {
                   <input
                     type="text"
                     placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 pl-12 text-[14px] text-slate-600 focus:border-[#5E35B1] focus:outline-none placeholder:text-slate-300"
                   />
                   <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
@@ -136,7 +147,7 @@ export default function TimeTrackerPage() {
 
               <div className="text-[16px] font-bold text-[#0D1B3E] whitespace-nowrap overflow-hidden text-ellipsis">
                 {activeView === 'org' ? (
-                  <>Total Team Productivity: <span className="text-[#0D1B3E]">277hrs 43Min 41Sec</span></>
+                  <>Total Team Productivity: <span className="text-[#0D1B3E]">{formatTimeSpent(totalProductive)}</span></>
                 ) : (
                   <>Total Productivity: <span className="text-[#0D1B3E]">0hrs 0Min 0Sec</span></>
                 )}
@@ -166,9 +177,9 @@ export default function TimeTrackerPage() {
                 </>
               )}
               <div className="flex items-center gap-3">
-                <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-slate-100/50 text-slate-400 px-6 py-3 rounded-xl border-none font-bold text-[13px] h-auto whitespace-nowrap">
+                <Button variant="secondary" size="sm" onClick={fetchReports} className="flex items-center gap-2 bg-slate-100/50 text-slate-500 px-6 py-3 rounded-xl border-none font-bold text-[13px] h-auto whitespace-nowrap">
                   <Filter className="h-5 w-5" />
-                  Filter
+                  Apply Filters
                 </Button>
                 <Button variant="secondary" size="sm" className="flex items-center gap-2 bg-slate-100/50 text-slate-400 px-6 py-3 rounded-xl border-none font-bold text-[13px] h-auto whitespace-nowrap">
                   <Upload className="h-5 w-5 rotate-180" />
@@ -287,8 +298,8 @@ export default function TimeTrackerPage() {
                     </td>
                     <td className="px-4 py-5 text-right font-bold text-slate-400 text-[13px]">{formatTimeSpent(row.trackedTimeSeconds || 0)}</td>
                     <td className="px-4 py-5 text-right font-bold text-[#3B82F6] text-[13px]">{formatTimeSpent(row.trackedTimeSeconds || 0)}</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#10B981] text-[13px]">0h 0m</td>
-                    <td className="px-4 py-5 text-right font-bold text-[#EF4444] text-[13px]">0h 0m</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#10B981] text-[13px]">{formatTimeSpent(row.productiveSeconds || 0)}</td>
+                    <td className="px-4 py-5 text-right font-bold text-[#EF4444] text-[13px]">{formatTimeSpent(row.unproductiveSeconds || 0)}</td>
                     <td className="px-4 py-5 text-right font-bold text-[#F59E0B] text-[13px]">0h 0m</td>
                     <td className="px-4 py-5 text-right font-bold text-[#FBBF24] text-[13px]">0h 0m</td>
                   </tr>

@@ -7,7 +7,8 @@ import {
   ChevronDown,
   ChevronRight,
   Globe,
-  Monitor
+  Monitor,
+  Search
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
@@ -47,68 +48,84 @@ interface DaySummary {
 export default function ActivityLogPage() {
   const [logsByDate, setLogsByDate] = useState<DaySummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 200;
 
   // Expanded states
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
   const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    async function fetchLogs() {
-      try {
-        const res = await fetch('/api/activity-log');
-        const json = await res.json();
-        if (json.success) {
-          const summaryMap: Record<string, DaySummary> = {};
+  async function fetchLogs(targetPage = page) {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('page', String(targetPage));
+      params.set('limit', String(limit));
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+      const res = await fetch(`/api/activity-log?${params.toString()}`);
+      const json = await res.json();
+      if (json.success) {
+        setTotal(Number(json.total || 0));
+        setPage(Number(json.page || targetPage));
+        const summaryMap: Record<string, DaySummary> = {};
 
-          json.data.forEach((log: LogEntry) => {
-            const dateObj = new Date(log.start_time);
-            const dateStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        json.data.forEach((log: LogEntry) => {
+          const dateObj = new Date(log.start_time);
+          const dateStr = dateObj.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 
-            if (!summaryMap[dateStr]) {
-              summaryMap[dateStr] = { date: dateStr, working: 0, idle: 0, stopped: 0, total: 0, users: {} };
-            }
+          if (!summaryMap[dateStr]) {
+            summaryMap[dateStr] = { date: dateStr, working: 0, idle: 0, stopped: 0, total: 0, users: {} };
+          }
 
-            const dayEntry = summaryMap[dateStr];
-            dayEntry.working += log.duration_seconds;
-            dayEntry.total += log.duration_seconds;
+          const dayEntry = summaryMap[dateStr];
+          dayEntry.working += log.duration_seconds;
+          dayEntry.total += log.duration_seconds;
 
-            if (!dayEntry.users[log.userId]) {
-              dayEntry.users[log.userId] = {
-                userId: log.userId,
-                userName: log.userName || log.userId,
-                working: 0,
-                idle: 0,
-                stopped: 0,
-                total: 0,
-                logs: []
-              };
-            }
+          if (!dayEntry.users[log.userId]) {
+            dayEntry.users[log.userId] = {
+              userId: log.userId,
+              userName: log.userName || log.userId,
+              working: 0,
+              idle: 0,
+              stopped: 0,
+              total: 0,
+              logs: []
+            };
+          }
 
-            const userEntry = dayEntry.users[log.userId];
-            userEntry.working += log.duration_seconds;
-            userEntry.total += log.duration_seconds;
-            userEntry.logs.push(log);
+          const userEntry = dayEntry.users[log.userId];
+          userEntry.working += log.duration_seconds;
+          userEntry.total += log.duration_seconds;
+          userEntry.logs.push(log);
+        });
+
+        // Sort days descending
+        const sortedLogs = Object.values(summaryMap).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        // Sort logs within users descending
+        sortedLogs.forEach(day => {
+          Object.values(day.users).forEach(user => {
+            user.logs.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
           });
+        });
 
-          // Sort days descending
-          const sortedLogs = Object.values(summaryMap).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-          // Sort logs within users descending
-          sortedLogs.forEach(day => {
-            Object.values(day.users).forEach(user => {
-              user.logs.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
-            });
-          });
-
-          setLogsByDate(sortedLogs);
-        }
-      } catch (err) {
-        console.error("Failed to fetch activity logs", err);
-      } finally {
-        setLoading(false);
+        setLogsByDate(sortedLogs);
       }
+    } catch (err) {
+      console.error("Failed to fetch activity logs", err);
+    } finally {
+      setLoading(false);
     }
-    fetchLogs();
+  }
+
+  useEffect(() => {
+    fetchLogs(1);
   }, []);
 
   const toggleDate = (date: string) => {
@@ -124,11 +141,22 @@ export default function ActivityLogPage() {
     <DashboardLayout>
       {/* Header Controls */}
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-end">
-        <div className="flex items-center gap-4 px-5 py-3 bg-white border border-slate-100 rounded-xl shadow-sm cursor-pointer min-w-[320px]">
-          <span className="text-[14px] font-medium text-slate-500">2026-03-27</span>
+        <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-2.5 shadow-sm">
+          <Search className="h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search title, app, site"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="text-[13px] text-slate-600 outline-none min-w-[220px]"
+          />
+        </div>
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-slate-100 rounded-xl shadow-sm min-w-[320px]">
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-[13px] text-slate-600 outline-none" />
           <span className="text-slate-300">—</span>
-          <span className="text-[14px] font-medium text-slate-500">2026-04-02</span>
-          <Calendar className="ml-4 h-5 w-5 text-slate-300" />
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-[13px] text-slate-600 outline-none" />
+          <Calendar className="h-5 w-5 text-slate-300" />
+          <Button size="sm" onClick={() => fetchLogs(1)} className="rounded-lg bg-[#5E35B1] text-white hover:bg-[#4527A0] px-3 py-1.5 h-auto">Apply</Button>
         </div>
       </div>
 
@@ -270,6 +298,29 @@ export default function ActivityLogPage() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-slate-50">
+          <span className="text-[12px] text-slate-500">
+            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fetchLogs(page - 1)}
+            disabled={page <= 1 || loading}
+            className="rounded-lg"
+          >
+            Prev
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => fetchLogs(page + 1)}
+            disabled={page * limit >= total || loading}
+            className="rounded-lg"
+          >
+            Next
+          </Button>
         </div>
       </div>
     </DashboardLayout>

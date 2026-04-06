@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { cn } from '../../../lib/utils';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
@@ -7,6 +8,29 @@ import { useSidebar } from '@/components/providers';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isOpen, toggle, close } = useSidebar();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    const runSweep = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        await fetch('/api/users/inactivity-sweep', {
+          method: 'POST',
+          cache: 'no-store',
+        });
+      } catch {
+        // noop
+      }
+    };
+
+    runSweep();
+    timer = setInterval(runSweep, 4 * 60 * 1000);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -161,6 +161,8 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
               token={lkToken}
               serverUrl={lkUrl}
               connect={true}
+              audio={false}
+              video={false}
               data-lk-theme="default"
               className="h-full w-full"
               onDisconnected={() => setIsActive(false)}

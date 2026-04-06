@@ -6,8 +6,11 @@ export async function GET(req: NextRequest) {
   const identity = req.nextUrl.searchParams.get('identity');
 
   if (!room || !identity) {
+    console.error(`[Stream Token] Missing room (${room}) or identity (${identity})`);
     return NextResponse.json({ error: 'Missing room or identity' }, { status: 400 });
   }
+
+  console.log(`[Stream Token] Generating token for room: ${room}, identity: ${identity}`);
 
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;

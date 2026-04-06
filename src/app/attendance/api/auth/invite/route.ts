@@ -44,7 +44,7 @@ export async function POST(request: Request) {
             const mailOptions = {
                 from: 'CUS Tech <CUS_Tech.solution@gmail.com>',
                 to: email,
-                subject: "You're Invited to Join CUS Spy Admin Dashboard",
+                subject: "You're Invited to Join CUS Monitor Admin Dashboard",
                 html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px;">
                     <div style="background-color: #4F46E5; padding: 30px; text-align: center; color: white;">

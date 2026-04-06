@@ -74,7 +74,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl shadow-indigo-100/40 border border-slate-100">
         <div className="mb-8 text-center bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white py-6 rounded-xl">
-          <h1 className="text-2xl font-bold">Welcome to CUS Spy</h1>
+          <h1 className="text-2xl font-bold">Welcome to CUS Monitor</h1>
           <p className="text-sm opacity-90 mt-1">Set up your account to get started</p>
         </div>
 

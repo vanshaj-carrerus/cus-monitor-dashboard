@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         const stream = await Stream.findOne({ userId: { $in: possibleIds } });
 
         if (action === "status") {
+            console.log(`[Stream Status Check] User: ${userId}, Resolved: [${possibleIds}], isActive: ${stream ? stream.isActive : false}`);
             return NextResponse.json(
                 { success: true, isActive: stream ? stream.isActive : false },
                 { status: 200 }
@@ -93,6 +94,7 @@ export async function POST(req: NextRequest) {
                 stream.isActive = isActive;
                 stream.updatedAt = new Date();
                 await stream.save();
+                console.log(`[Stream Toggle] Updated Stream doc for user: ${userId}, isActive: ${isActive}`);
             } else {
                 // Create new — use the userId as-is (usually the username from the dashboard)
                 stream = await Stream.create({
@@ -100,6 +102,7 @@ export async function POST(req: NextRequest) {
                     isActive,
                     updatedAt: new Date()
                 });
+                console.log(`[Stream Toggle] Created NEW Stream doc for user: ${userId}, isActive: ${isActive}`);
             }
 
             return NextResponse.json({ success: true, stream }, { status: 200 });

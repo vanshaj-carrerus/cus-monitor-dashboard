@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import SalesUser from "@/models/sales_user";
 import MarketingUser from "@/models/marketing_user";
 import TimeEntry from "@/models/time_entry";
-import DBConnect from "../../../../../../lib/DB_Connect";
+import DBConnect from "../../../../../lib/DB_Connect";
 
 const INACTIVITY_WINDOW_MS = 4 * 60 * 1000;
 

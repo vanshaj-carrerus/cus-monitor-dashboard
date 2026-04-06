@@ -3,14 +3,20 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const room = req.nextUrl.searchParams.get('room');
-  const identity = req.nextUrl.searchParams.get('identity');
+  const identity = req.nextUrl.searchParams.get('identity') || '';
+  const clientType = (req.nextUrl.searchParams.get('clientType') || 'admin').toLowerCase();
+  const actorRole = (req.headers.get('x-actor-role') || '').toLowerCase();
 
-  if (!room || !identity) {
+  if (!room || !identity || !['admin', 'agent'].includes(clientType)) {
     console.error(`[Stream Token] Missing room (${room}) or identity (${identity})`);
-    return NextResponse.json({ error: 'Missing room or identity' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing room/identity or invalid clientType' }, { status: 400 });
   }
 
-  console.log(`[Stream Token] Generating token for room: ${room}, identity: ${identity}`);
+  if (clientType === 'admin' && !['admin', 'manager'].includes(actorRole)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  console.log(`[Stream Token] Generating ${clientType} token for room: ${room}, identity: ${identity}`);
 
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
@@ -27,8 +33,9 @@ export async function GET(req: NextRequest) {
   at.addGrant({
     roomJoin: true,
     room: room,
-    canPublish: true,
+    canPublish: clientType === 'agent',
     canSubscribe: true,
+    canPublishData: clientType === 'admin',
   });
 
   return NextResponse.json({

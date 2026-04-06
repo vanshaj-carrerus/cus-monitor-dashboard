@@ -56,23 +56,38 @@ import { Track } from 'livekit-client';
 import '@livekit/components-styles';
 
 function VideoPlayer({ room }: { room: string }) {
-  const tracks = useTracks([Track.Source.ScreenShare, Track.Source.Camera]);
-  const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
-  const cameraTrack = tracks.find(t => t.source === Track.Source.Camera);
-  const activeTrack = screenShareTrack || cameraTrack;
+  // 1. Broaden the search: Remove specific sources to see ALL incoming tracks
+  const tracks = useTracks();
 
-  if (!activeTrack) {
+  useEffect(() => {
+    console.log("DEBUG: Total tracks found in room:", tracks.length);
+    tracks.forEach((t, i) => {
+      console.log(`Track ${i}: Source=${t.source}, Participant=${t.participant.identity}, Kind=${t.publication.kind}`);
+    });
+  }, [tracks]);
+
+  if (tracks.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex flex-col items-center gap-4 text-center p-10">
         <RefreshCw className="h-10 w-10 animate-spin text-purple-500" />
-        <p className="text-sm font-medium text-slate-400">Waiting for live video from monitor...</p>
+        <p className="text-sm font-medium text-slate-400">Waiting for tracks from participant... (0 total found)</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full">
-      <VideoTrack trackRef={activeTrack as TrackReference} className="h-full w-full object-contain" />
+    <div className="grid grid-cols-1 gap-4 h-full w-full overflow-y-auto p-4 bg-slate-950">
+      {tracks.map((trackRef) => (
+        <div key={trackRef.publication.trackSid} className="relative flex flex-col gap-2 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden min-h-[300px]">
+          <div className="absolute top-4 left-4 z-10 rounded-lg bg-black/60 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+            {trackRef.participant.identity.toUpperCase()} • {trackRef.source.toUpperCase()}
+          </div>
+          <VideoTrack
+            trackRef={trackRef as TrackReference}
+            className="h-full w-full object-contain"
+          />
+        </div>
+      ))}
     </div>
   );
 }

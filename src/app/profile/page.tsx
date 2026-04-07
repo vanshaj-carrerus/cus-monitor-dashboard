@@ -53,6 +53,31 @@ export default function ProfilePage() {
             Forgot password
           </Link>
         </Card>
+        <Card className="border-none p-8 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <KeyRound className="h-5 w-5 text-[#5E35B1]" />
+            <h3 className="font-bold text-slate-900">Download App</h3>
+          </div>
+          <p className="mb-4 text-sm text-slate-500">
+            Download the CUS Monitor app for your device.
+          </p>
+          <Link
+            href="/CUS-Monitor.exe"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex rounded-xl bg-[#5E35B1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#4527A0]"
+          >
+            Download App (Windows)
+          </Link>
+          <Link
+            href="/download-app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex rounded-xl bg-[#5E35B1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#4527A0]"
+          >
+            Download App (MacOS)
+          </Link>
+        </Card>
       </div>
     </DashboardLayout>
   );

@@ -7,7 +7,6 @@ import {
   Clock,
   TrendingUp,
   Users,
-  CheckCircle2,
   XCircle,
   Check,
   X,
@@ -31,85 +30,60 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
-  Sector,
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { cn } from '../../lib/utils';
 import { useAuth } from '@/components/auth-context';
-// ── Data ──────────────────────────────────────────────────────────────────────
-
-const lineDataOrg = [
-  { name: '27th Mar', productive: 45, unproductive: 12, neutral: 125 },
-  { name: '28th Mar', productive: 35, unproductive: 10, neutral: 65 },
-  { name: '29th Mar', productive: 15, unproductive: 5, neutral: 10 },
-  { name: '30th Mar', productive: 60, unproductive: 15, neutral: 185 },
-  { name: '31st Mar', productive: 65, unproductive: 14, neutral: 175 },
-  { name: '1st Apr', productive: 55, unproductive: 12, neutral: 90 },
-  { name: '2nd Apr', productive: 35, unproductive: 18, neutral: 70 },
-];
-
-const lineDataTeam = [
-  { name: '27th Mar', productive: 85, unproductive: 5, neutral: 100 },
-  { name: '28th Mar', productive: 35, unproductive: 10, neutral: 115 },
-  { name: '29th Mar', productive: 38, unproductive: 8, neutral: 120 },
-  { name: '30th Mar', productive: 40, unproductive: 5, neutral: 10 },
-  { name: '31st Mar', productive: 50, unproductive: 15, neutral: 160 },
-  { name: '1st Apr', productive: 60, unproductive: 10, neutral: 120 },
-  { name: '2nd Apr', productive: 40, unproductive: 8, neutral: 45 },
-];
-
-const attendanceData = [
-  { name: '27th Mar', present: 42, absent: 8 },
-  { name: '28th Mar', present: 18, absent: 32 },
-  { name: '29th Mar', present: 52, absent: 12 },
-  { name: '30th Mar', present: 40, absent: 10 },
-  { name: '31st Mar', present: 36, absent: 15 },
-  { name: '1st Apr', present: 42, absent: 10 },
-  { name: '2nd Apr', present: 20, absent: 32 },
-];
-
-const webDataOrg = [
-  { name: 'https://linkedin.com', pct: '30.1%', time: '120:33:03', color: '#4ADE80' },
-  { name: 'https://mail.google.com', pct: '23.2%', time: '97:26:40', color: '#60A5FA' },
-  { name: 'https://docs.google.com', pct: '14.8%', time: '59:58:19', color: '#F87171' },
-  { name: 'https://web.whatsapp.com', pct: '3.6%', time: '27:57:04', color: '#A78BFA' },
-  { name: 'Other', pct: '28.3%', time: '', color: '#FACC15' },
-];
-
-const appDataOrg = [
-  { name: 'chrome.exe', pct: '71.1%', time: '286:30:19', color: '#4ADE80' },
-  { name: 'whatsapp.root', pct: '19.9%', time: '80:10:45', color: '#60A5FA' },
-  { name: 'windows explorer', pct: '3.5%', time: '14:20:06', color: '#F87171' },
-  { name: 'microsoft word', pct: '3.3%', time: '13:34:18', color: '#A78BFA' },
-  { name: 'Other', pct: '2.2%', time: '', color: '#FACC15' },
-];
-
-const webDataTeam = [
-  { name: 'https://linkedin.com', pct: '41.6%', time: '81:30:12', color: '#4ADE80' },
-  { name: 'https://mail.google.com', pct: '29.3%', time: '59:01:42', color: '#60A5FA' },
-  { name: 'https://drive.google.com', pct: '12.4%', time: '24:17:23', color: '#F87171' },
-  { name: 'https://job-boards.greenhouse.io', pct: '10.4%', time: '19:20:54', color: '#A78BFA' },
-  { name: 'Other', pct: '6.3%', time: '', color: '#FACC15' },
-];
-
-const appDataTeam = [
-  { name: 'chrome.exe', pct: '66.0%', time: '146:06:35', color: '#4ADE80' },
-  { name: 'whatsapp.exe', pct: '23.7%', time: '52:34:25', color: '#60A5FA' },
-  { name: 'window-explorer', pct: '4.4%', time: '09:47:09', color: '#F87171' },
-  { name: 'microsoft-word', pct: '3.9%', time: '09:07:18', color: '#A78BFA' },
-  { name: 'Other', pct: '2.0%', time: '', color: '#FACC15' },
-];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function toPieData(items: { name: string; pct: string; color: string; time: string }[]) {
+type PieItem = { name: string; pct: string; color: string; time: string };
+type SeriesPoint = { name: string; productive: number; unproductive: number; neutral: number };
+type DashboardMetrics = {
+  connectedNow: { total: number; active: number; inactive: number };
+  totals: { activeSeconds: number; productiveSeconds: number; unproductiveSeconds: number; neutralSeconds: number };
+  series: SeriesPoint[];
+  websites: PieItem[];
+  apps: PieItem[];
+  topMembers: { name: string; dept?: string }[];
+  lessMembers: { name: string; dept?: string }[];
+};
+
+const EMPTY_METRICS: DashboardMetrics = {
+  connectedNow: { total: 0, active: 0, inactive: 0 },
+  totals: { activeSeconds: 0, productiveSeconds: 0, unproductiveSeconds: 0, neutralSeconds: 0 },
+  series: [],
+  websites: [{ name: 'Other', pct: '0.0%', time: '', color: '#FACC15' }],
+  apps: [{ name: 'Other', pct: '0.0%', time: '', color: '#FACC15' }],
+  topMembers: [],
+  lessMembers: [],
+};
+
+function toPieData(items: PieItem[]) {
   return items.map(i => ({ ...i, value: parseFloat(i.pct) }));
+}
+
+function secondsToHms(totalSeconds: number) {
+  const s = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+  const hours = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = s % 60;
+  const pad2 = (x: number) => String(x).padStart(2, '0');
+  return `${hours}:${pad2(mins)}:${pad2(secs)}`;
+}
+
+function todayYmd() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysYmd(ymd: string, deltaDays: number) {
+  const d = new Date(`${ymd}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
 }
 
 // ── Shared Sub-components ─────────────────────────────────────────────────────
@@ -213,8 +187,8 @@ function DataBox({ label, value }: { label: string; value: string }) {
 function WebAppsSection({
   webData, appData,
 }: {
-  webData: typeof webDataOrg;
-  appData: typeof appDataOrg;
+  webData: PieItem[];
+  appData: PieItem[];
 }) {
   const [activeWebIndex, setActiveWebIndex] = useState<number | null>(null);
   const [activeAppIndex, setActiveAppIndex] = useState<number | null>(null);
@@ -222,7 +196,26 @@ function WebAppsSection({
   const wPie = toPieData(webData);
   const aPie = toPieData(appData);
 
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, pct, index, activeIndex }: any) => {
+  type PieLabelProps = {
+    cx: number;
+    cy: number;
+    midAngle: number;
+    innerRadius: number;
+    outerRadius: number;
+    percent?: number;
+    index: number;
+  };
+
+  const renderCustomLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    pct,
+    index,
+    activeIndex,
+  }: PieLabelProps & { pct: string; activeIndex: number | null }) => {
     const isExploded = index === activeIndex;
     const offset = isExploded ? 6 : 0;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5 + offset;
@@ -242,39 +235,7 @@ function WebAppsSection({
     );
   };
 
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
-    return (
-      <g>
-        <filter id="shadow" height="130%">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
-          <feOffset dx="0" dy="2" result="offsetblur" />
-          <feComponentTransfer>
-            <feFuncA type="linear" slope="0.2" />
-          </feComponentTransfer>
-          <feMerge>
-            <feMergeNode />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 8}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-          stroke="white"
-          strokeWidth={2}
-          filter="url(#shadow)"
-          style={{ transition: 'all 0.3s ease-out', cursor: 'pointer' }}
-        />
-      </g>
-    );
-  };
-
-  const PieComponent = Pie as any;
+  const PieComponent = Pie as unknown as React.ComponentType<Record<string, unknown>>;
 
   return (
     <Card className="p-6 border-none shadow-sm">
@@ -302,7 +263,11 @@ function WebAppsSection({
                   dataKey="value"
                   paddingAngle={0}
                   labelLine={false}
-                  label={(props: any) => renderCustomLabel({ ...props, activeIndex: activeWebIndex })}
+                  label={(props: unknown) => {
+                    const p = props as PieLabelProps & { percent?: number };
+                    const pct = `${Math.round((p.percent ?? 0) * 100)}%`;
+                    return renderCustomLabel({ ...p, pct, activeIndex: activeWebIndex });
+                  }}
                   activeIndex={activeWebIndex ?? undefined}                >
                   {wPie.map((e, i) => (
                     <Cell
@@ -353,7 +318,11 @@ function WebAppsSection({
                   dataKey="value"
                   paddingAngle={0}
                   labelLine={false}
-                  label={(props: any) => renderCustomLabel({ ...props, activeIndex: activeAppIndex })}
+                  label={(props: unknown) => {
+                    const p = props as PieLabelProps & { percent?: number };
+                    const pct = `${Math.round((p.percent ?? 0) * 100)}%`;
+                    return renderCustomLabel({ ...p, pct, activeIndex: activeAppIndex });
+                  }}
                   activeIndex={activeAppIndex ?? undefined}
                 >
                   {aPie.map((e, i) => (
@@ -394,45 +363,9 @@ function WebAppsSection({
   );
 }
 
-// ── Attendance Chart ──────────────────────────────────────────────────────────
-
-function AttendanceSection() {
-  return (
-    <Card className="p-6 border-none shadow-sm">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-900">Attendance</h3>
-          <p className="text-[11px] text-slate-400">Overview of the attendance for the last 07 days</p>
-        </div>
-        <ExternalLink className="h-5 w-5 text-slate-300 cursor-pointer" />
-      </div>
-      <div className="mb-4 flex gap-5">
-        <LegendDot color="bg-green-400" label="Present" />
-        <LegendDot color="bg-pink-400" label="On Leave" />
-      </div>
-      <div className="h-[260px]">
-        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-          <BarChart data={attendanceData} barGap={6}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dy={8} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dx={-8} />
-            <Tooltip cursor={{ fill: '#F8FAFC' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-            <Bar dataKey="present" fill="#4ADE80" radius={[4, 4, 0, 0]} barSize={22} />
-            <Bar dataKey="absent" fill="#F472B6" radius={[4, 4, 0, 0]} barSize={22} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="mt-3 flex justify-end gap-2">
-        <button className="rounded-full bg-slate-50 p-1.5 text-slate-400 hover:bg-slate-100"><ChevronLeft className="h-3.5 w-3.5" /></button>
-        <button className="rounded-full bg-slate-50 p-1.5 text-slate-400 hover:bg-slate-100"><ChevronRight className="h-3.5 w-3.5" /></button>
-      </div>
-    </Card>
-  );
-}
-
 // ── Productive Graph ──────────────────────────────────────────────────────────
 
-function ProductiveGraph({ data }: { data: typeof lineDataOrg }) {
+function ProductiveGraph({ data }: { data: SeriesPoint[] }) {
   return (
     <Card className="p-6 border-none shadow-sm">
       <div className="mb-4 flex items-center justify-between">
@@ -508,7 +441,7 @@ function ProductivitySideCards({
 }
 
 
-function OrganizationView() {
+function OrganizationView({ metrics }: { metrics: DashboardMetrics }) {
   return (
     <div className="space-y-6">
       {/* Connected Now + Side Stats */}
@@ -520,39 +453,38 @@ function OrganizationView() {
             <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value="51 members" label="All Devices" iconBg="bg-purple-50" />
-            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value="2 members" label="Active Signal" iconBg="bg-green-50" />
-            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value="49 members" label="No Signal" iconBg="bg-slate-100" />
+            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value={`${metrics.connectedNow.total} members`} label="All Devices" iconBg="bg-purple-50" />
+            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value={`${metrics.connectedNow.active} members`} label="Active Signal" iconBg="bg-green-50" />
+            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value={`${metrics.connectedNow.inactive} members`} label="No Signal" iconBg="bg-slate-100" />
           </div>
         </div>
         <div className="lg:col-span-3 space-y-2.5">
-          <SideMiniStat label="Total Active hours" value="1127:49:27 hrs" color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
-          <SideMiniStat label="Total Productive hours" value="286:36:19 hrs" color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
-          <SideMiniStat label="Total Unproductive hours" value="--:--:-- hrs" color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
-          <SideMiniStat label="Total Neutral hours" value="841:13:08 hrs" color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
+          <SideMiniStat label="Total Active hours" value={`${secondsToHms(metrics.totals.activeSeconds)} hrs`} color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
+          <SideMiniStat label="Total Productive hours" value={`${secondsToHms(metrics.totals.productiveSeconds)} hrs`} color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
+          <SideMiniStat label="Total Unproductive hours" value={`${secondsToHms(metrics.totals.unproductiveSeconds)} hrs`} color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
+          <SideMiniStat label="Total Neutral hours" value={`${secondsToHms(metrics.totals.neutralSeconds)} hrs`} color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
         </div>
       </div>
 
       {/* Graph + Top/Less Productive */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-9">
-          <ProductiveGraph data={lineDataOrg} />
+          <ProductiveGraph data={metrics.series} />
         </div>
         <div className="lg:col-span-3">
           <ProductivitySideCards
-            topMembers={[{ name: 'Adoreen', dept: 'Sales' }, { name: 'Arsh Saiyed' }, { name: 'Fatima' }]}
-            lessMembers={[{ name: 'Lekisha', dept: 'Sales' }, { name: 'prasad pawar', dept: 'Sales' }]}
+            topMembers={metrics.topMembers}
+            lessMembers={metrics.lessMembers}
           />
         </div>
       </div>
 
-      <WebAppsSection webData={webDataOrg} appData={appDataOrg} />
-      <AttendanceSection />
+      <WebAppsSection webData={metrics.websites} appData={metrics.apps} />
     </div>
   );
 }
 
-function TeamView() {
+function TeamView({ metrics }: { metrics: DashboardMetrics }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -562,33 +494,32 @@ function TeamView() {
             <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value="28 members" label="All Devices" iconBg="bg-purple-50" />
-            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value="19 members" label="Active Signal" iconBg="bg-green-50" />
-            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value="9 members" label="No Signal" iconBg="bg-slate-100" />
+            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value={`${metrics.connectedNow.total} members`} label="All Devices" iconBg="bg-purple-50" />
+            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value={`${metrics.connectedNow.active} members`} label="Active Signal" iconBg="bg-green-50" />
+            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value={`${metrics.connectedNow.inactive} members`} label="No Signal" iconBg="bg-slate-100" />
           </div>
         </div>
         <div className="lg:col-span-3 space-y-2.5">
-          <SideMiniStat label="Total Active hours" value="710:53:48 hrs" color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
-          <SideMiniStat label="Total Productive hours" value="146:06:35 hrs" color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
-          <SideMiniStat label="Total Unproductive hours" value="--:--:-- hrs" color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
-          <SideMiniStat label="Total Neutral hours" value="564:47:13 hrs" color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
+          <SideMiniStat label="Total Active hours" value={`${secondsToHms(metrics.totals.activeSeconds)} hrs`} color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
+          <SideMiniStat label="Total Productive hours" value={`${secondsToHms(metrics.totals.productiveSeconds)} hrs`} color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
+          <SideMiniStat label="Total Unproductive hours" value={`${secondsToHms(metrics.totals.unproductiveSeconds)} hrs`} color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
+          <SideMiniStat label="Total Neutral hours" value={`${secondsToHms(metrics.totals.neutralSeconds)} hrs`} color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="lg:col-span-9">
-          <ProductiveGraph data={lineDataTeam} />
+          <ProductiveGraph data={metrics.series} />
         </div>
         <div className="lg:col-span-3">
           <ProductivitySideCards
-            topMembers={[{ name: 'Fatima' }, { name: 'Arsh Saiyed' }, { name: 'pournima' }]}
-            lessMembers={[{ name: 'Abhishek Sadhu' }, { name: 'Alfaiz khatri' }]}
+            topMembers={metrics.topMembers}
+            lessMembers={metrics.lessMembers}
           />
         </div>
       </div>
 
-      <WebAppsSection webData={webDataTeam} appData={appDataTeam} />
-      <AttendanceSection />
+      <WebAppsSection webData={metrics.websites} appData={metrics.apps} />
     </div>
   );
 }
@@ -766,6 +697,11 @@ export default function Dashboard() {
   const { user } = useAuth();
   const hideOrgView = user?.role === 'manager';
 
+  const [startDate] = useState<string>(() => addDaysYmd(todayYmd(), -6));
+  const [endDate] = useState<string>(() => todayYmd());
+  const [metrics, setMetrics] = useState<DashboardMetrics>(EMPTY_METRICS);
+  const [metricsLoading, setMetricsLoading] = useState<boolean>(false);
+
   const [activeView, setActiveView] = useState<'org' | 'team' | 'ind'>(() =>
     user?.role === 'manager' ? 'team' : 'org'
   );
@@ -775,6 +711,39 @@ export default function Dashboard() {
       setActiveView('team');
     }
   }, [hideOrgView, activeView]);
+
+  useEffect(() => {
+    if (activeView === 'ind') return;
+
+    const ac = new AbortController();
+    setMetricsLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/dashboard/metrics?startDate=${startDate}&endDate=${endDate}`, {
+          signal: ac.signal,
+          cache: 'no-store',
+        });
+        const json = await res.json();
+        if (!res.ok || !json?.success) {
+          setMetrics(EMPTY_METRICS);
+          return;
+        }
+        setMetrics({
+          connectedNow: json.connectedNow || EMPTY_METRICS.connectedNow,
+          totals: json.totals || EMPTY_METRICS.totals,
+          series: Array.isArray(json.series) ? json.series : [],
+          websites: Array.isArray(json.websites) ? json.websites : EMPTY_METRICS.websites,
+          apps: Array.isArray(json.apps) ? json.apps : EMPTY_METRICS.apps,
+          topMembers: Array.isArray(json.topMembers) ? json.topMembers : [],
+          lessMembers: Array.isArray(json.lessMembers) ? json.lessMembers : [],
+        });
+      } finally {
+        setMetricsLoading(false);
+      }
+    })();
+
+    return () => ac.abort();
+  }, [activeView, startDate, endDate]);
 
   const viewTabs = [
     ...(!hideOrgView
@@ -823,21 +792,20 @@ export default function Dashboard() {
             </div>
           )}
           <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm cursor-pointer">
-            <span className="text-[12px] font-medium text-slate-600">2026-03-27</span>
+            <span className="text-[12px] font-medium text-slate-600">{startDate}</span>
             <span className="text-slate-300 text-xs">—</span>
-            <span className="text-[12px] font-medium text-slate-600">2026-04-02</span>
+            <span className="text-[12px] font-medium text-slate-600">{endDate}</span>
             <Calendar className="ml-1 h-3.5 w-3.5 text-slate-400" />
           </div>
         </div>
       </div>
 
-      {/* Trial Banner */}
-      <div className="mb-6 rounded-xl bg-[#5E35B1] py-2.5 text-center text-[13px] font-bold text-white shadow-lg shadow-purple-500/20">
-        The trial will expire in 6 days.
-      </div>
+      {metricsLoading && activeView !== 'ind' && (
+        <div className="mb-4 text-[12px] text-slate-400 font-medium">Loading dashboard data…</div>
+      )}
 
-      {activeView === 'org' && <OrganizationView />}
-      {activeView === 'team' && <TeamView />}
+      {activeView === 'org' && <OrganizationView metrics={metrics} />}
+      {activeView === 'team' && <TeamView metrics={metrics} />}
       {activeView === 'ind' && <IndividualView />}
     </DashboardLayout>
   );

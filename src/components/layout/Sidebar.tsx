@@ -21,17 +21,17 @@ import { isMemberRole } from '@/components/auth-context';
 type SubItem = { label: string; href: string; adminOnly?: boolean };
 type Item =
   | {
-      icon: typeof LayoutDashboard;
-      label: string;
-      href: string;
-      subItems?: undefined;
-    }
+    icon: typeof LayoutDashboard;
+    label: string;
+    href: string;
+    subItems?: undefined;
+  }
   | {
-      icon: typeof LayoutDashboard;
-      label: string;
-      href: string;
-      subItems: SubItem[];
-    };
+    icon: typeof LayoutDashboard;
+    label: string;
+    href: string;
+    subItems: SubItem[];
+  };
 
 function itemsForRole(role: string): Item[] {
   if (isMemberRole(role)) {
@@ -49,11 +49,11 @@ function itemsForRole(role: string): Item[] {
 
   return [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/' },
-    { icon: Users2, label: 'My Team', href: '#', subItems: myTeamSub },
+    { icon: Users2, label: 'My Team', href: '/my-team/members', subItems: myTeamSub },
     {
       icon: Activity,
       label: 'Live Tracking',
-      href: '#',
+      href: '/live-stream',
       subItems: [
         { label: 'Live Stream', href: '/live-stream' },
         { label: 'Screenshot', href: '/screenshots' },
@@ -62,13 +62,12 @@ function itemsForRole(role: string): Item[] {
     {
       icon: BarChart3,
       label: 'Reports',
-      href: '#',
+      href: '/reports/time-tracker',
       subItems: [
         { label: 'Time Tracker', href: '/reports/time-tracker' },
         { label: 'Productivity Breakdown', href: '/reports/productivity' },
         { label: 'Activity Log', href: '/reports/activity-log' },
         { label: 'Web And Apps', href: '/reports/web-apps' },
-        { label: 'Attendance', href: '/reports/attendance' },
         { label: 'Productive vs Unproductive', href: '/reports/productivity-vs-unproductive' },
       ],
     },
@@ -153,7 +152,7 @@ export function Sidebar({
                       'group flex cursor-pointer items-center rounded-xl p-3 text-slate-500 transition-all hover:bg-slate-50',
                       (openMenus[item.label] ||
                         item.subItems.some((si) => linkActive(si.href))) &&
-                        'font-bold text-[#5E35B1]'
+                      'font-bold text-[#5E35B1]'
                     )}
                   >
                     <item.icon className="h-5 w-5" />

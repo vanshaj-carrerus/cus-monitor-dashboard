@@ -752,7 +752,7 @@ export default function EmployeesPage() {
                 <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button className='text-white' type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
+                <Button className='text-white! hover:text-white!' type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>

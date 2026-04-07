@@ -13,7 +13,6 @@ const SidebarContext = React.createContext<{ isOpen: boolean; toggle: () => void
 export const useSidebar = () => React.useContext(SidebarContext);
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
   // Use useEffect to ensure the component is mounted on the client
@@ -23,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
-      <SidebarContext.Provider value={{ isOpen, toggle: () => setIsOpen(prev => !prev), close: () => setIsOpen(false) }}>
+      <SidebarContext.Provider value={{ isOpen: true, toggle: () => {}, close: () => {} }}>
         <NextThemesProvider
           attribute="class"
           defaultTheme="light"

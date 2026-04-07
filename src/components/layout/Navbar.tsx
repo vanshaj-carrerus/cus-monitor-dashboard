@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, ArrowLeft, Menu, LogOut } from 'lucide-react';
+import { Bell, ArrowLeft, LogOut } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { useAuth } from '@/components/auth-context';
 
-export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => void; isOpen?: boolean }) {
+export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -39,18 +39,9 @@ export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => voi
     .join(' ') || 'Overview';
 
   return (
-    <nav className={cn(
-      "fixed top-0 z-40 w-full bg-white px-4 sm:px-6 py-4 transition-all duration-300",
-      isOpen ? "sm:w-[calc(100%-16rem)] sm:left-64" : "sm:w-[calc(100%-5rem)] sm:left-20"
-    )}>
+    <nav className="fixed top-0 z-40 w-full bg-white px-4 sm:px-6 py-4 transition-all duration-300 sm:w-[calc(100%-16rem)] sm:left-64">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onMenuClick}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors sm:hidden"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
           {(isManagerLegacyPage || isMyTeamPage || isTimeTrackerPage || isShiftTrackerPage || isProductivityPage || isActivityLogPage || isWebAppsPage || isAttendancePage || isDailyTimeEntryPage) && (
             <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors">
               <ArrowLeft className="h-4 w-4" />

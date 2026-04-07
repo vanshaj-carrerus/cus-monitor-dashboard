@@ -7,12 +7,10 @@ import {
   LayoutDashboard,
   Activity,
   BarChart3,
-  Monitor,
   Users2,
   HelpCircle,
   User,
   Clock,
-  X,
   KeyRound,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
@@ -75,17 +73,7 @@ function itemsForRole(role: string): Item[] {
   ];
 }
 
-export function Sidebar({
-  isOpen,
-  onClose,
-  onToggle,
-  role,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onToggle?: () => void;
-  role: string;
-}) {
+export function Sidebar({ role }: { role: string }) {
   const pathname = usePathname();
   const sidebarItems = useMemo(() => itemsForRole(role), [role]);
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
@@ -113,33 +101,15 @@ export function Sidebar({
   const linkActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 z-50 h-screen border-r border-slate-200 bg-white transition-transform duration-300',
-        isOpen ? 'w-64 translate-x-0' : '-translate-x-full sm:translate-x-0 sm:w-20'
-      )}
-    >
+    <aside className="fixed left-0 top-0 z-50 h-screen w-64 border-r border-slate-200 bg-white">
       <div className="flex h-full flex-col overflow-y-auto">
         <div className="flex items-center justify-between border-b border-dashed border-slate-200 p-6">
-          <div
-            className="flex cursor-pointer items-center gap-2 transition-transform hover:scale-105"
-            onClick={onToggle}
-          >
+          <div className="flex cursor-pointer items-center gap-2 transition-transform hover:scale-105">
             <div className="flex shrink-0 items-center justify-center rounded-xl text-white">
               <Image src={"/logo.png"} alt="CUS Monitor" width={40} height={40} />
             </div>
-            <span
-              className={cn(
-                'text-xl font-bold text-[#5E35B1] transition-opacity',
-                !isOpen && 'sm:hidden sm:opacity-0'
-              )}
-            >
-              CUS Monitor
-            </span>
+            <span className="text-xl font-bold text-[#5E35B1]">CUS Monitor</span>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 sm:hidden">
-            <X className="h-6 w-6" />
-          </button>
         </div>
 
         <ul className="mt-6 space-y-1 px-3 font-medium">
@@ -157,9 +127,9 @@ export function Sidebar({
                     )}
                   >
                     <item.icon className="h-5 w-5" />
-                    <span className={cn('ml-3 flex-1 transition-opacity', !isOpen && 'sm:hidden')}>{item.label}</span>
+                    <span className="ml-3 flex-1">{item.label}</span>
                     <svg
-                      className={cn('h-4 w-4 transition-transform', openMenus[item.label] && 'rotate-180', !isOpen && 'sm:hidden')}
+                      className={cn('h-4 w-4 transition-transform', openMenus[item.label] && 'rotate-180')}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -170,7 +140,7 @@ export function Sidebar({
                   <ul
                     className={cn(
                       'ml-9 space-y-1 overflow-auto transition-all duration-300',
-                      openMenus[item.label] && isOpen ? 'max-h-auto opacity-100' : 'max-h-0 opacity-0'
+                      openMenus[item.label] ? 'max-h-auto opacity-100' : 'max-h-0 opacity-0'
                     )}
                   >
                     {item.subItems
@@ -210,7 +180,7 @@ export function Sidebar({
                       linkActive(item.href) ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'
                     )}
                   />
-                  <span className={cn('ml-3 transition-opacity', !isOpen && 'sm:hidden')}>{item.label}</span>
+                  <span className="ml-3">{item.label}</span>
                 </Link>
               )}
             </li>
@@ -221,11 +191,11 @@ export function Sidebar({
           <div className="mt-auto border-t border-slate-200 p-4">
             <Link href="/forgot-password" className="flex items-center rounded-xl p-3 text-slate-500 hover:bg-slate-50">
               <KeyRound className="h-5 w-5 text-slate-400" />
-              <span className={cn('ml-3 transition-opacity', !isOpen && 'sm:hidden')}>Forgot password</span>
+              <span className="ml-3">Forgot password</span>
             </Link>
             <Link href="/support" className="flex items-center rounded-xl p-3 text-slate-500 hover:bg-slate-50">
               <HelpCircle className="h-5 w-5 text-slate-400" />
-              <span className={cn('ml-3 transition-opacity', !isOpen && 'sm:hidden')}>Support Forum</span>
+              <span className="ml-3">Support Forum</span>
             </Link>
           </div>
         )}

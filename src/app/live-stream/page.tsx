@@ -12,6 +12,7 @@ interface User {
   email: string;
   role: string;
   active: boolean;
+  pcActive?: boolean;
 }
 
 interface UserCardProps {
@@ -34,18 +35,17 @@ function UserCard({ user, onViewStream }: UserCardProps) {
       <div className="mb-6 space-y-1">
         <h4 className="text-sm font-bold text-slate-900 truncate">{user.username}</h4>
         <p className="text-[11px] font-medium text-slate-400 truncate">{user.email}</p>
-        <p className={cn("text-[11px] font-bold uppercase tracking-wider", user.active ? "text-green-600" : "text-red-500")}>
-          {user.active ? 'Active' : 'Inactive'}
+        <p className={cn("text-[11px] font-bold uppercase tracking-wider", user.pcActive ? "text-green-600" : "text-red-500")}>
+          {user.pcActive ? 'PC Active' : 'PC Inactive'}
         </p>
       </div>
 
       <Button
         onClick={() => onViewStream(user)}
-        disabled={!user.active}
         className="w-full justify-center gap-2 rounded-xl bg-[#5E35B1] py-5 text-[13px] font-bold text-white hover:bg-[#4527A0] active:scale-95 transition-all"
       >
         <Play className="h-4 w-4 fill-white" />
-        {user.active ? 'View Stream' : 'Inactive'}
+        View Stream
       </Button>
     </div>
   );
@@ -273,36 +273,35 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
       try {
         const res = await fetch(`/api/stream?action=status&userId=${encodeURIComponent(user.username)}`);
         const data = await res.json();
-        if (data.success && (!data.isUserActive || !data.isActive)) {
+        if (!data?.success) return;
+
+        // Never block the livestream just because the PC is idle/unproductive.
+        // We only reflect status and let the admin decide whether to stop.
+        if (data.isUserActive === false) {
           setStatusLabel('paused(inactive)');
+          setIsControlMode(false);
+        } else {
+          setStatusLabel(isControlMode ? 'control-active' : 'view-only');
+        }
+
+        // Only stop locally if the stream was explicitly stopped (admin closed/toggled off).
+        if (data.isActive === false && data.reasonStopped && data.reasonStopped !== 'user_became_inactive') {
           setIsControlMode(false);
           setIsActive(false);
           setLkToken(null);
-          setError(data.reasonStopped || 'User became inactive. Stream stopped.');
+          setError(data.reasonStopped);
         }
       } catch {
         // noop
       }
     }, 10_000);
     return () => clearInterval(timer);
-  }, [isActive, user.username]);
+  }, [isActive, user.username, isControlMode]);
 
   useEffect(() => {
-    return () => {
-      fetch(`/api/stream?action=toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-actor-role': ACTOR_ROLE,
-        },
-        body: JSON.stringify({
-          userId: user.username,
-          isActive: false,
-          controlEnabled: false,
-          reasonStopped: 'closed_by_admin',
-        }),
-      }).catch(console.error);
-    };
+    // IMPORTANT: Do not auto-stop the stream when an admin closes the modal.
+    // Multiple admins may be watching the same user; closing must not affect others.
+    return () => { };
   }, [user.username]);
 
   const setControlMode = useCallback(async (next: boolean) => {
@@ -498,9 +497,9 @@ export default function LiveStreamPage() {
   useEffect(() => {
     if (!selectedUser) return;
     const latest = users.find((u) => u.username === selectedUser.username);
-    if (!latest?.active) {
-      setSelectedUser(null);
-    }
+    // Do not auto-close the stream modal when the user becomes inactive;
+    // inactivity must not block viewing the live stream.
+    void latest;
   }, [users, selectedUser]);
 
   return (

@@ -5,6 +5,7 @@ import MarketingUser from "@/models/marketing_user";
 import Manager from "@/models/manager";
 import "@/models/department";
 import "@/models/location";
+import TimeEntry from "@/models/time_entry";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
 
@@ -91,9 +92,25 @@ export async function GET(req: NextRequest) {
         email: u.email,
         role: u.role,
         active,
+        pcActive: false,
         departmentId: prof?.departmentId || null,
         locationId: prof?.locationId || null,
       };
+    });
+
+    // Compute "PC active" via recent heartbeats (TimeEntry.sessions.lastHeartbeat).
+    // Keep `active` as the existing account/profile activation flag used elsewhere.
+    const cutoff = new Date(Date.now() - 4 * 60 * 1000);
+    const recentEntries = await TimeEntry.find({
+      userId: { $in: data.map((u: any) => u._id) },
+      sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
+    })
+      .select("userId")
+      .lean();
+
+    const pcActiveIds = new Set(recentEntries.map((e: any) => e.userId.toString()));
+    data.forEach((u: any) => {
+      u.pcActive = pcActiveIds.has(u._id.toString());
     });
 
     return NextResponse.json({ success: true, count: data.length, total, page, limit, data }, { status: 200 });

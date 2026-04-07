@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stream from "@/models/stream";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
 import DBConnect from "../../../../lib/DB_Connect";
+import TimeEntry from "@/models/time_entry";
 
 type UserLookupDoc = {
     _id?: { toString: () => string };
     username?: string;
     role?: string;
-};
-
-type ActivityProfileDoc = {
-    active?: boolean;
 };
 
 type StreamToggleBody = {
@@ -63,25 +58,23 @@ function isAgentRequest(req: NextRequest): boolean {
     return (req.headers.get("x-client-type") || "").trim().toLowerCase() === "agent";
 }
 
-async function getUserActiveStatus(userId: string): Promise<boolean> {
+async function getPcActiveStatus(userId: string): Promise<boolean> {
+    // "PC active" means we have received a recent heartbeat from the agent app.
+    // This is the only signal we should use to decide whether livestream is allowed.
     const userQuery: Array<Record<string, string>> = [{ username: userId }];
     if (userId.length === 24) userQuery.push({ _id: userId });
-    const user = await User.findOne({ $or: userQuery }).lean() as UserLookupDoc | null;
+    const user = await User.findOne({ $or: userQuery }).select("_id").lean() as UserLookupDoc | null;
+    if (!user?._id) return false;
 
-    if (!user) return false;
-    if (user.role === "manager") return true;
+    const cutoff = new Date(Date.now() - 4 * 60 * 1000); // 4 minutes
+    const entry = await TimeEntry.findOne({
+        userId: user._id,
+        sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
+    })
+        .select("_id")
+        .lean();
 
-    if (user.role === "sales") {
-        const profile = await SalesUser.findOne({ userId: user._id }).select("active").lean() as ActivityProfileDoc | null;
-        return Boolean(profile?.active);
-    }
-
-    if (user.role === "marketing") {
-        const profile = await MarketingUser.findOne({ userId: user._id }).select("active").lean() as ActivityProfileDoc | null;
-        return Boolean(profile?.active);
-    }
-
-    return false;
+    return Boolean(entry);
 }
 
 export async function GET(req: NextRequest) {
@@ -101,13 +94,13 @@ export async function GET(req: NextRequest) {
         const stream = await Stream.findOne({ userId: { $in: possibleIds } });
 
         if (action === "status") {
-            const activeUser = await getUserActiveStatus(userId);
+            const pcActive = await getPcActiveStatus(userId);
             console.log(`[Stream Status Check] User: ${userId}, Resolved: [${possibleIds}], isActive: ${stream ? stream.isActive : false}`);
             return NextResponse.json(
                 {
                     success: true,
                     isActive: stream ? stream.isActive : false,
-                    isUserActive: activeUser,
+                    isUserActive: pcActive,
                     reasonStopped: stream?.reasonStopped || "",
                     controlEnabled: stream?.controlEnabled || false,
                     controllerId: stream?.controllerId || "",

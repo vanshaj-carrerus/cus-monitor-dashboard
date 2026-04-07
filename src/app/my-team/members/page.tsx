@@ -47,10 +47,14 @@ export default function EmployeesPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isAddDeptOpen, setIsAddDeptOpen] = useState(false);
   const [isAddLocOpen, setIsAddLocOpen] = useState(false);
+  const [isEditDeptOpen, setIsEditDeptOpen] = useState(false);
+  const [isEditLocOpen, setIsEditLocOpen] = useState(false);
 
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'sales', departmentId: '', locationId: '' });
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
   const [locForm, setLocForm] = useState({ name: '', address: '' });
+  const [editingDeptId, setEditingDeptId] = useState<string>('');
+  const [editingLocId, setEditingLocId] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   const fetchData = async (nextPage = page, nextLimit = limit) => {
@@ -180,6 +184,100 @@ export default function EmployeesPage() {
       });
       if (res.ok) { setIsAddLocOpen(false); setLocForm({ name: '', address: '' }); fetchData(); }
     } catch (err) { alert('Failed to add location'); }
+  };
+
+  const openEditDept = (dept: any) => {
+    setEditingDeptId(dept._id);
+    setDeptForm({ name: dept.name || '', description: dept.description || '' });
+    setIsEditDeptOpen(true);
+  };
+
+  const openEditLoc = (loc: any) => {
+    setEditingLocId(loc._id);
+    setLocForm({ name: loc.name || '', address: loc.address || '' });
+    setIsEditLocOpen(true);
+  };
+
+  const handleEditDept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/departments/${editingDeptId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(deptForm),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to update department');
+        return;
+      }
+      setIsEditDeptOpen(false);
+      setEditingDeptId('');
+      setDeptForm({ name: '', description: '' });
+      fetchData();
+    } catch {
+      alert('Failed to update department');
+    }
+  };
+
+  const handleEditLoc = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/locations/${editingLocId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(locForm),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to update location');
+        return;
+      }
+      setIsEditLocOpen(false);
+      setEditingLocId('');
+      setLocForm({ name: '', address: '' });
+      fetchData();
+    } catch {
+      alert('Failed to update location');
+    }
+  };
+
+  const deleteDepartment = async (dept: any) => {
+    if (!confirm(`Delete department "${dept.name}"?`)) return;
+    try {
+      const res = await fetch(`/api/departments/${dept._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to delete department');
+        return;
+      }
+      fetchData();
+    } catch {
+      alert('Failed to delete department');
+    }
+  };
+
+  const deleteLocation = async (loc: any) => {
+    if (!confirm(`Delete location "${loc.name}"?`)) return;
+    try {
+      const res = await fetch(`/api/locations/${loc._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to delete location');
+        return;
+      }
+      fetchData();
+    } catch {
+      alert('Failed to delete location');
+    }
   };
 
   const tabs = [
@@ -452,10 +550,20 @@ export default function EmployeesPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
+                        <Button
+                          type="button"
+                          onClick={() => openEditDept(dept)}
+                          variant="ghost"
+                          className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50">
+                        <Button
+                          type="button"
+                          onClick={() => deleteDepartment(dept)}
+                          variant="ghost"
+                          className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50"
+                        >
                           Delete
                         </Button>
                       </div>
@@ -499,10 +607,20 @@ export default function EmployeesPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Button variant="ghost" className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100">
+                        <Button
+                          type="button"
+                          onClick={() => openEditLoc(loc)}
+                          variant="ghost"
+                          className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50">
+                        <Button
+                          type="button"
+                          onClick={() => deleteLocation(loc)}
+                          variant="ghost"
+                          className="text-red-500 bg-red-50/50 hover:bg-red-50 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-red-50"
+                        >
                           Delete
                         </Button>
                       </div>
@@ -556,7 +674,7 @@ export default function EmployeesPage() {
                 </select>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
+                <Button className='text-white' type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Send Invite</Button>
               </div>
             </form>
@@ -609,6 +727,58 @@ export default function EmployeesPage() {
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button type="button" variant="ghost" onClick={() => setIsAddLocOpen(false)}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Department Modal */}
+      {isEditDeptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Department</h3>
+              <button onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleEditDept} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
+                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Location Modal */}
+      {isEditLocOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Location</h3>
+              <button onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleEditLoc} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location Name</label>
+                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
+                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>

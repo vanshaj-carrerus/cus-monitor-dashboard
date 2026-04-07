@@ -61,7 +61,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/');
+        router.push('/login');
       }, 2500);
     } catch (err: any) {
       setError(err.message);
@@ -84,7 +84,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
             <h2 className="text-xl font-bold text-slate-900">Account Created!</h2>
-            <p className="text-slate-500">Redirecting to login...</p>
+            <p className="text-slate-500">Redirecting to sign in…</p>
             <div className="flex justify-center">
               <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
             </div>

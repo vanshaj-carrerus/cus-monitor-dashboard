@@ -2,16 +2,45 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import DBConnect from "../../../../../lib/DB_Connect";
+import { getSession } from "../../../../../lib/session";
 import Invite from "@/models/invite";
+import User from "@/models/user";
+import Manager from "@/models/manager";
 
 export async function POST(request: Request) {
     try {
         await DBConnect();
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const actor = await User.findById(session.userId).select("role").lean();
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager")) {
+            return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { email, role, name, departmentId, locationId, invitedBy } = body;
 
         if (!email || !role) {
             return NextResponse.json({ success: false, error: "Email and role are required." }, { status: 400 });
+        }
+
+        const r = String(role).toLowerCase();
+        if (actor.role === "manager") {
+            if (["admin", "manager"].includes(r)) {
+                return NextResponse.json({ success: false, error: "Managers cannot invite this role." }, { status: 403 });
+            }
+            const mgr = await Manager.findOne({ userId: actor._id }).lean();
+            const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+            const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
+            if (departmentId && !deptIds.includes(String(departmentId))) {
+                return NextResponse.json({ success: false, error: "Department not in your scope." }, { status: 403 });
+            }
+            if (locationId && !locIds.includes(String(locationId))) {
+                return NextResponse.json({ success: false, error: "Location not in your scope." }, { status: 403 });
+            }
         }
 
         const token = crypto.randomBytes(32).toString("hex");

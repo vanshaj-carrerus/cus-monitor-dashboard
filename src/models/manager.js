@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const ManagerSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     managedDepartments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Department' }],
+    managedLocations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Location' }],
     permissions: [String],
 }, { timestamps: true });
 

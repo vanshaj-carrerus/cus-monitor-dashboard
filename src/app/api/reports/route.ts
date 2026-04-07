@@ -3,11 +3,23 @@ import User from "@/models/user";
 import TimeEntry from "@/models/time_entry";
 import SalesUser from "@/models/sales_user";
 import MarketingUser from "@/models/marketing_user";
+import Manager from "@/models/manager";
 import DBConnect from "../../../../lib/DB_Connect";
+import { getSession } from "../../../../lib/session";
 
 export async function GET(request: Request) {
     try {
         await DBConnect();
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const actor = await User.findById(session.userId).select("role").lean();
+        if (!actor) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
         const { searchParams } = new URL(request.url);
         const startDate = searchParams.get("startDate");
         const endDate = searchParams.get("endDate");
@@ -25,7 +37,37 @@ export async function GET(request: Request) {
                 { email: { $regex: search, $options: "i" } },
             ];
         }
-        if (userIdFilter) {
+
+        if (actor.role === "sales" || actor.role === "marketing") {
+            userFilter._id = actor._id;
+        } else if (actor.role === "manager") {
+            const mgr = await Manager.findOne({ userId: actor._id }).lean();
+            const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+            const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
+            const or: any[] = [];
+            if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
+            if (locIds.length) or.push({ locationId: { $in: locIds } });
+            let allowedIds: string[] = [];
+            if (or.length) {
+                const [s, m] = await Promise.all([
+                    SalesUser.find({ $or: or }).select("userId").lean(),
+                    MarketingUser.find({ $or: or }).select("userId").lean(),
+                ]);
+                allowedIds = [...new Set([...s, ...m].map((p: any) => p.userId.toString()))];
+            }
+            if (allowedIds.length === 0) {
+                return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
+            }
+            userFilter._id = { $in: allowedIds };
+        }
+
+        if (userIdFilter && (actor.role === "admin" || actor.role === "manager")) {
+            if (actor.role === "manager") {
+                const allowed = (userFilter._id?.$in || []).map((id: any) => id.toString());
+                if (!allowed.includes(userIdFilter)) {
+                    return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
+                }
+            }
             userFilter._id = userIdFilter;
         }
 

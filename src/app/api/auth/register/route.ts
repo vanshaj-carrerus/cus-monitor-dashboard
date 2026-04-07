@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import User from "@/models/user";
 import SalesUser from "@/models/sales_user";
 import MarketingUser from "@/models/marketing_user";
+import Manager from "@/models/manager";
 import bcrypt from "bcryptjs";
 import DBConnect from "../../../../../lib/DB_Connect";
 
@@ -42,6 +43,12 @@ export async function POST(request: Request) {
             await new SalesUser(roleEntry).save();
         } else if (role === 'marketing') {
             await new MarketingUser(roleEntry).save();
+        } else if (role === 'manager') {
+            await new Manager({
+                userId: newUser._id,
+                managedDepartments: roleData.departmentId ? [roleData.departmentId] : [],
+                managedLocations: roleData.locationId ? [roleData.locationId] : [],
+            }).save();
         }
 
         const userResponse = newUser.toObject();

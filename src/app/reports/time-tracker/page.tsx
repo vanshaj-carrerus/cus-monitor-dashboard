@@ -18,9 +18,13 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, formatTimeSpent } from '../../../../lib/utils';
+import { useAuth, isMemberRole } from '@/components/auth-context';
 
 export default function TimeTrackerPage() {
-  const [activeView, setActiveView] = useState<'org' | 'ind'>('org');
+  const { user } = useAuth();
+  const memberOnly = user ? isMemberRole(user.role) : false;
+
+  const [activeView, setActiveView] = useState<'org' | 'ind'>(memberOnly ? 'ind' : 'org');
   const [orgFilter, setOrgFilter] = useState<'manager' | 'loc_dept'>('manager');
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +41,7 @@ export default function TimeTrackerPage() {
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
-      const res = await fetch(`/api/reports?${params.toString()}`);
+      const res = await fetch(`/api/reports?${params.toString()}`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setReports(json.data);
@@ -53,11 +57,16 @@ export default function TimeTrackerPage() {
     fetchReports();
   }, []);
 
+  useEffect(() => {
+    if (memberOnly) setActiveView('ind');
+  }, [memberOnly]);
+
   return (
     <DashboardLayout>
       {/* Sub-header Controls */}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-1 rounded-xl border border-slate-100 bg-white p-1 shadow-sm">
+          {!memberOnly && (
           <button
             onClick={() => setActiveView('org')}
             className={cn(
@@ -72,6 +81,7 @@ export default function TimeTrackerPage() {
             </div>
             Organization View
           </button>
+          )}
           <button
             onClick={() => setActiveView('ind')}
             className={cn(

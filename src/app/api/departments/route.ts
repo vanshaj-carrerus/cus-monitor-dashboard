@@ -1,11 +1,36 @@
 import { NextResponse } from "next/server";
 import Department from "@/models/department";
+import Manager from "@/models/manager";
+import User from "@/models/user";
 import DBConnect from "../../../../lib/DB_Connect";
+import { getSession } from "../../../../lib/session";
 
 export async function GET() {
     try {
         await DBConnect();
-        const departments = await Department.find({ isActive: true }).sort({ name: 1 });
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const actor = await User.findById(session.userId).select("role").lean();
+        if (!actor) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        let departments;
+        if (actor.role === "manager") {
+            const mgr = await Manager.findOne({ userId: actor._id }).select("managedDepartments").lean();
+            const ids = mgr?.managedDepartments || [];
+            if (ids.length === 0) {
+                departments = [];
+            } else {
+                departments = await Department.find({ _id: { $in: ids }, isActive: true }).sort({ name: 1 });
+            }
+        } else {
+            departments = await Department.find({ isActive: true }).sort({ name: 1 });
+        }
+
         return NextResponse.json({ departments }, { status: 200 });
     } catch (error: any) {
         return NextResponse.json({ error: "Failed to fetch departments", details: error.message }, { status: 500 });
@@ -15,6 +40,11 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         await DBConnect();
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const { name, description } = await request.json();
 
         if (!name) {

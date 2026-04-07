@@ -68,7 +68,7 @@ export default function ActivityLogPage() {
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate);
-      const res = await fetch(`/api/activity-log?${params.toString()}`);
+      const res = await fetch(`/api/activity-log?${params.toString()}`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setTotal(Number(json.total || 0));

@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, User, ArrowLeft, Menu } from 'lucide-react';
+import { Bell, ArrowLeft, Menu, LogOut } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { useAuth } from '@/components/auth-context';
 
 export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => void; isOpen?: boolean }) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -17,8 +19,9 @@ export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => voi
   if (!mounted) return null;
 
   const isDashboard = pathname === '/' || pathname === '/dashboard';
-  const isManagerPage = pathname === '/manager';
-  const isMyTeamPage = pathname === '/my-team';
+  const isManagerLegacyPage = pathname === '/manager';
+  const isMyTeamPage = pathname?.startsWith('/my-team');
+  const isProfilePage = pathname === '/profile';
   const isTimeTrackerPage = pathname === '/reports/time-tracker';
   const isShiftTrackerPage = pathname === '/reports/shift-tracker';
   const isProductivityPage = pathname === '/reports/productivity';
@@ -48,21 +51,31 @@ export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => voi
           >
             <Menu className="h-4 w-4" />
           </button>
-          {(isManagerPage || isMyTeamPage || isTimeTrackerPage || isShiftTrackerPage || isProductivityPage || isActivityLogPage || isWebAppsPage || isAttendancePage || isDailyTimeEntryPage) && (
+          {(isManagerLegacyPage || isMyTeamPage || isTimeTrackerPage || isShiftTrackerPage || isProductivityPage || isActivityLogPage || isWebAppsPage || isAttendancePage || isDailyTimeEntryPage) && (
             <button className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
           <div>
-            {isManagerPage ? (
+            {isManagerLegacyPage ? (
               <>
                 <h1 className="text-2xl font-bold text-[#0D1B3E]">Change Manager</h1>
                 <p className="text-sm text-slate-400">Reassign your team members to a different manager from this page.</p>
               </>
-            ) : isMyTeamPage ? (
+            ) : pathname?.startsWith('/my-team/managers') ? (
               <>
-                <h1 className="text-2xl font-bold text-[#0D1B3E]">My Team</h1>
+                <h1 className="text-2xl font-bold text-[#0D1B3E]">Managers</h1>
+                <p className="text-sm text-slate-400">Assign departments and locations that each manager can oversee.</p>
+              </>
+            ) : pathname?.startsWith('/my-team/members') ? (
+              <>
+                <h1 className="text-2xl font-bold text-[#0D1B3E]">My Team — Members</h1>
                 <p className="text-sm text-slate-400">Manage your team members, departments, and locations from this page.</p>
+              </>
+            ) : isProfilePage ? (
+              <>
+                <h1 className="text-2xl font-bold text-[#0D1B3E]">Profile</h1>
+                <p className="text-sm text-slate-400">Your account details and security options.</p>
               </>
             ) : isTimeTrackerPage ? (
               <>
@@ -101,8 +114,13 @@ export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => voi
               </>
             ) : isDashboard ? (
               <>
-                <h1 className="text-xl font-bold text-slate-900 ">Hi Yash sapkale, Good Afternoon</h1>
-                <p className="text-sm text-slate-400">2nd April, 2026</p>
+                <h1 className="text-xl font-bold text-slate-900">
+                  Hi {user?.username || 'there'},{' '}
+                  {new Date().getHours() < 12 ? ' Good morning' : new Date().getHours() < 17 ? ' Good afternoon' : ' Good evening'}
+                </h1>
+                <p className="text-sm text-slate-400">
+                  {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
               </>
             ) : (
               <>
@@ -121,10 +139,20 @@ export function Navbar({ onMenuClick, isOpen = false }: { onMenuClick: () => voi
             </span>
           </button>
           <div className="flex items-center gap-2">
+            <span className="hidden text-sm text-slate-600 sm:inline max-w-[140px] truncate">{user?.email}</span>
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="flex h-9 items-center gap-1 rounded-lg border border-slate-200 px-2 text-sm text-slate-500 hover:bg-slate-50"
+              title="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign out</span>
+            </button>
             <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-green-500 shadow-sm">
               <img
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop"
-                alt="User"
+                alt=""
                 className="h-full w-full object-cover"
               />
             </div>

@@ -3,6 +3,7 @@ import Invite from "@/models/invite";
 import User from "@/models/user";
 import SalesUser from "@/models/sales_user";
 import MarketingUser from "@/models/marketing_user";
+import Manager from "@/models/manager";
 import bcrypt from "bcryptjs";
 import DBConnect from "../../../../../../lib/DB_Connect";
 
@@ -55,6 +56,12 @@ export async function POST(request: Request) {
         } else if (invite.role === "marketing") {
             const newMarketingUser = new MarketingUser(roleData);
             await newMarketingUser.save();
+        } else if (invite.role === "manager") {
+            await new Manager({
+                userId: newUser._id,
+                managedDepartments: invite.departmentId ? [invite.departmentId] : [],
+                managedLocations: invite.locationId ? [invite.locationId] : [],
+            }).save();
         }
 
         invite.status = "accepted";

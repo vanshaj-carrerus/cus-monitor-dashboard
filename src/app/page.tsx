@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar,
   User,
@@ -41,6 +41,7 @@ import {
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { cn } from '../../lib/utils';
+import { useAuth } from '@/components/auth-context';
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const lineDataOrg = [
@@ -762,7 +763,26 @@ function IndividualView() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [activeView, setActiveView] = useState<'org' | 'team' | 'ind'>('org');
+  const { user } = useAuth();
+  const hideOrgView = user?.role === 'manager';
+
+  const [activeView, setActiveView] = useState<'org' | 'team' | 'ind'>(() =>
+    user?.role === 'manager' ? 'team' : 'org'
+  );
+
+  useEffect(() => {
+    if (hideOrgView && activeView === 'org') {
+      setActiveView('team');
+    }
+  }, [hideOrgView, activeView]);
+
+  const viewTabs = [
+    ...(!hideOrgView
+      ? [{ key: 'org' as const, icon: <Users2 className="h-3.5 w-3.5" />, label: 'Organization View' }]
+      : []),
+    { key: 'team' as const, icon: <Users className="h-3.5 w-3.5" />, label: 'Team View' },
+    { key: 'ind' as const, icon: <User className="h-3.5 w-3.5" />, label: 'Individual View' },
+  ];
 
   return (
     <DashboardLayout>
@@ -770,14 +790,11 @@ export default function Dashboard() {
       <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         {/* Tab Switcher */}
         <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 border border-slate-100 overflow-x-auto whitespace-nowrap w-full lg:w-auto relative">
-          {[
-            { key: 'org', icon: <Users2 className="h-3.5 w-3.5" />, label: 'Organization View' },
-            { key: 'team', icon: <Users className="h-3.5 w-3.5" />, label: 'Team View' },
-            { key: 'ind', icon: <User className="h-3.5 w-3.5" />, label: 'Individual View' },
-          ].map(({ key, icon, label }) => (
+          {viewTabs.map(({ key, icon, label }) => (
             <button
               key={key}
-              onClick={() => setActiveView(key as 'org' | 'team' | 'ind')}
+              type="button"
+              onClick={() => setActiveView(key)}
               className={cn(
                 'flex items-center gap-2 rounded-lg px-4 py-2 text-[12px] font-bold transition-all',
                 activeView === key

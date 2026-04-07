@@ -284,9 +284,9 @@ export default function EmployeesPage() {
     { id: 'members', label: 'Members', icon: Users },
     ...(canManageStructure
       ? [
-          { id: 'departments', label: 'Departments', icon: Building2 },
-          { id: 'location', label: 'Location', icon: MapPin },
-        ]
+        { id: 'departments', label: 'Departments', icon: Building2 },
+        { id: 'location', label: 'Location', icon: MapPin },
+      ]
       : []),
   ] as const;
 
@@ -700,7 +700,7 @@ export default function EmployeesPage() {
                 <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => setIsAddDeptOpen(false)}>Cancel</Button>
+                <Button className='text-white' type="button" variant="ghost" onClick={() => setIsAddDeptOpen(false)}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>
@@ -726,7 +726,7 @@ export default function EmployeesPage() {
                 <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => setIsAddLocOpen(false)}>Cancel</Button>
+                <Button className='text-white' type="button" variant="ghost" onClick={() => setIsAddLocOpen(false)}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>
@@ -752,7 +752,7 @@ export default function EmployeesPage() {
                 <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
+                <Button className='text-white' type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>
@@ -778,7 +778,7 @@ export default function EmployeesPage() {
                 <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }}>Cancel</Button>
+                <Button className='text-white' type="button" variant="ghost" onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>

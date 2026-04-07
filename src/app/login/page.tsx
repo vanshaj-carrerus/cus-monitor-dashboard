@@ -66,7 +66,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 py-3 pl-11 pr-4 text-sm focus:border-[#5E35B1] focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/20"
+                className="w-full rounded-xl text-black placeholder:text-black border border-slate-200 py-3 pl-11 pr-4 text-sm focus:border-[#5E35B1] focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/20"
                 placeholder="you@company.com"
               />
             </div>
@@ -81,7 +81,7 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 py-3 pl-11 pr-4 text-sm focus:border-[#5E35B1] focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/20"
+                className="w-full rounded-xl text-black placeholder:text-black border border-slate-200 py-3 pl-11 pr-4 text-sm focus:border-[#5E35B1] focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/20"
               />
             </div>
           </div>

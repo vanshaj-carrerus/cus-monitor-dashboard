@@ -112,9 +112,10 @@ function RemoteControlOverlay({
     async (command: RemoteCommand) => {
       if (!enabled) return;
       const payload = JSON.stringify(command);
+      const reliable = command.t !== 'mouseMove';
       await room.localParticipant.publishData(
         new TextEncoder().encode(payload),
-        { reliable: false, topic: 'remote-control' },
+        { reliable, topic: 'remote-control' },
       );
     },
     [enabled, room.localParticipant],
@@ -214,6 +215,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
   const [lkToken, setLkToken] = useState<string | null>(null);
   const [lkUrl, setLkUrl] = useState<string | null>(null);
   const [statusLabel, setStatusLabel] = useState<'view-only' | 'control-active' | 'paused(inactive)'>('view-only');
+  const [adminIdentity, setAdminIdentity] = useState<string>('');
 
   const toggleStream = async (start: boolean) => {
     setLoading(true);
@@ -228,7 +230,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
           userId: user.username,
           isActive: start,
           controlEnabled: isControlMode,
-          controllerId: isControlMode ? 'admin-ui' : '',
+          controllerId: isControlMode ? adminIdentity : '',
           reasonStopped: start ? '' : 'stopped_by_admin',
         }),
       });
@@ -236,7 +238,9 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
 
       if (data.success) {
         if (start) {
-          const tokenRes = await fetch(`/api/stream/token?room=room_${user.username}&identity=admin_${Math.random().toString(36).substring(7)}&clientType=admin`, {
+          const identity = `admin_${Math.random().toString(36).substring(7)}`;
+          setAdminIdentity(identity);
+          const tokenRes = await fetch(`/api/stream/token?room=room_${user.username}&identity=${encodeURIComponent(identity)}&clientType=admin`, {
             headers: { 'x-actor-role': ACTOR_ROLE },
           });
           const tokenData = await tokenRes.json();
@@ -253,6 +257,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
           setIsControlMode(false);
           setStatusLabel('view-only');
           setLkToken(null);
+          setAdminIdentity('');
         }
       }
     } catch {
@@ -300,6 +305,30 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
     };
   }, [user.username]);
 
+  const setControlMode = useCallback(async (next: boolean) => {
+    setIsControlMode(next);
+    setStatusLabel(next ? 'control-active' : 'view-only');
+    // Persist controller selection so the agent can block local input + accept only admin commands
+    try {
+      await fetch(`/api/stream?action=toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-actor-role': ACTOR_ROLE,
+        },
+        body: JSON.stringify({
+          userId: user.username,
+          isActive: true,
+          controlEnabled: next,
+          controllerId: next ? adminIdentity : '',
+        }),
+      });
+    } catch {
+      // If we can't persist, we still disable locally to avoid UI lying about control mode.
+      // Agent will auto-timeout control via heartbeat/lastControlAt logic.
+    }
+  }, [adminIdentity, user.username]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm animate-in fade-in duration-300">
       <Card className="w-full max-w-5xl max-h-[95vh] overflow-y-auto overflow-x-hidden rounded-3xl border-none bg-white p-0 shadow-2xl">
@@ -333,7 +362,11 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
               video={false}
               data-lk-theme="default"
               className="h-full w-full"
-              onDisconnected={() => setIsActive(false)}
+              onDisconnected={() => {
+                setIsActive(false);
+                setControlMode(false);
+                setLkToken(null);
+              }}
               onError={(e) => setError(e.message)}
             >
               <VideoPlayer />
@@ -378,8 +411,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
                 type="button"
                 onClick={() => {
                   const next = !isControlMode;
-                  setIsControlMode(next);
-                  setStatusLabel(next ? 'control-active' : 'view-only');
+                  setControlMode(next);
                 }}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wider",

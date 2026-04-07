@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { isMemberRole } from '@/components/auth-context';
+import Image from 'next/image';
 
 type SubItem = { label: string; href: string; adminOnly?: boolean };
 type Item =
@@ -124,8 +125,8 @@ export function Sidebar({
             className="flex cursor-pointer items-center gap-2 transition-transform hover:scale-105"
             onClick={onToggle}
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5E35B1] text-white">
-              <Monitor className="h-6 w-6" />
+            <div className="flex shrink-0 items-center justify-center rounded-xl text-white">
+              <Image src={"/logo.png"} alt="CUS Monitor" width={40} height={40} />
             </div>
             <span
               className={cn(

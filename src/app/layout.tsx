@@ -5,6 +5,9 @@ import { Providers } from "@/components/providers";
 export const metadata: Metadata = {
   title: "CUS Monitor - Employee Monitoring",
   description: "Modern employee activity and productivity tracking dashboard",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

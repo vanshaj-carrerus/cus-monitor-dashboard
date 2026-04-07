@@ -109,7 +109,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 pl-12 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/10 transition-all"
+                    className="w-full rounded-xl text-black placeholder:text-black border border-slate-200 px-4 py-3 pl-12 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/10 transition-all"
                     placeholder="Create a strong password"
                   />
                   <button
@@ -147,7 +147,7 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
                     minLength={6}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 pl-12 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/10 transition-all"
+                    className="w-full rounded-xl text-black placeholder:text-black border border-slate-200 px-4 py-3 pl-12 text-sm focus:border-[#4F46E5] focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/10 transition-all"
                     placeholder="Verify your password"
                   />
                   {confirmPassword.length > 0 && (

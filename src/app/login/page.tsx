@@ -45,7 +45,7 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-indigo-50/30 to-slate-100 p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-xl shadow-indigo-100/40">
         <div className="mb-8 rounded-xl bg-gradient-to-r from-[#5E35B1] to-[#7E57C2] py-6 text-center text-white">
-          <h1 className="text-2xl font-bold">MeraMonitor</h1>
+          <h1 className="text-2xl font-bold">CUS Monitor</h1>
           <p className="mt-1 text-sm opacity-90">Sign in to continue</p>
         </div>
 

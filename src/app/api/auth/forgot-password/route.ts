@@ -44,9 +44,9 @@ export async function POST(request: Request) {
         auth: { user: emailUser, pass: emailPass },
       });
       await transporter.sendMail({
-        from: "MeraMonitor <noreply@meramonitor.local>",
+        from: "CUS Monitor <noreply@cusmonitor.local>",
         to: normalized,
-        subject: "Reset your MeraMonitor password",
+        subject: "Reset your CUS Monitor password",
         html: `
           <p>You requested a password reset.</p>
           <p><a href="${resetLink}">Click here to set a new password</a> (expires in 1 hour).</p>

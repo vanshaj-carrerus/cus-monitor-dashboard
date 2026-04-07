@@ -1,30 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/user";
 import SalesUser from "@/models/sales_user";
 import MarketingUser from "@/models/marketing_user";
 import Manager from "@/models/manager";
+import "@/models/department";
+import "@/models/location";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
 
-async function memberProfileQueries(deptIds: string[], locIds: string[]) {
-  const or: any[] = [];
-  if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-  if (locIds.length) or.push({ locationId: { $in: locIds } });
-  if (!or.length) return { sales: [] as any[], marketing: [] as any[] };
-  const [sales, marketing] = await Promise.all([
-    SalesUser.find({ $or: or })
-      .populate("departmentId", "name")
-      .populate("locationId", "name")
-      .lean(),
-    MarketingUser.find({ $or: or })
-      .populate("departmentId", "name")
-      .populate("locationId", "name")
-      .lean(),
-  ]);
-  return { sales, marketing };
-}
-
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await DBConnect();
     const session = await getSession();
@@ -41,36 +25,57 @@ export async function GET() {
       return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
     }
 
-    let memberIds: string[] | null = null;
+    const url = new URL(req.url);
+    const page = Math.max(1, Number(url.searchParams.get("page") || 1));
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 10)));
+    const search = (url.searchParams.get("search") || "").trim();
+    const status = (url.searchParams.get("status") || "all").toLowerCase(); // all|enable|disable
 
+    const profileFilter: any = {};
     if (actor.role === "manager") {
       const mgr = await Manager.findOne({ userId: actor._id }).lean();
       const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
       const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
-      const { sales, marketing } = await memberProfileQueries(deptIds, locIds);
-      memberIds = [
-        ...new Set([...sales, ...marketing].map((p: any) => p.userId.toString())),
-      ];
-      if (memberIds.length === 0) {
-        return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
+      const or: any[] = [];
+      if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
+      if (locIds.length) or.push({ locationId: { $in: locIds } });
+      if (!or.length) {
+        return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
       }
+      profileFilter.$or = or;
     }
 
-    const userFilter: any = { role: { $in: ["sales", "marketing"] } };
-    if (memberIds) {
-      userFilter._id = { $in: memberIds };
+    if (status === "enable") profileFilter.active = true;
+    if (status === "disable") profileFilter.active = false;
+
+    const [salesProfiles, marketingProfiles] = await Promise.all([
+      SalesUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+      MarketingUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+    ]);
+
+    const allowedIds = [
+      ...new Set([...salesProfiles, ...marketingProfiles].map((p: any) => p.userId.toString())),
+    ];
+
+    if (allowedIds.length === 0) {
+      return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
     }
 
-    const users = await User.find(userFilter).select("username email role").sort({ username: 1 }).lean();
+    const userFilter: any = { _id: { $in: allowedIds }, role: { $in: ["sales", "marketing"] } };
+    if (search) {
+      userFilter.$or = [
+        { username: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
 
-    const ids = users.map((u: any) => u._id);
-    const salesProfiles = await SalesUser.find({ userId: { $in: ids } })
-      .populate("departmentId", "name")
-      .populate("locationId", "name")
-      .lean();
-    const marketingProfiles = await MarketingUser.find({ userId: { $in: ids } })
-      .populate("departmentId", "name")
-      .populate("locationId", "name")
+    const total = await User.countDocuments(userFilter);
+    const skip = (page - 1) * limit;
+    const users = await User.find(userFilter)
+      .select("username email role")
+      .sort({ username: 1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
     const salesMap = new Map(salesProfiles.map((p: any) => [p.userId.toString(), p]));
@@ -91,7 +96,7 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({ success: true, count: data.length, data }, { status: 200 });
+    return NextResponse.json({ success: true, count: data.length, total, page, limit, data }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Users GET Error:", error);

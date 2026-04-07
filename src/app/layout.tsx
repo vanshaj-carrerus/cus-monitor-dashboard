@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "MeraMonitor - Employee Monitoring",
+  title: "CUS Monitor - Employee Monitoring",
   description: "Modern employee activity and productivity tracking dashboard",
 };
 

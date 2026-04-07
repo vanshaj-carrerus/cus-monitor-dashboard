@@ -5,7 +5,6 @@ import {
   Search,
   Plus,
   MoreHorizontal,
-  Edit2,
   Trash2,
   Mail,
   User as UserIcon,
@@ -39,6 +38,9 @@ export default function EmployeesPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'enable' | 'disable'>('all');
 
   const [members, setMembers] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
   const [departments, setDepartments] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
 
@@ -51,18 +53,23 @@ export default function EmployeesPage() {
   const [locForm, setLocForm] = useState({ name: '', address: '' });
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const fetchData = async (nextPage = page, nextLimit = limit) => {
     try {
       const cred = { credentials: 'include' as RequestCredentials };
       const [uRes, dRes, lRes] = await Promise.all([
-        fetch('/api/users', cred),
+        fetch(`/api/users?page=${nextPage}&limit=${nextLimit}&search=${encodeURIComponent(searchTerm)}&status=${filterStatus}`, cred),
         fetch('/api/departments', cred),
         fetch('/api/locations', cred),
       ]);
       const uData = await uRes.json();
       const dData = await dRes.json();
       const lData = await lRes.json();
-      if (uData.success) setMembers(uData.data);
+      if (uData.success) {
+        setMembers(uData.data);
+        setPage(Number(uData.page || nextPage));
+        setLimit(Number(uData.limit || nextLimit));
+        setTotal(Number(uData.total || 0));
+      }
       if (dData.departments) setDepartments(dData.departments);
       if (lData.locations) setLocations(lData.locations);
     } catch (err) {
@@ -73,8 +80,68 @@ export default function EmployeesPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    setLoading(true);
+    setPage(1);
+    fetchData(1, limit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, filterStatus]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData(page, limit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const from = total === 0 ? 0 : (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
+
+  const changeLimit = (v: number) => {
+    setLimit(v);
+    setPage(1);
+  };
+
+  const toggleActive = async (member: any) => {
+    try {
+      const res = await fetch(`/api/users/${member._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ active: !member.active }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to update status');
+        return;
+      }
+      await fetchData(page, limit);
+    } catch {
+      alert('Failed to update status');
+    }
+  };
+
+  const deleteMember = async (member: any) => {
+    if (!confirm(`Delete ${member.username}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/users/${member._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to delete');
+        return;
+      }
+      const nextTotal = Math.max(0, total - 1);
+      const nextTotalPages = Math.max(1, Math.ceil(nextTotal / limit));
+      const nextPage = Math.min(page, nextTotalPages);
+      setTotal(nextTotal);
+      setPage(nextPage);
+      await fetchData(nextPage, limit);
+    } catch {
+      alert('Failed to delete');
+    }
+  };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,7 +295,11 @@ export default function EmployeesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {members.length === 0 ? (
+                    {loading ? (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                      </tr>
+                    ) : members.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="px-4 py-8 text-center text-slate-500">No members found.</td>
                       </tr>
@@ -248,23 +319,38 @@ export default function EmployeesPage() {
                           <td className="px-4 py-4 text-sm text-slate-500">-</td>
                           <td className="px-4 py-4">
                             <div className="flex justify-center">
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              {member.active ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-slate-300" />
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex justify-center">
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              {member.active ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-slate-300" />
+                              )}
                             </div>
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                                <XCircle className="h-4 w-4" />
+                              <button
+                                type="button"
+                                onClick={() => toggleActive(member)}
+                                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                                title={member.active ? 'Disable' : 'Enable'}
+                              >
+                                {member.active ? <Ban className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                               </button>
-                              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                                <Edit2 className="h-4 w-4" />
-                              </button>
-                              <button className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                              <button
+                                type="button"
+                                onClick={() => deleteMember(member)}
+                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                                title="Delete"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -279,21 +365,54 @@ export default function EmployeesPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
-                  <select className="px-2 py-1 border border-slate-200 rounded text-sm text-slate-500 bg-transparent focus:outline-none">
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
+                  <select
+                    value={limit}
+                    onChange={(e) => changeLimit(Number(e.target.value))}
+                    className="px-2 py-1 border border-slate-200 rounded text-sm text-slate-500 bg-transparent focus:outline-none"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
                   </select>
-                  <span className="text-sm text-slate-500">Showing 1 to 10 of 52 entries</span>
+                  <span className="text-sm text-slate-500">Showing {from} to {to} of {total} entries</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"><ChevronLeft className="h-4 w-4" /></button>
-                  <button className="w-8 h-8 flex items-center justify-center bg-[#5E35B1] text-white rounded-lg text-sm">1</button>
-                  <button className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-lg text-sm">2</button>
-                  <button className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-lg text-sm">3</button>
-                  <span className="px-2 text-slate-300">...</span>
-                  <button className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 rounded-lg text-sm">6</button>
-                  <button className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"><ChevronRight className="h-4 w-4" /></button>
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                    const p = start + i;
+                    if (p > totalPages) return null;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={cn(
+                          "w-8 h-8 flex items-center justify-center rounded-lg text-sm",
+                          p === page ? "bg-[#5E35B1] text-white" : "text-slate-500 hover:bg-slate-100"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-lg disabled:opacity-40"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             </div>

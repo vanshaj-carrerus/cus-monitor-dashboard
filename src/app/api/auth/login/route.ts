@@ -21,6 +21,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "Account not found." }, { status: 401 });
         }
 
+        // Migrate old roles to new roles
+        if (user.role === 'sales' || user.role === 'marketing') {
+            user.role = 'common';
+            await user.save();
+        }
+
         const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
             return NextResponse.json({ success: false, error: "Invalid credentials." }, { status: 401 });

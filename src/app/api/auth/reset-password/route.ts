@@ -27,6 +27,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Account not found." }, { status: 400 });
     }
 
+    // Migrate old roles to new roles
+    if (user.role === 'sales' || user.role === 'marketing') {
+      user.role = 'common';
+    }
+
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
     await user.save();

@@ -82,6 +82,7 @@ export async function POST(request: Request) {
         if (invite.managerId) roleData.managerId = invite.managerId;
         if (invite.role === "common" && teamLeaderEmail) roleData.teamLeaderEmail = teamLeaderEmail;
 
+        if (invite.role === "common") roleData.userEmail = invite.email.toLowerCase();
         if (invite.role === "common") {
             if (!roleData.departmentId || !roleData.teamLeaderEmail) {
                 return NextResponse.json({ error: "Department and Team Leader are required for common users." }, { status: 400 });

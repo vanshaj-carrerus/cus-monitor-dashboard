@@ -37,9 +37,9 @@ export async function POST(request: Request) {
         });
         await newUser.save();
 
-        const roleEntry = { userId: newUser._id, active: true, ...roleData };
-
+        const roleEntry: any = { userId: newUser._id, active: true, ...roleData };
         if (role === 'common') {
+            roleEntry.userEmail = email.toLowerCase();
             if (!roleData.departmentId || !roleData.teamLeaderId) {
                 return NextResponse.json({ success: false, error: "Department and Team Leader are required for common users." }, { status: 400 });
             }

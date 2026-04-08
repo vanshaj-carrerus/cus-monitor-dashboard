@@ -25,12 +25,13 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    // Build search filter
+    // Build search filter using the new userEmail field for reliability
     const searchQuery = searchTerm
       ? {
         $or: [
-          { "userId.username": { $regex: searchTerm, $options: "i" } },
-          { "userId.email": { $regex: searchTerm, $options: "i" } },
+          { userEmail: { $regex: searchTerm, $options: "i" } },
+          // We can't easily search by username in User collection within CommonUser.find
+          // but we can search by userEmail which is usually what's needed.
         ],
       }
       : {};
@@ -43,9 +44,9 @@ export async function GET(request: Request) {
           ? { active: false }
           : {};
 
-    // Get team members
+    // Get team members with case-insensitive teamLeaderEmail matching
     const members = await CommonUser.find({
-      teamLeaderEmail: user.email,
+      teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" },
       ...statusQuery,
       ...searchQuery,
     })

@@ -108,6 +108,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
     if (Object.keys(roleUpdate).length) {
       if (target.role === "common") {
+        if (updates.email) roleUpdate.userEmail = updates.email;
         await CommonUser.updateOne({ userId }, { $set: roleUpdate });
       } else {
         await TeamLeader.updateOne({ userId }, { $set: roleUpdate });

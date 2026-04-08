@@ -3,6 +3,8 @@ import Stream from "@/models/stream";
 import User from "@/models/user";
 import DBConnect from "../../../../lib/DB_Connect";
 import TimeEntry from "@/models/time_entry";
+import CommonUser from "@/models/common_user";
+import { getSession } from "../../../../lib/session";
 
 type UserLookupDoc = {
     _id?: { toString: () => string };
@@ -51,7 +53,7 @@ function getActorRole(req: NextRequest): string {
 }
 
 function isPrivilegedRole(role: string): boolean {
-    return role === "admin" || role === "manager";
+    return role === "admin" || role === "manager" || role === "team_leader";
 }
 
 function isAgentRequest(req: NextRequest): boolean {
@@ -77,6 +79,36 @@ async function getPcActiveStatus(userId: string): Promise<boolean> {
     return Boolean(entry);
 }
 
+async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<boolean> {
+    const role = getActorRole(req);
+    if (role === "admin" || role === "manager") return true;
+    if (isAgentRequest(req)) return true; // Agent can view its own (or if it's the target)
+
+    if (role === "team_leader") {
+        const session = await getSession();
+        if (!session) return false;
+
+        const actor = await User.findById(session.userId).select("email").lean();
+        if (!actor?.email) return false;
+
+        // Resolve target to an ObjectId if possible
+        const possibleIds = await resolveUserIds(targetUserId);
+        const targetOid = possibleIds.find(id => id.length === 24);
+
+        if (!targetOid) return false;
+
+        // Check if target is in team
+        const member = await CommonUser.findOne({
+            userId: targetOid,
+            teamLeaderEmail: { $regex: `^${actor.email}$`, $options: "i" }
+        }).select("_id").lean();
+
+        return Boolean(member);
+    }
+
+    return false;
+}
+
 export async function GET(req: NextRequest) {
     try {
         await DBConnect();
@@ -87,6 +119,11 @@ export async function GET(req: NextRequest) {
 
         if (!userId || !action) {
             return NextResponse.json({ error: "Missing userId or action" }, { status: 400 });
+        }
+
+        // Authorization check
+        if (!(await isAllowedToView(req, userId))) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         // Resolve all possible userId representations
@@ -145,6 +182,11 @@ export async function POST(req: NextRequest) {
             const { userId, isActive } = body;
             if (!userId || isActive === undefined) {
                 return NextResponse.json({ error: "Missing userId or isActive" }, { status: 400 });
+            }
+
+            // Authorization check for toggle
+            if (!(await isAllowedToView(req, userId))) {
+                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
 
             const {

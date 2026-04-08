@@ -18,13 +18,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
-    // Get team members count
-    const totalTeamMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email });
-    const activeMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email, active: true });
-    const inactiveMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email, active: false });
+    // Get team members count with case-insensitive filtering
+    const totalTeamMembers = await CommonUser.countDocuments({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" } });
+    const activeMembers = await CommonUser.countDocuments({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" }, active: true });
+    const inactiveMembers = await CommonUser.countDocuments({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" }, active: false });
 
     // Get total activities for this team
-    const memberIds = await CommonUser.find({ teamLeaderEmail: user.email }).select("userId").lean();
+    const memberIds = await CommonUser.find({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" } }).select("userId").lean();
     const memberUserIds = memberIds.map((m: any) => m.userId);
     const totalActivities = await ActivityLog.countDocuments({ userId: { $in: memberUserIds } });
 

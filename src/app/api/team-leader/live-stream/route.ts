@@ -21,8 +21,8 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const searchTerm = url.searchParams.get("search") || "";
 
-    // Get team member IDs
-    const teamMembers = await CommonUser.find({ teamLeaderEmail: user.email }).select("userId").lean();
+    // Get team member IDs with case-insensitive filtering
+    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" } }).select("userId").lean();
     const teamMemberIds = teamMembers.map((m: any) => m.userId);
 
     // Build search filter

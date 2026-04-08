@@ -23,6 +23,9 @@ const ScreenshotSchema = new mongoose.Schema(
     }
 );
 
+// Auto-delete screenshots after 24 hours (86400 seconds)
+ScreenshotSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 });
+
 const Screenshot =
     mongoose.models.Screenshot || mongoose.model("Screenshot", ScreenshotSchema);
 

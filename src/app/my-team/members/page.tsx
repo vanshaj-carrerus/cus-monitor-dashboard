@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Ban,
   Activity,
-  X
+  X,
+  Edit2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -49,6 +50,9 @@ export default function EmployeesPage() {
   const [isAddLocOpen, setIsAddLocOpen] = useState(false);
   const [isEditDeptOpen, setIsEditDeptOpen] = useState(false);
   const [isEditLocOpen, setIsEditLocOpen] = useState(false);
+  const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
+  const [editingMemberId, setEditingMemberId] = useState<string>('');
+  const [editForm, setEditForm] = useState({ username: '', email: '', departmentId: '', locationId: '', teamLeaderId: '' });
 
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' });
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
@@ -111,6 +115,41 @@ export default function EmployeesPage() {
   const changeLimit = (v: number) => {
     setLimit(v);
     setPage(1);
+  };
+
+  const openEditMember = (member: any) => {
+    setEditingMemberId(member._id);
+    setEditForm({
+      username: member.username || '',
+      email: member.email || '',
+      departmentId: member.departmentId?._id || '',
+      locationId: member.locationId?._id || '',
+      teamLeaderId: member.teamLeaderId?._id || '',
+    });
+    setIsEditMemberOpen(true);
+  };
+
+  const handleEditMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/users/${editingMemberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(editForm),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json.error || 'Failed to update member');
+        return;
+      }
+      setIsEditMemberOpen(false);
+      setEditingMemberId('');
+      setEditForm({ username: '', email: '', departmentId: '', locationId: '', teamLeaderId: '' });
+      await fetchData(page, limit);
+    } catch {
+      alert('Failed to update member');
+    }
   };
 
   const toggleActive = async (member: any) => {
@@ -461,6 +500,14 @@ export default function EmployeesPage() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openEditMember(member)}
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+                                title="Edit"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => toggleActive(member)}
@@ -814,6 +861,53 @@ export default function EmployeesPage() {
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white' type="button" variant="ghost" onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }}>Cancel</Button>
+                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {isEditMemberOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Member</h3>
+              <button onClick={() => setIsEditMemberOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleEditMember} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
+                <input type="text" value={editForm.username} onChange={e => setEditForm(f => ({ ...f, username: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                <select value={editForm.departmentId} onChange={e => setEditForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">None</option>
+                  {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
+                <select value={editForm.locationId} onChange={e => setEditForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">None</option>
+                  {locations.map((l: any) => (<option key={l._id} value={l._id}>{l.name}</option>))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Leader</label>
+                <select value={editForm.teamLeaderId} onChange={e => setEditForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">None</option>
+                  {teamLeaders.map((tl: any) => (<option key={tl._id} value={tl._id}>{tl.username || tl.email}</option>))}
+                </select>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <Button className='text-white' type="button" variant="ghost" onClick={() => setIsEditMemberOpen(false)}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>

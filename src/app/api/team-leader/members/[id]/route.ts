@@ -15,7 +15,7 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(session.userId).select("role _id").lean();
+    const user = await User.findById(session.userId).select("role _id email").lean();
     if (!user || user.role !== "team_leader") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }

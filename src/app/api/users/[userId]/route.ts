@@ -70,8 +70,20 @@ export async function PATCH(request: Request, { params }: Ctx) {
     }
 
     if (actor.role === "admin") {
-      if (username) updates.username = username;
-      if (email) updates.email = email;
+      if (username) {
+        const existingUsername = await User.findOne({ username, _id: { $ne: userId } }).select("_id").lean();
+        if (existingUsername) {
+          return NextResponse.json({ success: false, error: "Username already taken." }, { status: 400 });
+        }
+        updates.username = username;
+      }
+      if (email) {
+        const existingEmail = await User.findOne({ email, _id: { $ne: userId } }).select("_id").lean();
+        if (existingEmail) {
+          return NextResponse.json({ success: false, error: "Email already taken." }, { status: 400 });
+        }
+        updates.email = email;
+      }
     }
 
     const target = await User.findById(userId).select("role").lean();

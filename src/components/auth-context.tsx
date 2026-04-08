@@ -29,7 +29,7 @@ const AuthContext = React.createContext<{
 export const useAuth = () => React.useContext(AuthContext);
 
 export function isMemberRole(role: string) {
-  return role === 'sales' || role === 'marketing';
+  return role === 'common';
 }
 
 function memberCanAccess(pathname: string) {

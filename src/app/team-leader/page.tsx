@@ -96,10 +96,10 @@ export default function TeamLeaderDashboard() {
           </Card>
 
           <Card className="p-6">
-            <h3 className="font-bold text-lg text-[#0D1B3E] mb-4">Team Activity</h3>
-            <p className="text-slate-500 text-sm mb-4">Monitor activities of your team members</p>
-            <a href="/team-leader/activity" className="inline-block px-6 py-2 bg-[#5E35B1] text-white rounded-lg font-medium hover:bg-[#5E35B1]/90 transition">
-              View Activity
+            <h3 className="font-bold text-lg text-[#0D1B3E] mb-4">Team Time Tracking</h3>
+            <p className="text-slate-500 text-sm mb-4">Monitor time tracking data from your team members</p>
+            <a href="/team-leader/time-tracker" className="inline-block px-6 py-2 bg-[#5E35B1] text-white rounded-lg font-medium hover:bg-[#5E35B1]/90 transition">
+              View Time Tracking
             </a>
           </Card>
 

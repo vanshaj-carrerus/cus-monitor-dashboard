@@ -340,7 +340,7 @@ export default function EmployeesPage() {
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden min-h-[600px]">
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden min-h-125">
         {effectiveTab === 'members' && (
           <div className="p-8">
             <div className="flex flex-col gap-8">
@@ -358,7 +358,7 @@ export default function EmployeesPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <button className="flex items-center gap-3 px-5 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium min-w-[180px] justify-between">
+                    <button className="flex items-center gap-3 px-5 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium min-w-45 justify-between">
                       All Departments
                       <ChevronDown className="h-4 w-4" />
                     </button>

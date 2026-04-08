@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Download, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, ChevronDown, ChevronLeft, ChevronRight, Trash2, ExternalLink } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +56,35 @@ export default function TeamLeaderScreenshots() {
   const changeLimit = (v: number) => {
     setLimit(v);
     setPage(1);
+  };
+
+  const handleDeleteScreenshot = async (screenshotId: string) => {
+    if (!confirm('Are you sure you want to delete this screenshot? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/screenshots/${screenshotId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      
+      if (res.ok) {
+        // Remove the screenshot from the local state
+        setScreenshots(prev => prev.filter(shot => shot._id !== screenshotId));
+        setTotal(prev => Math.max(0, prev - 1));
+      } else {
+        alert(json.error || 'Failed to delete screenshot');
+      }
+    } catch (err) {
+      console.error('Error deleting screenshot:', err);
+      alert('Failed to delete screenshot');
+    }
+  };
+
+  const handleOpenInNewTab = (imageUrl: string) => {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -114,8 +143,26 @@ export default function TeamLeaderScreenshots() {
                         {screenshot.createdAt && new Date(screenshot.createdAt).toLocaleString()}
                       </p>
                       {screenshot.appName && (
-                        <p className="text-xs text-slate-400">App: {screenshot.appName}</p>
+                        <p className="text-xs text-slate-400 mb-3">App: {screenshot.appName}</p>
                       )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenInNewTab(screenshot.imageUrl)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          title="Open in new tab"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Open
+                        </button>
+                        <button
+                          onClick={() => handleDeleteScreenshot(screenshot._id)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                          title="Delete screenshot"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </Card>
                 ))

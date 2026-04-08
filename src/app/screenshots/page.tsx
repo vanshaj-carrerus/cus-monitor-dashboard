@@ -5,11 +5,15 @@ import {
   Image as ImageIcon,
   BarChart3,
   Calendar,
-  X
+  X,
+  Trash2,
+  ExternalLink,
+  AlertTriangle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { cn } from '../../../lib/utils';
+import { useAuth } from '@/components/auth-context';
 
 interface User {
   _id: string;
@@ -24,6 +28,9 @@ interface Screenshot {
 }
 
 export default function ScreenshotsPage() {
+  const { user } = useAuth();
+  const canManageScreenshots = user?.role === 'admin' || user?.role === 'manager' || user?.role === 'team_leader';
+
   const [activeTab, setActiveTab] = useState<'gallery' | 'productivity'>('gallery');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +69,34 @@ export default function ScreenshotsPage() {
     } finally {
       setScreenshotsLoading(false);
     }
+  };
+
+  const handleDeleteScreenshot = async (screenshotId: string) => {
+    if (!confirm('Are you sure you want to delete this screenshot? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/screenshots/${screenshotId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      
+      if (res.ok) {
+        // Remove the screenshot from the local state
+        setUserScreenshots(prev => prev.filter(shot => shot._id !== screenshotId));
+      } else {
+        alert(json.error || 'Failed to delete screenshot');
+      }
+    } catch (err) {
+      console.error('Error deleting screenshot:', err);
+      alert('Failed to delete screenshot');
+    }
+  };
+
+  const handleOpenInNewTab = (imageUrl: string) => {
+    window.open(imageUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -178,12 +213,32 @@ export default function ScreenshotsPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {userScreenshots.map((shot) => (
-                    <div key={shot._id} className="rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+                    <div key={shot._id} className="rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 group relative">
                       <img src={shot.imageUrl || '/placeholder.png'} alt="Screenshot" className="w-full h-auto object-cover bg-slate-100" />
                       <div className="p-3 bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 mb-2">
                           {new Date(shot.createdAt).toLocaleString()}
                         </p>
+                        {canManageScreenshots && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleOpenInNewTab(shot.imageUrl)}
+                              className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                              title="Open in new tab"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Open
+                            </button>
+                            <button
+                              onClick={() => handleDeleteScreenshot(shot._id)}
+                              className="flex items-center gap-1 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                              title="Delete screenshot"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

@@ -64,10 +64,8 @@ function itemsForRole(role: string): Item[] {
       href: '/reports/time-tracker',
       subItems: [
         { label: 'Time Tracker', href: '/reports/time-tracker' },
-        { label: 'Productivity Breakdown', href: '/reports/productivity' },
         { label: 'Activity Log', href: '/reports/activity-log' },
         { label: 'Web And Apps', href: '/reports/web-apps' },
-        { label: 'Productive vs Unproductive', href: '/reports/productivity-vs-unproductive' },
       ],
     },
   ];

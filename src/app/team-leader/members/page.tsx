@@ -160,7 +160,7 @@ export default function TeamLeaderMembers() {
 
   return (
     <DashboardLayout>
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden min-h-[600px]">
+      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden min-h-150">
         <div className="p-8">
           <div className="flex flex-col gap-8">
             {/* Header Controls */}

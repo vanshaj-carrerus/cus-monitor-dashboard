@@ -149,7 +149,7 @@ export default function TimeTrackerPage() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-[240px] shrink-0">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-60 shrink-0">
                   <span className="text-[14px] text-slate-500 flex-1">Yash sapkale</span>
                   <ChevronDown className="h-5 w-5 text-slate-300" />
                 </div>
@@ -168,17 +168,17 @@ export default function TimeTrackerPage() {
               {activeView === 'org' && (
                 <>
                   {orgFilter === 'manager' ? (
-                    <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-[200px]">
+                    <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-50">
                       <span className="text-[14px] text-slate-500 flex-1">All members</span>
                       <ChevronDown className="h-5 w-5 text-slate-300" />
                     </div>
                   ) : (
                     <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-[160px]">
+                      <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-40">
                         <span className="text-[14px] text-slate-500 flex-1">All Location</span>
                         <ChevronDown className="h-5 w-5 text-slate-300" />
                       </div>
-                      <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-[160px]">
+                      <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-5 py-3 shadow-sm cursor-pointer min-w-40">
                         <span className="text-[14px] text-slate-500 flex-1">All Department</span>
                         <ChevronDown className="h-5 w-5 text-slate-300" />
                       </div>
@@ -326,7 +326,7 @@ export default function TimeTrackerPage() {
         {/* Pagination Footer */}
         <div className="mt-12 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between text-[14px] text-slate-400 border-t border-slate-50 pt-8">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-2.5 text-slate-400 shadow-sm cursor-pointer min-w-[120px] justify-between">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-5 py-2.5 text-slate-400 shadow-sm cursor-pointer min-w-30 justify-between">
               10 rows
               <ChevronDown className="h-4 w-4" />
             </div>

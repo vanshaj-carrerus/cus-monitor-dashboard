@@ -3,7 +3,6 @@
 import {
   Calendar,
   Search,
-  FileX
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -18,7 +17,7 @@ export default function ApplicationUsageReportPage() {
       </div>
 
       {/* Main Content Card */}
-      <Card className="p-12 shadow-sm border-slate-100 min-h-[480px] flex flex-col">
+      <Card className="p-12 shadow-sm border-slate-100 min-h-120 flex flex-col">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-12 mb-24">
           {/* Search Section */}
           <div className="w-full max-w-md">

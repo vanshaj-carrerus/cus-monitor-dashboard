@@ -1,0 +1,44 @@
+import { NextResponse } from "next/server";
+import DBConnect from "../../../../../lib/DB_Connect";
+import { getSession } from "../../../../../lib/session";
+import User from "@/models/user";
+import CommonUser from "@/models/common_user";
+import ActivityLog from "@/models/activity_log";
+
+export async function GET(request: Request) {
+  try {
+    await DBConnect();
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await User.findById(session.userId).select("role _id").lean();
+    if (!user || user.role !== "team_leader") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+
+    // Get team members count
+    const totalTeamMembers = await CommonUser.countDocuments({ teamLeaderId: user._id });
+    const activeMembers = await CommonUser.countDocuments({ teamLeaderId: user._id, active: true });
+    const inactiveMembers = await CommonUser.countDocuments({ teamLeaderId: user._id, active: false });
+
+    // Get total activities for this team
+    const memberIds = await CommonUser.find({ teamLeaderId: user._id }).select("userId").lean();
+    const memberUserIds = memberIds.map((m: any) => m.userId);
+    const totalActivities = await ActivityLog.countDocuments({ userId: { $in: memberUserIds } });
+
+    return NextResponse.json({
+      success: true,
+      stats: {
+        totalTeamMembers,
+        activeMembers,
+        inactiveMembers,
+        totalActivities,
+      }
+    });
+  } catch (error: any) {
+    console.error("Error fetching team leader stats:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}

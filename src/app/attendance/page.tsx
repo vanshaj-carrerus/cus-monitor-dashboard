@@ -66,7 +66,7 @@ export default function AttendancePage() {
             <div className="flex items-center gap-3 px-4 py-2 border border-slate-200 rounded-lg cursor-pointer w-full sm:w-auto h-10">
               <span className="text-[13px] text-slate-400 mr-2">Select Member</span>
               <span className="text-[13px] text-[#0D1B3E] font-bold flex-1">Yash sapkale</span>
-              <div className="w-[1px] h-4 bg-slate-200 mx-1"></div>
+              <div className="w-px h-4 bg-slate-200 mx-1"></div>
               <ChevronDown className="h-4 w-4 text-slate-400" />
             </div>
           ) : (
@@ -94,17 +94,17 @@ export default function AttendancePage() {
 
               {orgFilter === 'manager' ? (
                 <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 cursor-pointer w-full sm:w-auto h-10">
-                  <span className="text-[13px] text-slate-600 flex-1 min-w-[140px]">All Members</span>
+                  <span className="text-[13px] text-slate-600 flex-1 min-w-35">All Members</span>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 cursor-pointer w-full sm:w-auto h-10">
-                    <span className="text-[13px] text-slate-600 flex-1 min-w-[120px]">All Location</span>
+                    <span className="text-[13px] text-slate-600 flex-1 min-w-30">All Location</span>
                     <ChevronDown className="h-4 w-4 text-slate-400" />
                   </div>
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 cursor-pointer w-full sm:w-auto h-10">
-                    <span className="text-[13px] text-slate-600 flex-1 min-w-[120px]">All Department</span>
+                    <span className="text-[13px] text-slate-600 flex-1 min-w-35">All Department</span>
                     <ChevronDown className="h-4 w-4 text-slate-400" />
                   </div>
                 </>
@@ -132,7 +132,7 @@ export default function AttendancePage() {
       {/* Table */}
       <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+          <table className="w-full text-left border-collapse min-w-200">
             <thead>
               <tr className="border-b border-slate-50 bg-white">
                 <th className="px-8 py-5 text-[14px] font-bold text-[#0D1B3E]">Name</th>
@@ -170,7 +170,7 @@ export default function AttendancePage() {
         <div className="p-6 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between text-[13px] font-bold text-[#0D1B3E] border-t border-slate-50">
           <div className="flex items-center gap-3">
             <span>Rows per page:</span>
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-500 shadow-sm cursor-pointer w-[70px]">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-slate-500 shadow-sm cursor-pointer w-17.5">
               10
               <ChevronDown className="h-4 w-4" />
             </div>

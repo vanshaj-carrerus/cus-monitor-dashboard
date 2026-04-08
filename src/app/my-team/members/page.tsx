@@ -50,24 +50,27 @@ export default function EmployeesPage() {
   const [isEditDeptOpen, setIsEditDeptOpen] = useState(false);
   const [isEditLocOpen, setIsEditLocOpen] = useState(false);
 
-  const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'sales', departmentId: '', locationId: '' });
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' });
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
   const [locForm, setLocForm] = useState({ name: '', address: '' });
   const [editingDeptId, setEditingDeptId] = useState<string>('');
   const [editingLocId, setEditingLocId] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
 
   const fetchData = async (nextPage = page, nextLimit = limit) => {
     try {
       const cred = { credentials: 'include' as RequestCredentials };
-      const [uRes, dRes, lRes] = await Promise.all([
+      const [uRes, dRes, lRes, tRes] = await Promise.all([
         fetch(`/api/users?page=${nextPage}&limit=${nextLimit}&search=${encodeURIComponent(searchTerm)}&status=${filterStatus}`, cred),
         fetch('/api/departments', cred),
         fetch('/api/locations', cred),
+        fetch('/api/users?role=team_leader', cred),
       ]);
       const uData = await uRes.json();
       const dData = await dRes.json();
       const lData = await lRes.json();
+      const tData = await tRes.json();
       if (uData.success) {
         setMembers(uData.data);
         setPage(Number(uData.page || nextPage));
@@ -76,6 +79,11 @@ export default function EmployeesPage() {
       }
       if (dData.departments) setDepartments(dData.departments);
       if (lData.locations) setLocations(lData.locations);
+      if (tData.success && Array.isArray(tData.data)) {
+        setTeamLeaders(tData.data);
+      } else if (tData.data && Array.isArray(tData.data)) {
+        setTeamLeaders(tData.data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -149,6 +157,15 @@ export default function EmployeesPage() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate based on role
+    if (inviteForm.role === 'common') {
+      if (!inviteForm.departmentId || !inviteForm.teamLeaderId) {
+        alert('Department and Team Leader are required for common users.');
+        return;
+      }
+    }
+    
     try {
       const res = await fetch('/api/auth/invite', {
         method: 'POST',
@@ -156,8 +173,17 @@ export default function EmployeesPage() {
         credentials: 'include',
         body: JSON.stringify(inviteForm),
       });
-      if (res.ok) { setIsAddMemberOpen(false); setInviteForm({ name: '', email: '', role: 'sales', departmentId: '', locationId: '' }); alert('Invited successfully'); }
-    } catch (err) { alert('Failed to invite user'); }
+      const json = await res.json();
+      if (res.ok) { 
+        setIsAddMemberOpen(false); 
+        setInviteForm({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' }); 
+        alert('Invited successfully'); 
+      } else {
+        alert(json.error || 'Failed to invite user');
+      }
+    } catch (err) { 
+      alert('Failed to invite user'); 
+    }
   };
 
   const handleAddDept = async (e: React.FormEvent) => {
@@ -653,16 +679,25 @@ export default function EmployeesPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
                 <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
-                  <option value="sales">Sales</option>
-                  <option value="marketing">Marketing</option>
+                  <option value="common">Common User</option>
+                  <option value="team_leader">Team Leader</option>
                   <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
+                  {user?.role === 'admin' && <option value="admin">Admin</option>}
                 </select>
               </div>
+              {inviteForm.role === 'common' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Leader *</label>
+                  <select required value={inviteForm.teamLeaderId} onChange={e => setInviteForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                    <option value="">Select a Team Leader</option>
+                    {teamLeaders.map((tl: any) => (<option key={tl._id} value={tl._id}>{tl.username || tl.email}</option>))}
+                  </select>
+                </div>
+              )}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                <select value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
-                  <option value="">None</option>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department {inviteForm.role === 'common' && '*'}</label>
+                <select required={inviteForm.role === 'common'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <option value="">Select Department</option>
                   {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
                 </select>
               </div>
@@ -674,7 +709,7 @@ export default function EmployeesPage() {
                 </select>
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <Button className='text-white' type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
+                <Button className='text-white!' type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
                 <Button type="submit" className="bg-[#5E35B1] text-white">Send Invite</Button>
               </div>
             </form>

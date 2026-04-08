@@ -16,18 +16,29 @@ export async function POST(request: Request) {
         }
 
         const actor = await User.findById(session.userId).select("role").lean();
-        if (!actor || (actor.role !== "admin" && actor.role !== "manager")) {
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader")) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 
         const body = await request.json();
-        const { email, role, name, departmentId, locationId, invitedBy } = body;
+        const { email, role, name, departmentId, locationId, teamLeaderId, invitedBy } = body;
 
         if (!email || !role) {
             return NextResponse.json({ success: false, error: "Email and role are required." }, { status: 400 });
         }
 
         const r = String(role).toLowerCase();
+        
+        // Validate role
+        if (!["admin", "manager", "common", "team_leader"].includes(r)) {
+            return NextResponse.json({ success: false, error: "Invalid role." }, { status: 400 });
+        }
+
+        // Common users require department and team leader
+        if (r === "common" && (!departmentId || !teamLeaderId)) {
+            return NextResponse.json({ success: false, error: "Department and Team Leader are required for common users." }, { status: 400 });
+        }
+
         if (actor.role === "manager") {
             if (["admin", "manager"].includes(r)) {
                 return NextResponse.json({ success: false, error: "Managers cannot invite this role." }, { status: 403 });
@@ -40,6 +51,15 @@ export async function POST(request: Request) {
             }
             if (locationId && !locIds.includes(String(locationId))) {
                 return NextResponse.json({ success: false, error: "Location not in your scope." }, { status: 403 });
+            }
+        } else if (actor.role === "team_leader") {
+            // Team leaders can only invite common users to their team
+            if (r !== "common") {
+                return NextResponse.json({ success: false, error: "Team leaders can only invite common users." }, { status: 403 });
+            }
+            // Team leader must be the one assigning themselves
+            if (teamLeaderId !== actor._id.toString()) {
+                return NextResponse.json({ success: false, error: "Team leaders can only invite to their own team." }, { status: 403 });
             }
         }
 
@@ -55,6 +75,7 @@ export async function POST(request: Request) {
         if (name) updateData.name = name;
         if (departmentId) updateData.departmentId = departmentId;
         if (locationId) updateData.locationId = locationId;
+        if (teamLeaderId) updateData.teamLeaderId = teamLeaderId;
 
         const invite = await Invite.findOneAndUpdate(
             { email: email.toLowerCase() },

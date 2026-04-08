@@ -4,28 +4,22 @@ import { useState, useEffect } from 'react';
 import {
   Search,
   Plus,
-  MoreHorizontal,
   Trash2,
-  Mail,
   User as UserIcon,
-  Filter,
   Users,
   Building2,
   MapPin,
   Download,
   CheckCircle2,
   XCircle,
-  ShieldAlert,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Ban,
-  Activity,
   X,
   Edit2
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../../lib/utils';
 import { useAuth } from '@/components/auth-context';
@@ -195,7 +189,7 @@ export default function EmployeesPage() {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate based on role
     if (inviteForm.role === 'common') {
       if (!inviteForm.departmentId || !inviteForm.teamLeaderId) {
@@ -203,7 +197,7 @@ export default function EmployeesPage() {
         return;
       }
     }
-    
+
     try {
       const res = await fetch('/api/auth/invite', {
         method: 'POST',
@@ -212,15 +206,15 @@ export default function EmployeesPage() {
         body: JSON.stringify(inviteForm),
       });
       const json = await res.json();
-      if (res.ok) { 
-        setIsAddMemberOpen(false); 
-        setInviteForm({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' }); 
-        alert('Invited successfully'); 
+      if (res.ok) {
+        setIsAddMemberOpen(false);
+        setInviteForm({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' });
+        alert('Invited successfully');
       } else {
         alert(json.error || 'Failed to invite user');
       }
-    } catch (err) { 
-      alert('Failed to invite user'); 
+    } catch (err) {
+      alert('Failed to invite user');
     }
   };
 

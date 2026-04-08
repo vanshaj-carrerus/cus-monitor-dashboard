@@ -17,12 +17,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const actor = await User.findById(session.userId).select("role").lean();
+    const actor = await User.findById(session.userId).select("role email").lean();
     if (!actor) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    if (actor.role === "common" || actor.role === "team_leader") {
+    if (actor.role === "common") {
       return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
     }
 
@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
       }
       profileFilter.$or = or;
+    } else if (actor.role === "team_leader") {
+      const escapedEmail = (actor.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      profileFilter.teamLeaderEmail = { $regex: `^${escapedEmail}$`, $options: "i" };
     }
 
     if (status === "enable") profileFilter.active = true;

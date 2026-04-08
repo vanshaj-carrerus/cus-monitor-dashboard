@@ -3,8 +3,8 @@
 import { NextResponse } from "next/server";
 import TimeEntry from "@/models/time_entry";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import DBConnect from "../../../../../lib/DB_Connect";
 
 export async function POST(request: Request) {
@@ -23,14 +23,14 @@ export async function POST(request: Request) {
         const now = new Date();
 
         const user = await User.findById(userId).select("role").lean() as { role?: string } | null;
-        if (user?.role === "sales") {
-            await SalesUser.findOneAndUpdate(
+        if (user?.role === "common") {
+            await CommonUser.findOneAndUpdate(
                 { userId },
                 { $set: { active: true, lastLogin: now } },
                 { upsert: true, new: true }
             );
-        } else if (user?.role === "marketing") {
-            await MarketingUser.findOneAndUpdate(
+        } else if (user?.role === "team_leader") {
+            await TeamLeader.findOneAndUpdate(
                 { userId },
                 { $set: { active: true, lastLogin: now } },
                 { upsert: true, new: true }

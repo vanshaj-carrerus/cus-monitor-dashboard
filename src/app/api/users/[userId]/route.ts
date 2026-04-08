@@ -4,8 +4,8 @@ import DBConnect from "../../../../../lib/DB_Connect";
 import { getSession } from "../../../../../lib/session";
 import User from "@/models/user";
 import Manager from "@/models/manager";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 
 type Ctx = { params: Promise<{ userId: string }> };
 
@@ -18,11 +18,11 @@ async function getManagerAllowedIds(managerUserId: string) {
   if (locIds.length) or.push({ locationId: { $in: locIds } });
   if (!or.length) return [];
 
-  const [s, m] = await Promise.all([
-    SalesUser.find({ $or: or }).select("userId").lean(),
-    MarketingUser.find({ $or: or }).select("userId").lean(),
+  const [c, t] = await Promise.all([
+    CommonUser.find({ $or: or }).select("userId").lean(),
+    TeamLeader.find({ $or: or }).select("userId").lean(),
   ]);
-  return [...new Set([...s, ...m].map((p: any) => p.userId.toString()))];
+  return [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
 }
 
 export async function PATCH(request: Request, { params }: Ctx) {
@@ -55,6 +55,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     const email = body.email ? String(body.email).toLowerCase().trim() : null;
     const departmentId = body.departmentId || null;
     const locationId = body.locationId || null;
+    const teamLeaderId = body.teamLeaderId || null;
     const active = typeof body.active === "boolean" ? body.active : null;
 
     if (actor.role === "admin") {
@@ -63,7 +64,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     }
 
     const target = await User.findById(userId).select("role").lean();
-    if (!target || !["sales", "marketing"].includes(target.role)) {
+    if (!target || !["common", "team_leader"].includes(target.role)) {
       return NextResponse.json({ success: false, error: "Only member users can be edited here." }, { status: 400 });
     }
 
@@ -74,13 +75,14 @@ export async function PATCH(request: Request, { params }: Ctx) {
     const roleUpdate: any = {};
     if (departmentId !== null) roleUpdate.departmentId = departmentId || undefined;
     if (locationId !== null) roleUpdate.locationId = locationId || undefined;
+    if (teamLeaderId !== null && target.role === "common") roleUpdate.teamLeaderId = teamLeaderId || undefined;
     if (active !== null) roleUpdate.active = active;
 
     if (Object.keys(roleUpdate).length) {
-      if (target.role === "sales") {
-        await SalesUser.updateOne({ userId }, { $set: roleUpdate });
+      if (target.role === "common") {
+        await CommonUser.updateOne({ userId }, { $set: roleUpdate });
       } else {
-        await MarketingUser.updateOne({ userId }, { $set: roleUpdate });
+        await TeamLeader.updateOne({ userId }, { $set: roleUpdate });
       }
     }
 
@@ -115,13 +117,13 @@ export async function DELETE(_: Request, { params }: Ctx) {
     }
 
     const target = await User.findById(userId).select("role").lean();
-    if (!target || !["sales", "marketing"].includes(target.role)) {
+    if (!target || !["common", "team_leader"].includes(target.role)) {
       return NextResponse.json({ success: false, error: "Only member users can be deleted here." }, { status: 400 });
     }
 
     await Promise.all([
-      SalesUser.deleteOne({ userId }),
-      MarketingUser.deleteOne({ userId }),
+      CommonUser.deleteOne({ userId }),
+      TeamLeader.deleteOne({ userId }),
       User.deleteOne({ _id: userId }),
     ]);
 

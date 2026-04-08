@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import TimeEntry from "@/models/time_entry";
 import DBConnect from "../../../../../lib/DB_Connect";
 
@@ -14,16 +14,16 @@ export async function POST() {
     try {
         await DBConnect();
 
-        const activeSalesProfiles = (await SalesUser.find({ active: true })
+        const activeCommonProfiles = (await CommonUser.find({ active: true })
             .select("userId")
             .lean()) as ActiveProfile[];
-        const activeMarketingProfiles = (await MarketingUser.find({ active: true })
+        const activeTeamLeaderProfiles = (await TeamLeader.find({ active: true })
             .select("userId")
             .lean()) as ActiveProfile[];
 
         const activeUserIdStrings = [
-            ...activeSalesProfiles.map((p) => p.userId.toString()),
-            ...activeMarketingProfiles.map((p) => p.userId.toString()),
+            ...activeCommonProfiles.map((p) => p.userId.toString()),
+            ...activeTeamLeaderProfiles.map((p) => p.userId.toString()),
         ];
 
         if (activeUserIdStrings.length === 0) {
@@ -54,18 +54,18 @@ export async function POST() {
             }, { status: 200 });
         }
 
-        const [salesRes, marketingRes] = await Promise.all([
-            SalesUser.updateMany(
+        const [commonRes, teamLeaderRes] = await Promise.all([
+            CommonUser.updateMany(
                 { userId: { $in: staleUserIds }, active: true },
                 { $set: { active: false } }
             ),
-            MarketingUser.updateMany(
+            TeamLeader.updateMany(
                 { userId: { $in: staleUserIds }, active: true },
                 { $set: { active: false } }
             ),
         ]);
 
-        const deactivatedCount = (salesRes.modifiedCount ?? 0) + (marketingRes.modifiedCount ?? 0);
+        const deactivatedCount = (commonRes.modifiedCount ?? 0) + (teamLeaderRes.modifiedCount ?? 0);
 
         return NextResponse.json({
             success: true,

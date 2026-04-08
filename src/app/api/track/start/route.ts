@@ -2,8 +2,8 @@
 
 import { NextResponse } from "next/server";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import TimeEntry from "@/models/time_entry";
 import DBConnect from "../../../../../lib/DB_Connect";
 
@@ -30,10 +30,10 @@ export async function POST(request: Request) {
             // Activate the corresponding role profile
             const updatePayload = { active: true, lastLogin: new Date() };
 
-            if (user.role === 'sales') {
-                await SalesUser.findOneAndUpdate({ userId }, updatePayload, { upsert: true, new: true });
-            } else if (user.role === 'marketing') {
-                await MarketingUser.findOneAndUpdate({ userId }, updatePayload, { upsert: true, new: true });
+            if (user.role === 'common') {
+                await CommonUser.findOneAndUpdate({ userId }, updatePayload, { upsert: true, new: true });
+            } else if (user.role === 'team_leader') {
+                await TeamLeader.findOneAndUpdate({ userId }, updatePayload, { upsert: true, new: true });
             }
 
             // Initialize or find the daily time entry

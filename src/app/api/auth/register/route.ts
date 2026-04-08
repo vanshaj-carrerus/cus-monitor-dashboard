@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
 import bcrypt from "bcryptjs";
 import DBConnect from "../../../../../lib/DB_Connect";
@@ -39,10 +39,13 @@ export async function POST(request: Request) {
 
         const roleEntry = { userId: newUser._id, active: true, ...roleData };
 
-        if (role === 'sales') {
-            await new SalesUser(roleEntry).save();
-        } else if (role === 'marketing') {
-            await new MarketingUser(roleEntry).save();
+        if (role === 'common') {
+            if (!roleData.departmentId || !roleData.teamLeaderId) {
+                return NextResponse.json({ success: false, error: "Department and Team Leader are required for common users." }, { status: 400 });
+            }
+            await new CommonUser(roleEntry).save();
+        } else if (role === 'team_leader') {
+            await new TeamLeader(roleEntry).save();
         } else if (role === 'manager') {
             await new Manager({
                 userId: newUser._id,

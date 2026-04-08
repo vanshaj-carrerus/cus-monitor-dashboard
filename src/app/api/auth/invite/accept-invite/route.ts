@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import Invite from "@/models/invite";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
 import bcrypt from "bcryptjs";
 import DBConnect from "../../../../../../lib/DB_Connect";
@@ -32,11 +32,17 @@ export async function POST(request: Request) {
 
         const username = invite.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
 
+        let teamLeaderId = null;
+        if (invite.role === "common" && invite.teamLeaderId) {
+            teamLeaderId = invite.teamLeaderId;
+        }
+
         const newUser = new User({
             username,
             email: invite.email,
             password: hashedPassword,
             role: invite.role,
+            teamLeaderId,
         });
 
         await newUser.save();
@@ -49,13 +55,17 @@ export async function POST(request: Request) {
         if (invite.departmentId) roleData.departmentId = invite.departmentId;
         if (invite.locationId) roleData.locationId = invite.locationId;
         if (invite.managerId) roleData.managerId = invite.managerId;
+        if (invite.role === "common" && invite.teamLeaderId) roleData.teamLeaderId = invite.teamLeaderId;
 
-        if (invite.role === "sales") {
-            const newSalesUser = new SalesUser(roleData);
-            await newSalesUser.save();
-        } else if (invite.role === "marketing") {
-            const newMarketingUser = new MarketingUser(roleData);
-            await newMarketingUser.save();
+        if (invite.role === "common") {
+            if (!roleData.departmentId || !roleData.teamLeaderId) {
+                return NextResponse.json({ error: "Department and Team Leader are required for common users." }, { status: 400 });
+            }
+            const newCommonUser = new CommonUser(roleData);
+            await newCommonUser.save();
+        } else if (invite.role === "team_leader") {
+            const newTeamLeader = new TeamLeader(roleData);
+            await newTeamLeader.save();
         } else if (invite.role === "manager") {
             await new Manager({
                 userId: newUser._id,

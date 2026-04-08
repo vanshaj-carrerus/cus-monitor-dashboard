@@ -8,7 +8,7 @@ export async function GET() {
 
         // 1. Fetch all users from the User model
         // Sort alphabetically by username
-        const users = await User.find({ role: { $in: ['sales', 'marketing', 'manager'] } })
+        const users = await User.find({ role: { $in: ['common', 'team_leader', 'manager'] } })
             .select("username email role")
             .sort({ username: 1 })
             .lean();

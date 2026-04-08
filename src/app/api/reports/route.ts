@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import User from "@/models/user";
 import TimeEntry from "@/models/time_entry";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
         const role = searchParams.get("role");
         const userIdFilter = searchParams.get("userId");
 
-        const userFilter: any = { role: { $in: ['sales', 'marketing'] } };
-        if (role && ['sales', 'marketing'].includes(role)) {
+        const userFilter: any = { role: { $in: ['common', 'team_leader'] } };
+        if (role && ['common', 'team_leader'].includes(role)) {
             userFilter.role = role;
         }
         if (search) {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
             ];
         }
 
-        if (actor.role === "sales" || actor.role === "marketing") {
+        if (actor.role === "common" || actor.role === "team_leader") {
             userFilter._id = actor._id;
         } else if (actor.role === "manager") {
             const mgr = await Manager.findOne({ userId: actor._id }).lean();
@@ -49,11 +49,11 @@ export async function GET(request: Request) {
             if (locIds.length) or.push({ locationId: { $in: locIds } });
             let allowedIds: string[] = [];
             if (or.length) {
-                const [s, m] = await Promise.all([
-                    SalesUser.find({ $or: or }).select("userId").lean(),
-                    MarketingUser.find({ $or: or }).select("userId").lean(),
+                const [c, t] = await Promise.all([
+                    CommonUser.find({ $or: or }).select("userId").lean(),
+                    TeamLeader.find({ $or: or }).select("userId").lean(),
                 ]);
-                allowedIds = [...new Set([...s, ...m].map((p: any) => p.userId.toString()))];
+                allowedIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
             }
             if (allowedIds.length === 0) {
                 return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
@@ -96,8 +96,8 @@ export async function GET(request: Request) {
         const timeEntries = await TimeEntry.find(timeEntryFilter).lean();
 
         // 3. Fetch role profiles for status
-        const salesProfiles = await SalesUser.find().lean();
-        const marketingProfiles = await MarketingUser.find().lean();
+        const commonUserProfiles = await CommonUser.find().lean();
+        const teamLeaderProfiles = await TeamLeader.find().lean();
 
         // Aggregate entries by user to support full-history reporting
         const timeByUser = new Map<string, { tracked: number; productive: number; unproductive: number }>();
@@ -115,10 +115,10 @@ export async function GET(request: Request) {
             const totals = timeByUser.get(user._id.toString()) || { tracked: 0, productive: 0, unproductive: 0 };
             let profile;
 
-            if (user.role === 'sales') {
-                profile = salesProfiles.find(sp => sp.userId.toString() === user._id.toString());
-            } else if (user.role === 'marketing') {
-                profile = marketingProfiles.find(mp => mp.userId.toString() === user._id.toString());
+            if (user.role === 'common') {
+                profile = commonUserProfiles.find(sp => sp.userId.toString() === user._id.toString());
+            } else if (user.role === 'team_leader') {
+                profile = teamLeaderProfiles.find(mp => mp.userId.toString() === user._id.toString());
             }
 
             return {

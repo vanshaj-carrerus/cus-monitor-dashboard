@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/user";
-import SalesUser from "@/models/sales_user";
-import MarketingUser from "@/models/marketing_user";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
 import "@/models/department";
 import "@/models/location";
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    if (actor.role === "sales" || actor.role === "marketing") {
+    if (actor.role === "common" || actor.role === "team_leader") {
       return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
     }
 
@@ -49,20 +49,20 @@ export async function GET(req: NextRequest) {
     if (status === "enable") profileFilter.active = true;
     if (status === "disable") profileFilter.active = false;
 
-    const [salesProfiles, marketingProfiles] = await Promise.all([
-      SalesUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
-      MarketingUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+    const [commonUserProfiles, teamLeaderProfiles] = await Promise.all([
+      CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+      TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
     ]);
 
     const allowedIds = [
-      ...new Set([...salesProfiles, ...marketingProfiles].map((p: any) => p.userId.toString())),
+      ...new Set([...commonUserProfiles, ...teamLeaderProfiles].map((p: any) => p.userId.toString())),
     ];
 
     if (allowedIds.length === 0) {
       return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
     }
 
-    const userFilter: any = { _id: { $in: allowedIds }, role: { $in: ["sales", "marketing"] } };
+    const userFilter: any = { _id: { $in: allowedIds }, role: { $in: ["common", "team_leader"] } };
     if (search) {
       userFilter.$or = [
         { username: { $regex: search, $options: "i" } },
@@ -79,12 +79,12 @@ export async function GET(req: NextRequest) {
       .limit(limit)
       .lean();
 
-    const salesMap = new Map(salesProfiles.map((p: any) => [p.userId.toString(), p]));
-    const mktMap = new Map(marketingProfiles.map((p: any) => [p.userId.toString(), p]));
+    const commonMap = new Map(commonUserProfiles.map((p: any) => [p.userId.toString(), p]));
+    const teamLeaderMap = new Map(teamLeaderProfiles.map((p: any) => [p.userId.toString(), p]));
 
     const data = users.map((u: any) => {
       const key = u._id.toString();
-      const prof = u.role === "sales" ? salesMap.get(key) : mktMap.get(key);
+      const prof = u.role === "common" ? commonMap.get(key) : teamLeaderMap.get(key);
       const active = prof ? Boolean(prof.active) : false;
       return {
         _id: u._id,
@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
         pcActive: false,
         departmentId: prof?.departmentId || null,
         locationId: prof?.locationId || null,
+        teamLeaderId: prof?.teamLeaderId || null,
       };
     });
 

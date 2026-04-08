@@ -122,7 +122,7 @@ export default function EmployeesPage() {
       email: member.email || '',
       departmentId: member.departmentId?._id || '',
       locationId: member.locationId?._id || '',
-      teamLeaderId: member.teamLeaderId?._id || '',
+      teamLeaderId: teamLeaders.find(tl => tl.email === member.teamLeaderId)?._id || '',
     });
     setIsEditMemberOpen(true);
   };

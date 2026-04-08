@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const searchTerm = url.searchParams.get("search") || "";
 
     // Get team member IDs
-    const teamMembers = await CommonUser.find({ teamLeaderId: user._id }).select("userId").lean();
+    const teamMembers = await CommonUser.find({ teamLeaderEmail: user.email }).select("userId").lean();
     const teamMemberIds = teamMembers.map((m: any) => m.userId);
 
     // Build search filter

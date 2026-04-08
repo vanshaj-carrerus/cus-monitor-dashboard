@@ -19,12 +19,12 @@ export async function GET(request: Request) {
     }
 
     // Get team members count
-    const totalTeamMembers = await CommonUser.countDocuments({ teamLeaderId: user._id });
-    const activeMembers = await CommonUser.countDocuments({ teamLeaderId: user._id, active: true });
-    const inactiveMembers = await CommonUser.countDocuments({ teamLeaderId: user._id, active: false });
+    const totalTeamMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email });
+    const activeMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email, active: true });
+    const inactiveMembers = await CommonUser.countDocuments({ teamLeaderEmail: user.email, active: false });
 
     // Get total activities for this team
-    const memberIds = await CommonUser.find({ teamLeaderId: user._id }).select("userId").lean();
+    const memberIds = await CommonUser.find({ teamLeaderEmail: user.email }).select("userId").lean();
     const memberUserIds = memberIds.map((m: any) => m.userId);
     const totalActivities = await ActivityLog.countDocuments({ userId: { $in: memberUserIds } });
 

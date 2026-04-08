@@ -42,6 +42,13 @@ export async function POST(request: Request) {
             if (!roleData.departmentId || !roleData.teamLeaderId) {
                 return NextResponse.json({ success: false, error: "Department and Team Leader are required for common users." }, { status: 400 });
             }
+            // Get team leader email
+            const tlUser = await User.findById(roleData.teamLeaderId).select("email").lean();
+            if (!tlUser) {
+                return NextResponse.json({ success: false, error: "Invalid team leader." }, { status: 400 });
+            }
+            roleEntry.teamLeaderEmail = tlUser.email;
+            delete roleEntry.teamLeaderId; // Remove id, use email
             await new CommonUser(roleEntry).save();
         } else if (role === 'team_leader') {
             await new TeamLeader(roleEntry).save();

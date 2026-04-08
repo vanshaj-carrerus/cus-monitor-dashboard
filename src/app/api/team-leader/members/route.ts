@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
     // Get team members
     const members = await CommonUser.find({
-      teamLeaderId: user._id,
+      teamLeaderEmail: user.email,
       ...statusQuery,
       ...searchQuery,
     })
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       .lean();
 
     const total = await CommonUser.countDocuments({
-      teamLeaderId: user._id,
+      teamLeaderEmail: user.email,
       ...statusQuery,
       ...searchQuery,
     });

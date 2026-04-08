@@ -25,7 +25,7 @@ export async function DELETE(
     // Verify the member belongs to this team leader
     const member = await CommonUser.findOne({
       _id: memberId,
-      teamLeaderId: user._id,
+      teamLeaderEmail: user.email,
     });
 
     if (!member) {

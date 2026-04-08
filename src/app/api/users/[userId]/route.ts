@@ -86,7 +86,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
     const roleUpdate: any = {};
     if (departmentId !== null) roleUpdate.departmentId = departmentId || undefined;
     if (locationId !== null) roleUpdate.locationId = locationId || undefined;
-    if (teamLeaderId !== null && target.role === "common") roleUpdate.teamLeaderId = teamLeaderId || undefined;
+    if (teamLeaderId !== null && target.role === "common") {
+      const tlUser = await User.findById(teamLeaderId).select("email").lean();
+      if (tlUser) {
+        roleUpdate.teamLeaderEmail = tlUser.email;
+      }
+    }
     if (active !== null) roleUpdate.active = active;
 
     if (Object.keys(roleUpdate).length) {

@@ -44,7 +44,7 @@ export async function GET(request: Request) {
                 departmentId: profile ? profile.departmentId : null,
                 locationId: profile ? profile.locationId : null,
                 managerId: profile ? profile.managerId : null,
-                teamLeaderId: profile ? profile.teamLeaderId : null,
+                teamLeaderId: profile ? (profile.teamLeaderId || profile.teamLeaderEmail) : null,
             };
         });
 

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const CommonUserSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true },
-    teamLeaderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    teamLeaderEmail: { type: String, required: true },
     locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Location' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Manager' },
     active: { type: Boolean, default: false },

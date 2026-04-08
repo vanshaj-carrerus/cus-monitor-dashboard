@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
         pcActive: false,
         departmentId: prof?.departmentId || null,
         locationId: prof?.locationId || null,
-        teamLeaderId: prof?.teamLeaderId || null,
+        teamLeaderId: prof?.teamLeaderId || prof?.teamLeaderEmail || null,
       };
     });
 

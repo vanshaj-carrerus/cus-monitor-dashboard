@@ -44,9 +44,11 @@ export async function GET(request: Request) {
           ? { active: false }
           : {};
 
+    const escapedEmail = (user.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     // Get team members with case-insensitive teamLeaderEmail matching
     const members = await CommonUser.find({
-      teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" },
+      teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" },
       ...statusQuery,
       ...searchQuery,
     })

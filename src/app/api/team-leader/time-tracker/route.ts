@@ -27,8 +27,10 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
+    const escapedEmail = (user.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     // Get team member IDs with case-insensitive filtering
-    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${user.email}$`, $options: "i" } }).select("userId").lean();
+    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } }).select("userId").lean();
     const teamMemberIds = teamMembers.map((m: any) => m.userId);
 
     // Build search filter

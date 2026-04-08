@@ -52,7 +52,7 @@ export default function EmployeesPage() {
   const [isEditLocOpen, setIsEditLocOpen] = useState(false);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState<string>('');
-  const [editForm, setEditForm] = useState({ username: '', email: '', departmentId: '', locationId: '', teamLeaderId: '' });
+  const [editForm, setEditForm] = useState({ username: '', email: '', role: '', departmentId: '', locationId: '', teamLeaderId: '' });
 
   const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'common', departmentId: '', locationId: '', teamLeaderId: '' });
   const [deptForm, setDeptForm] = useState({ name: '', description: '' });
@@ -123,6 +123,7 @@ export default function EmployeesPage() {
       departmentId: member.departmentId?._id || '',
       locationId: member.locationId?._id || '',
       teamLeaderId: teamLeaders.find(tl => tl.email === member.teamLeaderId)?._id || '',
+      role: member.role || 'common',
     });
     setIsEditMemberOpen(true);
   };
@@ -143,7 +144,7 @@ export default function EmployeesPage() {
       }
       setIsEditMemberOpen(false);
       setEditingMemberId('');
-      setEditForm({ username: '', email: '', departmentId: '', locationId: '', teamLeaderId: '' });
+      setEditForm({ username: '', email: '', role: '', departmentId: '', locationId: '', teamLeaderId: '' });
       await fetchData(page, limit);
     } catch {
       alert('Failed to update member');
@@ -883,6 +884,17 @@ export default function EmployeesPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                 <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
               </div>
+              {canManageStructure && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
+                  <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                    <option value="common">Common User</option>
+                    <option value="team_leader">Team Leader</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
                 <select value={editForm.departmentId} onChange={e => setEditForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">

@@ -57,6 +57,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     const locationId = body.locationId || null;
     let teamLeaderId = body.teamLeaderId || null;
     const active = typeof body.active === "boolean" ? body.active : null;
+    const role = body.role || null;
 
     // Validate and normalize teamLeaderId if it appears to be an email, look up the User
     if (teamLeaderId && teamLeaderId.includes('@')) {
@@ -84,6 +85,9 @@ export async function PATCH(request: Request, { params }: Ctx) {
         }
         updates.email = email;
       }
+      if (role && ["common", "team_leader", "manager", "admin"].includes(role)) {
+        updates.role = role;
+      }
     }
 
     const target = await User.findById(userId).select("role").lean();
@@ -106,12 +110,32 @@ export async function PATCH(request: Request, { params }: Ctx) {
     }
     if (active !== null) roleUpdate.active = active;
 
-    if (Object.keys(roleUpdate).length) {
+    const roleChanged = updates.role && updates.role !== target.role;
+
+    if (roleChanged) {
+      // Role changed! Migrate doc between collections
+      await Promise.all([
+        CommonUser.deleteOne({ userId }),
+        TeamLeader.deleteOne({ userId }),
+        Manager.deleteOne({ userId }),
+      ]);
+
+      if (updates.role === 'common') {
+        const emailToUse = updates.email || (await User.findById(userId).select("email").lean())?.email;
+        await new CommonUser({ userId, ...roleUpdate, userEmail: emailToUse }).save();
+      } else if (updates.role === 'team_leader') {
+        await new TeamLeader({ userId, ...roleUpdate }).save();
+      } else if (updates.role === 'manager') {
+        await new Manager({ userId }).save();
+      }
+    } else if (Object.keys(roleUpdate).length) {
       if (target.role === "common") {
         if (updates.email) roleUpdate.userEmail = updates.email;
         await CommonUser.updateOne({ userId }, { $set: roleUpdate });
-      } else {
+      } else if (target.role === "team_leader") {
         await TeamLeader.updateOne({ userId }, { $set: roleUpdate });
+      } else if (target.role === "manager") {
+        await Manager.updateOne({ userId }, { $set: roleUpdate });
       }
     }
 

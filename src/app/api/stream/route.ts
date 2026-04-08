@@ -97,10 +97,12 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
 
         if (!targetOid) return false;
 
+        const escapedEmail = (actor.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
         // Check if target is in team
         const member = await CommonUser.findOne({
             userId: targetOid,
-            teamLeaderEmail: { $regex: `^${actor.email}$`, $options: "i" }
+            teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" }
         }).select("_id").lean();
 
         return Boolean(member);

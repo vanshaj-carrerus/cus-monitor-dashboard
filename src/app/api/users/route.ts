@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 10)));
     const search = (url.searchParams.get("search") || "").trim();
     const status = (url.searchParams.get("status") || "all").toLowerCase(); // all|enable|disable
+    const roleFilter = (url.searchParams.get("role") || "").toLowerCase(); // Specific role filter
 
     const profileFilter: any = {};
     if (actor.role === "manager") {
@@ -49,10 +50,22 @@ export async function GET(req: NextRequest) {
     if (status === "enable") profileFilter.active = true;
     if (status === "disable") profileFilter.active = false;
 
-    const [commonUserProfiles, teamLeaderProfiles] = await Promise.all([
-      CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
-      TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
-    ]);
+    // Filter by specific role if requested
+    let commonUserProfiles: any[] = [];
+    let teamLeaderProfiles: any[] = [];
+    if (roleFilter === "team_leader") {
+      commonUserProfiles = [];
+      teamLeaderProfiles = await TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean();
+    } else if (roleFilter === "common") {
+      commonUserProfiles = await CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean();
+      teamLeaderProfiles = [];
+    } else {
+      // Default: get both
+      [commonUserProfiles, teamLeaderProfiles] = await Promise.all([
+        CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+        TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+      ]);
+    }
 
     const allowedIds = [
       ...new Set([...commonUserProfiles, ...teamLeaderProfiles].map((p: any) => p.userId.toString())),

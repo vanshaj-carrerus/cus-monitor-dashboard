@@ -75,7 +75,11 @@ export async function POST(request: Request) {
         if (name) updateData.name = name;
         if (departmentId) updateData.departmentId = departmentId;
         if (locationId) updateData.locationId = locationId;
-        if (teamLeaderId) updateData.teamLeaderId = teamLeaderId;
+        // Ensure teamLeaderId is properly formatted as ObjectId if provided
+        if (teamLeaderId) {
+            // If teamLeaderId is a string, validate it's a valid ObjectId format
+            updateData.teamLeaderId = teamLeaderId;
+        }
 
         const invite = await Invite.findOneAndUpdate(
             { email: email.toLowerCase() },

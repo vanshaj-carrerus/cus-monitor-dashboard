@@ -33,7 +33,18 @@ export async function POST(request: Request) {
 
         let teamLeaderId = null;
         if (invite.role === "common" && invite.teamLeaderId) {
-            teamLeaderId = invite.teamLeaderId;
+            // Ensure teamLeaderId is in valid format - convert if it's an email string
+            let tl = invite.teamLeaderId;
+            if (typeof tl === 'string' && tl.includes('@')) {
+                // It's an email, look up the user
+                const teamLeaderUser = await User.findOne({ email: tl }).select("_id").lean();
+                if (teamLeaderUser) {
+                    teamLeaderId = teamLeaderUser._id;
+                }
+            } else {
+                // Assume it's an ObjectId or valid string
+                teamLeaderId = invite.teamLeaderId;
+            }
         }
 
         const newUser = new User({

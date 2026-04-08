@@ -99,13 +99,11 @@ export default function EmployeesPage() {
     setLoading(true);
     setPage(1);
     fetchData(1, limit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, filterStatus]);
 
   useEffect(() => {
     setLoading(true);
     fetchData(page, limit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));

@@ -55,8 +55,19 @@ export async function PATCH(request: Request, { params }: Ctx) {
     const email = body.email ? String(body.email).toLowerCase().trim() : null;
     const departmentId = body.departmentId || null;
     const locationId = body.locationId || null;
-    const teamLeaderId = body.teamLeaderId || null;
+    let teamLeaderId = body.teamLeaderId || null;
     const active = typeof body.active === "boolean" ? body.active : null;
+
+    // Validate and normalize teamLeaderId if it appears to be an email, look up the User
+    if (teamLeaderId && teamLeaderId.includes('@')) {
+      const teamLeaderUser = await User.findOne({ email: teamLeaderId }).select("_id").lean();
+      if (teamLeaderUser) {
+        teamLeaderId = teamLeaderUser._id.toString();
+      } else {
+        // Email doesn't exist, keep as is and let MongoDB handle the error
+        teamLeaderId = teamLeaderId;
+      }
+    }
 
     if (actor.role === "admin") {
       if (username) updates.username = username;

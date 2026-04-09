@@ -82,7 +82,7 @@ export default function ScreenshotsPage() {
         credentials: 'include',
       });
       const json = await res.json();
-      
+
       if (res.ok) {
         // Remove the screenshot from the local state
         setUserScreenshots(prev => prev.filter(shot => shot._id !== screenshotId));
@@ -107,39 +107,11 @@ export default function ScreenshotsPage() {
         <p className="text-sm text-slate-500">View user screenshots captured on specific dates from this page.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setActiveTab('gallery')}
-          className={cn(
-            "flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-all",
-            activeTab === 'gallery'
-              ? "bg-[#F5F3FF] text-[#5E35B1] border border-[#5E35B1]/20"
-              : "text-slate-600 hover:bg-slate-50"
-          )}
-        >
-          <ImageIcon className="h-4 w-4" />
-          Gallery
-        </button>
-        <button
-          onClick={() => setActiveTab('productivity')}
-          className={cn(
-            "flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-medium transition-all",
-            activeTab === 'productivity'
-              ? "bg-[#F5F3FF] text-[#5E35B1] border border-[#5E35B1]/20"
-              : "text-slate-600 hover:bg-slate-50"
-          )}
-        >
-          <BarChart3 className="h-4 w-4" />
-          Productivity
-        </button>
-      </div>
-
       {/* Content Card */}
       <Card className="p-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white capitalize">
-            {activeTab === 'gallery' ? 'Screenshots' : 'Productivity'}
+            Gallery
           </h2>
 
           <div className="flex flex-col gap-3 sm:flex-row">

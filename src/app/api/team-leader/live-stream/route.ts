@@ -24,8 +24,11 @@ export async function GET(request: Request) {
     const escapedEmail = (user.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // Get team member IDs with case-insensitive filtering
-    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } }).select("userId").lean();
-    const teamMemberIds = teamMembers.map((m: any) => m.userId);
+    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } })
+      .select("userId")
+      .lean() as Array<{ userId: string }>;
+    const teamMemberIds = teamMembers.map((m) => m.userId.toString());
+    const allowedUserIds = Array.from(new Set([...teamMemberIds, user._id.toString()]));
 
     // Build search filter
     const searchQuery = searchTerm
@@ -37,9 +40,9 @@ export async function GET(request: Request) {
       }
       : {};
 
-    // Get active streams for team members (only active streams)
+    // Get active streams for team members and the team leader
     const streams = await Stream.find({
-      userId: { $in: teamMemberIds },
+      userId: { $in: allowedUserIds },
       active: true,
       ...searchQuery,
     })
@@ -51,8 +54,9 @@ export async function GET(request: Request) {
       success: true,
       data: streams,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching team live streams:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

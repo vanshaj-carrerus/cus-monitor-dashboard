@@ -83,7 +83,7 @@ function VideoPlayer() {
   return (
     <div className="grid grid-cols-1 gap-4 h-full w-full overflow-y-auto p-4 bg-slate-950">
       {tracks.map((trackRef) => (
-        <div key={trackRef.publication.trackSid} className="relative flex flex-col gap-2 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden min-h-[300px]">
+        <div key={trackRef.publication.trackSid} className="relative flex flex-col gap-2 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden min-h-75">
           <div className="absolute top-4 left-4 z-10 rounded-lg bg-black/60 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-md">
             {trackRef.participant.identity.toUpperCase()} • {trackRef.source.toUpperCase()}
           </div>

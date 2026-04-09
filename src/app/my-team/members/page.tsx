@@ -442,22 +442,20 @@ export default function EmployeesPage() {
                       <th className="w-10 px-4 py-3"><div className="w-4 h-4 rounded border border-slate-300" /></th>
                       <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name <ChevronDown className="inline-block h-3 w-3 ml-1" /></th>
                       <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manager</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Activation Date</th>
-                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">App Version</th>
-                      <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Activation</th>
-                      <th className="px-4 py-3 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tracking</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Team Lead</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</th>
                       <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {loading ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                        <td colSpan={7} className="px-4 py-8 text-center text-slate-500">Loading…</td>
                       </tr>
                     ) : members.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">No members found.</td>
+                        <td colSpan={7} className="px-4 py-8 text-center text-slate-500">No members found.</td>
                       </tr>
                     ) : (
                       members.map((member: any) => (
@@ -470,27 +468,9 @@ export default function EmployeesPage() {
                             </div>
                           </td>
                           <td className="px-4 py-4 text-sm text-slate-500">{member.email}</td>
-                          <td className="px-4 py-4 text-sm text-slate-500 capitalize">{member.role}</td>
-                          <td className="px-4 py-4 text-sm text-slate-500">-</td>
-                          <td className="px-4 py-4 text-sm text-slate-500">-</td>
-                          <td className="px-4 py-4">
-                            <div className="flex justify-center">
-                              {member.active ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-slate-300" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex justify-center">
-                              {member.active ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <XCircle className="h-4 w-4 text-slate-300" />
-                              )}
-                            </div>
-                          </td>
+                          <td className="px-4 py-4 text-sm text-slate-500 capitalize">{member.role || '-'}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">{member.teamLeaderId?.username || member.teamLeaderId?.email || member.teamLeaderId || '-'}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">{member.departmentId?.name || '-'}</td>
                           <td className="px-4 py-4">
                             <div className="flex items-center justify-end gap-1">
                               <button

@@ -28,8 +28,11 @@ export async function GET(request: Request) {
     const escapedEmail = (user.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // Get team member IDs with case-insensitive filtering
-    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } }).select("userId").lean();
-    const teamMemberIds = teamMembers.map((m: any) => m.userId);
+    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } })
+      .select("userId")
+      .lean() as Array<{ userId: string }>;
+    const teamMemberIds = teamMembers.map((m) => m.userId.toString());
+    const allowedUserIds = Array.from(new Set([...teamMemberIds, user._id.toString()]));
 
     // Build search filter
     const searchQuery = searchTerm
@@ -42,9 +45,9 @@ export async function GET(request: Request) {
       }
       : {};
 
-    // Get screenshots for team members
+    // Get screenshots for team members and the team leader
     const screenshots = await Screenshot.find({
-      userId: { $in: teamMemberIds },
+      userId: { $in: allowedUserIds },
       ...searchQuery,
     })
       .populate("userId", "username email _id")
@@ -54,7 +57,7 @@ export async function GET(request: Request) {
       .lean();
 
     const total = await Screenshot.countDocuments({
-      userId: { $in: teamMemberIds },
+      userId: { $in: allowedUserIds },
       ...searchQuery,
     });
 
@@ -65,8 +68,9 @@ export async function GET(request: Request) {
       limit,
       total,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching team screenshots:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

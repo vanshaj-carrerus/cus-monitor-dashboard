@@ -68,6 +68,7 @@ function itemsForRole(role: string): Item[] {
         { label: 'Web And Apps', href: '/reports/web-apps' },
       ],
     },
+    { icon: User, label: 'Profile', href: '/profile' },
   ];
 }
 

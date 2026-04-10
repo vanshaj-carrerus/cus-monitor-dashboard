@@ -82,16 +82,23 @@ async function getPcActiveStatus(userId: string): Promise<boolean> {
 }
 
 async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<boolean> {
-    const role = getActorRole(req);
+    let role = getActorRole(req);
+    let actorEmail = "";
+
+    const session = await getSession();
+    if (session?.userId) {
+        const actor = await User.findById(session.userId).select("role email").lean();
+        if (actor) {
+            role = actor.role || role;
+            actorEmail = actor.email || "";
+        }
+    }
+
     if (role === "admin" || role === "manager") return true;
     if (isAgentRequest(req)) return true; // Agent can view its own (or if it's the target)
 
     if (role === "team_leader") {
-        const session = await getSession();
-        if (!session) return false;
-
-        const actor = await User.findById(session.userId).select("email").lean();
-        if (!actor?.email) return false;
+        if (!actorEmail) return false;
 
         // Resolve target to an ObjectId if possible
         const possibleIds = await resolveUserIds(targetUserId);
@@ -99,7 +106,7 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
 
         if (!targetOid) return false;
 
-        const escapedEmail = (actor.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedEmail = actorEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
         // Check if target is in team
         const member = await CommonUser.findOne({
@@ -178,7 +185,13 @@ export async function POST(req: NextRequest) {
 
         // 1. Dashboard requests to toggle stream
         if (action === "toggle") {
-            const role = getActorRole(req);
+            let role = getActorRole(req);
+            const session = await getSession();
+            if (session?.userId) {
+                const actor = await User.findById(session.userId).select("role").lean();
+                if (actor) role = actor.role || role;
+            }
+
             if (!isPrivilegedRole(role) && !isAgentRequest(req)) {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
@@ -253,7 +266,13 @@ export async function POST(req: NextRequest) {
         }
 
         if (action === "control-heartbeat") {
-            const role = getActorRole(req);
+            let role = getActorRole(req);
+            const session = await getSession();
+            if (session?.userId) {
+                const actor = await User.findById(session.userId).select("role").lean();
+                if (actor) role = actor.role || role;
+            }
+
             if (!isPrivilegedRole(role)) {
                 return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }

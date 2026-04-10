@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Screenshot from "@/models/screenshot";
 import User from "@/models/user";
+import Manager from "@/models/manager";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
 
@@ -13,7 +16,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
 
-        const actor = await User.findById(session.userId).select('role').lean();
+        const actor = await User.findById(session.userId).select('role email').lean();
         if (!actor) {
             return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
         }
@@ -22,22 +25,84 @@ export async function GET(req: NextRequest) {
         const filterUserId = url.searchParams.get("userId");
 
         if (filterUserId) {
-            // Check if the requested user is a manager, and if so, explicitly verify actor is admin
             const targetUser = await User.findById(filterUserId).select('role').lean();
-            if (targetUser && targetUser.role === 'manager' && actor.role !== 'admin') {
-                 return NextResponse.json({ success: false, error: "Forbidden: Only admins can view manager screenshots" }, { status: 403 });
+            if (!targetUser) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+
+            // Security: Only admins can see Managers or Admins screenshots
+            if ((targetUser.role === 'manager' || targetUser.role === 'admin') && actor.role !== 'admin') {
+                return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
             }
 
-            // Get screenshots for specific user
+            // Security: Managers can only see their department's users
+            if (actor.role === 'manager') {
+                const mgr = await Manager.findOne({ userId: actor._id }).lean();
+                const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+                const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
+
+                const [c, t] = await Promise.all([
+                    CommonUser.findOne({ userId: filterUserId }).select("departmentId locationId").lean(),
+                    TeamLeader.findOne({ userId: filterUserId }).select("departmentId locationId").lean()
+                ]);
+                const profile = c || (t as any);
+                if (!profile) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+
+                const targetDeptId = profile.departmentId?.toString();
+                const targetLocId = profile.locationId?.toString();
+
+                const isInManagedDept = targetDeptId && deptIds.includes(targetDeptId);
+                const isInManagedLoc = targetLocId && locIds.includes(targetLocId);
+
+                if (!isInManagedDept && !isInManagedLoc) {
+                    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+                }
+            }
+
+            // Security: Team Leaders can only see their team members
+            if (actor.role === 'team_leader') {
+                const member = await CommonUser.findOne({
+                    userId: filterUserId,
+                    teamLeaderEmail: { $regex: `^${(actor as any).email}$`, $options: 'i' }
+                }).lean();
+                if (!member) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+            }
+
             const screenshots = await Screenshot.find({ userId: filterUserId }).sort({ createdAt: -1 }).lean();
             return NextResponse.json({ success: true, count: screenshots.length, data: screenshots }, { status: 200 });
         } else {
-            // Get unique users who have screenshots, or just return all users with role common/team_leader/manager
             const allowedRoles = ['common', 'team_leader'];
             if (actor.role === 'admin') {
                 allowedRoles.push('manager');
             }
-            const users = await User.find({ role: { $in: allowedRoles } }).lean();
+
+            let userFilter: any = { role: { $in: allowedRoles } };
+
+            if (actor.role === 'manager') {
+                const mgr = await Manager.findOne({ userId: actor._id }).lean();
+                const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+                const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
+
+                if (deptIds.length || locIds.length) {
+                    const or: any[] = [];
+                    if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
+                    if (locIds.length) or.push({ locationId: { $in: locIds } });
+
+                    const [c, t] = await Promise.all([
+                        CommonUser.find({ $or: or }).select("userId").lean(),
+                        TeamLeader.find({ $or: or }).select("userId").lean()
+                    ]);
+                    const allowedIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
+                    userFilter._id = { $in: allowedIds };
+                } else {
+                    return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
+                }
+            } else if (actor.role === 'team_leader') {
+                const members = await CommonUser.find({
+                    teamLeaderEmail: { $regex: `^${(actor as any).email}$`, $options: 'i' }
+                }).select("userId").lean();
+                userFilter._id = { $in: members.map(m => m.userId.toString()) };
+            }
+
+            const users = await User.find(userFilter).lean();
             return NextResponse.json({ success: true, count: users.length, data: users }, { status: 200 });
         }
 

@@ -2,8 +2,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import ActivityLog from "@/models/activity_log";
+import User from "@/models/user";
+import Manager from "@/models/manager";
+import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import { getUserNameFromId } from "../../../../lib/user_utils";
 import DBConnect from "../../../../lib/DB_Connect";
+import { getSession } from "../../../../lib/session";
 
 // Browser suffixes to strip from window titles
 const BROWSER_SUFFIXES = [" - Google Chrome", " - Microsoft Edge", " - Mozilla Firefox", " - Brave", " - Opera"];
@@ -119,6 +124,16 @@ export async function GET(req: NextRequest) {
     try {
         await DBConnect();
 
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const actor = await User.findById(session.userId).select("role email").lean();
+        if (!actor) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
         // Get userId from query params if available
         const url = new URL(req.url);
         const filterUserId = url.searchParams.get("userId");
@@ -130,22 +145,70 @@ export async function GET(req: NextRequest) {
         const limit = Math.min(500, Math.max(1, Number(url.searchParams.get("limit") || 200)));
 
         let filter: any = {};
-        if (filterUserId) {
-            // Bridge old (username) and new (ObjectId) data
-            // 1. Resolve everything we know about this user
-            const user = await ((filterUserId.length === 24)
-                ? ActivityLog.db.model('User').findById(filterUserId)
-                : ActivityLog.db.model('User').findOne({ username: filterUserId }));
-
-            if (user) {
-                // Return items matching either their ID string OR their username string
-                filter = {
-                    userId: { $in: [user._id.toString(), user.username] }
-                };
-            } else {
-                // Fallback to literal search if user record doesn't exist
-                filter = { userId: filterUserId };
+        
+        // Authorization & Filtering Logic
+        if (actor.role === "admin") {
+            if (filterUserId) {
+                const user = await ((filterUserId.length === 24)
+                    ? User.findById(filterUserId)
+                    : User.findOne({ username: filterUserId }));
+                if (user) filter.userId = { $in: [user._id.toString(), user.username] };
+                else filter.userId = filterUserId;
             }
+        } else if (actor.role === "manager") {
+            const mgr = await Manager.findOne({ userId: actor._id }).lean();
+            const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+            const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
+            
+            const or: any[] = [];
+            if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
+            if (locIds.length) or.push({ locationId: { $in: locIds } });
+            
+            if (!or.length) {
+                return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
+            }
+
+            const [c, t] = await Promise.all([
+                CommonUser.find({ $or: or }).select("userId").lean(),
+                TeamLeader.find({ $or: or }).select("userId").lean()
+            ]);
+            const allowedUserIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
+
+            if (filterUserId) {
+                const user = await ((filterUserId.length === 24)
+                    ? User.findById(filterUserId)
+                    : User.findOne({ username: filterUserId }));
+                
+                if (!user || (!allowedUserIds.includes(user._id.toString()) && user._id.toString() !== actor._id.toString())) {
+                    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+                }
+                filter.userId = { $in: [user._id.toString(), user.username] };
+            } else {
+                // If no userId, show logs for all allowed users
+                filter.userId = { $in: allowedUserIds };
+            }
+        } else if (actor.role === "team_leader") {
+            const escapedEmail = (actor.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const members = await CommonUser.find({
+                teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" }
+            }).select("userId").lean();
+            const allowedUserIds = members.map(m => m.userId.toString());
+
+            if (filterUserId) {
+                const user = await ((filterUserId.length === 24)
+                    ? User.findById(filterUserId)
+                    : User.findOne({ username: filterUserId }));
+                
+                if (!user || (!allowedUserIds.includes(user._id.toString()) && user._id.toString() !== actor._id.toString())) {
+                    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+                }
+                filter.userId = { $in: [user._id.toString(), user.username] };
+            } else {
+                filter.userId = { $in: [...allowedUserIds, actor._id.toString()] };
+            }
+        } else {
+            // Common user can only see their own logs
+            filter.userId = { $in: [actor._id.toString(), (actor as any).username] };
         }
 
         if (startDate || endDate) {

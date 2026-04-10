@@ -142,7 +142,13 @@ export async function GET(req: NextRequest) {
       u.pcActive = pcActiveIds.has(u._id.toString());
     });
 
-    return NextResponse.json({ success: true, count: data.length, total, page, limit, data }, { status: 200 });
+    // Final security check for managers: strictly filter out any unexpected managers or admins
+    // (though the logic above already tries to prevent this, let's be double sure)
+    const filteredData = actor.role === "manager" 
+      ? data.filter(u => u.role === "common" || u.role === "team_leader") 
+      : data;
+
+    return NextResponse.json({ success: true, count: filteredData.length, total: actor.role === "manager" ? filteredData.length : total, page, limit, data: filteredData }, { status: 200 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Users GET Error:", error);

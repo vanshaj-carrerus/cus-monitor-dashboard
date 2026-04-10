@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import User from "@/models/user";
 import Screenshot from "@/models/screenshot";
 import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
+import Manager from "@/models/manager";
 import { getSession } from "../../../../../lib/session";
 import DBConnect from "../../../../../lib/DB_Connect";
 
@@ -50,8 +52,33 @@ export async function DELETE(
             }
         } else if (user.role === "manager") {
             // Managers can delete screenshots from users in their managed departments/locations
-            // This would need additional logic based on your manager permissions
-            // For now, allowing all non-admin users
+            const mgr = await Manager.findOne({ userId: user._id }).lean();
+            if (!mgr) return NextResponse.json({ success: false, error: "Manager profile not found" }, { status: 404 });
+
+            const deptIds = (mgr.managedDepartments || []).map((id: any) => id.toString());
+            const locIds = (mgr.managedLocations || []).map((id: any) => id.toString());
+
+            const [c, t] = await Promise.all([
+                CommonUser.findOne({ userId: screenshot.userId._id }).select("departmentId locationId").lean(),
+                TeamLeader.findOne({ userId: screenshot.userId._id }).select("departmentId locationId").lean()
+            ]);
+            const profile = c || (t as any);
+            if (!profile) {
+                return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+            }
+
+            const targetDeptId = profile.departmentId?.toString();
+            const targetLocId = profile.locationId?.toString();
+
+            const isInManagedDept = targetDeptId && deptIds.includes(targetDeptId);
+            const isInManagedLoc = targetLocId && locIds.includes(targetLocId);
+
+            if (!isInManagedDept && !isInManagedLoc) {
+                return NextResponse.json(
+                    { success: false, error: "Forbidden: User is not in your managed departments/locations" },
+                    { status: 403 }
+                );
+            }
         }
         // Admin can delete any screenshot
 

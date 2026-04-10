@@ -147,7 +147,7 @@ export default function ManagersAdminPage() {
                       <label key={d._id} className="flex cursor-pointer items-center gap-2 text-sm">
                         <input
                           type="checkbox"
-                          className="rounded border-slate-300"
+                          className="rounded border-slate-800"
                           checked={(selections[m._id]?.dept || []).includes(d._id)}
                           onChange={() =>
                             setSelections((prev) => ({

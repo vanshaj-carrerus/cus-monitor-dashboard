@@ -5,6 +5,8 @@ import DBConnect from "../../../../lib/DB_Connect";
 import TimeEntry from "@/models/time_entry";
 import ActivityLog from "@/models/activity_log";
 import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
+import Manager from "@/models/manager";
 import { getSession } from "../../../../lib/session";
 
 type UserLookupDoc = {
@@ -111,7 +113,35 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
         return false;
     }
 
-    if (role === "manager") return true;
+    if (role === "manager") {
+        if (!session?.userId) return false;
+        const mgr = await Manager.findOne({ userId: session.userId }).lean();
+        if (!mgr) return false;
+
+        const deptIds = (mgr.managedDepartments || []).map((id: any) => id.toString());
+        const locIds = (mgr.managedLocations || []).map((id: any) => id.toString());
+
+        if (deptIds.length === 0 && locIds.length === 0) return false;
+
+        const possibleIds = await resolveUserIds(targetUserId);
+        const targetOid = possibleIds.find(id => id.length === 24);
+        if (!targetOid) return false;
+
+        const [c, t] = await Promise.all([
+            CommonUser.findOne({ userId: targetOid }).select("departmentId locationId").lean(),
+            TeamLeader.findOne({ userId: targetOid }).select("departmentId locationId").lean()
+        ]);
+        const profile = c || (t as any);
+        if (!profile) return false;
+
+        const targetDeptId = profile.departmentId?.toString();
+        const targetLocId = profile.locationId?.toString();
+
+        const isInManagedDept = targetDeptId && deptIds.includes(targetDeptId);
+        const isInManagedLoc = targetLocId && locIds.includes(targetLocId);
+
+        return Boolean(isInManagedDept || isInManagedLoc);
+    }
 
     if (role === "team_leader") {
         if (!actorEmail) return false;

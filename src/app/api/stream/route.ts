@@ -119,28 +119,24 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
         if (!mgr) return false;
 
         const deptIds = (mgr.managedDepartments || []).map((id: any) => id.toString());
-        const locIds = (mgr.managedLocations || []).map((id: any) => id.toString());
-
-        if (deptIds.length === 0 && locIds.length === 0) return false;
+        if (deptIds.length === 0) return false;
 
         const possibleIds = await resolveUserIds(targetUserId);
         const targetOid = possibleIds.find(id => id.length === 24);
         if (!targetOid) return false;
 
+        // Managers cannot view their own or other managers' streams
+        if (targetOid === session.userId.toString()) return false;
+
         const [c, t] = await Promise.all([
-            CommonUser.findOne({ userId: targetOid }).select("departmentId locationId").lean(),
-            TeamLeader.findOne({ userId: targetOid }).select("departmentId locationId").lean()
+            CommonUser.findOne({ userId: targetOid }).select("departmentId").lean(),
+            TeamLeader.findOne({ userId: targetOid }).select("departmentId").lean()
         ]);
         const profile = c || (t as any);
         if (!profile) return false;
 
         const targetDeptId = profile.departmentId?.toString();
-        const targetLocId = profile.locationId?.toString();
-
-        const isInManagedDept = targetDeptId && deptIds.includes(targetDeptId);
-        const isInManagedLoc = targetLocId && locIds.includes(targetLocId);
-
-        return Boolean(isInManagedDept || isInManagedLoc);
+        return Boolean(targetDeptId && deptIds.includes(targetDeptId));
     }
 
     if (role === "team_leader") {

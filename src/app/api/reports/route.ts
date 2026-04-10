@@ -43,15 +43,11 @@ export async function GET(request: Request) {
         } else if (actor.role === "manager") {
             const mgr = await Manager.findOne({ userId: actor._id }).lean();
             const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
-            const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
-            const or: any[] = [];
-            if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-            if (locIds.length) or.push({ locationId: { $in: locIds } });
             let allowedIds: string[] = [];
-            if (or.length) {
+            if (deptIds.length) {
                 const [c, t] = await Promise.all([
-                    CommonUser.find({ $or: or }).select("userId").lean(),
-                    TeamLeader.find({ $or: or }).select("userId").lean(),
+                    CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
+                    TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
                 ]);
                 allowedIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
             }

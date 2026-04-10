@@ -119,16 +119,8 @@ export default function ScreenshotsPage() {
               <input
                 type="text"
                 placeholder="Search by name or email..."
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-4 pr-10 text-sm focus:border-[#5E35B1] focus:outline-none dark:border-slate-800   sm:w-64"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-4 pr-10 text-sm text-gray-500 focus:border-[#5E35B1] focus:outline-none dark:border-slate-800 sm:w-64"
               />
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                defaultValue="2026-04-01"
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none dark:border-slate-800  "
-              />
-              <Calendar className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             </div>
           </div>
         </div>
@@ -146,7 +138,7 @@ export default function ScreenshotsPage() {
                 onClick={() => handleUserClick(user)}
                 className="cursor-pointer rounded-2xl border border-slate-100 bg-[#F9FAFB] p-6 dark:border-slate-800/50 hover:bg-slate-50 shadow-sm transition-all"
               >
-                <p className="break-all text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                <p className="break-all text-sm font-medium text-slate-800 mb-2">
                   {user.username}
                 </p>
                 <p className="break-all text-xs text-slate-500">
@@ -200,14 +192,6 @@ export default function ScreenshotsPage() {
                             >
                               <ExternalLink className="h-3 w-3" />
                               Open
-                            </button>
-                            <button
-                              onClick={() => handleDeleteScreenshot(shot._id)}
-                              className="flex items-center gap-1 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                              title="Delete screenshot"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              Delete
                             </button>
                           </div>
                         )}

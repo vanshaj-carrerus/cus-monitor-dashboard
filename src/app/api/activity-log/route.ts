@@ -158,19 +158,14 @@ export async function GET(req: NextRequest) {
         } else if (actor.role === "manager") {
             const mgr = await Manager.findOne({ userId: actor._id }).lean();
             const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
-            const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
             
-            const or: any[] = [];
-            if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-            if (locIds.length) or.push({ locationId: { $in: locIds } });
-            
-            if (!or.length) {
+            if (!deptIds.length) {
                 return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
             }
 
             const [c, t] = await Promise.all([
-                CommonUser.find({ $or: or }).select("userId").lean(),
-                TeamLeader.find({ $or: or }).select("userId").lean()
+                CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
+                TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId").lean()
             ]);
             const allowedUserIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
 
@@ -179,12 +174,12 @@ export async function GET(req: NextRequest) {
                     ? User.findById(filterUserId)
                     : User.findOne({ username: filterUserId }));
                 
-                if (!user || (!allowedUserIds.includes(user._id.toString()) && user._id.toString() !== actor._id.toString())) {
+                if (!user || !allowedUserIds.includes(user._id.toString())) {
                     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
                 }
                 filter.userId = { $in: [user._id.toString(), user.username] };
             } else {
-                // If no userId, show logs for all allowed users
+                // If no userId, show logs for all allowed members (excluding the manager themselves)
                 filter.userId = { $in: allowedUserIds };
             }
         } else if (actor.role === "team_leader") {

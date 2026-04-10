@@ -12,15 +12,11 @@ type Ctx = { params: Promise<{ userId: string }> };
 async function getManagerAllowedIds(managerUserId: string) {
   const mgr = await Manager.findOne({ userId: managerUserId }).lean();
   const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
-  const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
-  const or: any[] = [];
-  if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-  if (locIds.length) or.push({ locationId: { $in: locIds } });
-  if (!or.length) return [];
+  if (!deptIds.length) return [];
 
   const [c, t] = await Promise.all([
-    CommonUser.find({ $or: or }).select("userId").lean(),
-    TeamLeader.find({ $or: or }).select("userId").lean(),
+    CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
+    TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
   ]);
   return [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
 }
@@ -91,8 +87,13 @@ export async function PATCH(request: Request, { params }: Ctx) {
     }
 
     const target = await User.findById(userId).select("role").lean();
-    if (!target || !["common", "team_leader"].includes(target.role)) {
-      return NextResponse.json({ success: false, error: "Only member users can be edited here." }, { status: 400 });
+    if (!target) {
+      return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
+    }
+
+    // Security: Only admins can edit managers or other admins
+    if ((target.role === 'manager' || target.role === 'admin') && actor.role !== 'admin') {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admins can manage these accounts." }, { status: 403 });
     }
 
     if (Object.keys(updates).length) {
@@ -170,13 +171,19 @@ export async function DELETE(_: Request, { params }: Ctx) {
     }
 
     const target = await User.findById(userId).select("role").lean();
-    if (!target || !["common", "team_leader"].includes(target.role)) {
-      return NextResponse.json({ success: false, error: "Only member users can be deleted here." }, { status: 400 });
+    if (!target) {
+      return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
+    }
+
+    // Security: Only admins can delete managers or other admins
+    if ((target.role === 'manager' || target.role === 'admin') && actor.role !== 'admin') {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admins can manage these accounts." }, { status: 403 });
     }
 
     await Promise.all([
       CommonUser.deleteOne({ userId }),
       TeamLeader.deleteOne({ userId }),
+      Manager.deleteOne({ userId }),
       User.deleteOne({ _id: userId }),
     ]);
 

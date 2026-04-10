@@ -83,23 +83,23 @@ async function resolveAllowedUsers(actor: Actor): Promise<AllowedUser[]> {
   } else if (actor.role === "manager") {
     const mgr = (await Manager.findOne({ userId: actor._id }).lean()) as unknown as {
       managedDepartments?: ObjectIdLike[];
-      managedLocations?: ObjectIdLike[];
     } | null;
     const deptIds = (mgr?.managedDepartments || []).map((id) => id.toString());
-    const locIds = (mgr?.managedLocations || []).map((id) => id.toString());
-    const or: Record<string, unknown>[] = [];
-    if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-    if (locIds.length) or.push({ locationId: { $in: locIds } });
-
-    if (!or.length) return [];
+    
+    if (!deptIds.length) return [];
 
     const [c, t] = (await Promise.all([
-      CommonUser.find({ $or: or }).select("userId active").lean(),
-      TeamLeader.find({ $or: or }).select("userId active").lean(),
+      CommonUser.find({ departmentId: { $in: deptIds } }).select("userId active").lean(),
+      TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId active").lean(),
     ])) as unknown as [ProfileRow[], ProfileRow[]];
     const allowedIds = [...new Set([...c, ...t].map((p) => p.userId.toString()))];
     if (!allowedIds.length) return [];
-    (userFilter as { _id: unknown })._id = { $in: allowedIds };
+    
+    // Explicitly exclude the manager themselves from the metrics
+    const filteredIds = allowedIds.filter(id => id !== actor._id.toString());
+    if (!filteredIds.length) return [];
+
+    (userFilter as { _id: unknown })._id = { $in: filteredIds };
   }
 
   const users = (await User.find(userFilter).select("_id username role").lean()) as unknown as AllowedUser[];

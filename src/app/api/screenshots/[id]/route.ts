@@ -51,16 +51,16 @@ export async function DELETE(
                 );
             }
         } else if (user.role === "manager") {
-            // Managers can delete screenshots from users in their managed departments/locations
+            // Managers can delete screenshots from users in their managed departments
             const mgr = await Manager.findOne({ userId: user._id }).lean();
             if (!mgr) return NextResponse.json({ success: false, error: "Manager profile not found" }, { status: 404 });
 
             const deptIds = (mgr.managedDepartments || []).map((id: any) => id.toString());
-            const locIds = (mgr.managedLocations || []).map((id: any) => id.toString());
+            if (deptIds.length === 0) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
             const [c, t] = await Promise.all([
-                CommonUser.findOne({ userId: screenshot.userId._id }).select("departmentId locationId").lean(),
-                TeamLeader.findOne({ userId: screenshot.userId._id }).select("departmentId locationId").lean()
+                CommonUser.findOne({ userId: screenshot.userId._id }).select("departmentId").lean(),
+                TeamLeader.findOne({ userId: screenshot.userId._id }).select("departmentId").lean()
             ]);
             const profile = c || (t as any);
             if (!profile) {
@@ -68,14 +68,9 @@ export async function DELETE(
             }
 
             const targetDeptId = profile.departmentId?.toString();
-            const targetLocId = profile.locationId?.toString();
-
-            const isInManagedDept = targetDeptId && deptIds.includes(targetDeptId);
-            const isInManagedLoc = targetLocId && locIds.includes(targetLocId);
-
-            if (!isInManagedDept && !isInManagedLoc) {
+            if (!targetDeptId || !deptIds.includes(targetDeptId)) {
                 return NextResponse.json(
-                    { success: false, error: "Forbidden: User is not in your managed departments/locations" },
+                    { success: false, error: "Forbidden: User is not in your managed departments" },
                     { status: 403 }
                 );
             }

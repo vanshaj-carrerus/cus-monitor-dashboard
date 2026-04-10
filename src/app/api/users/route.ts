@@ -38,14 +38,10 @@ export async function GET(req: NextRequest) {
     if (actor.role === "manager") {
       const mgr = await Manager.findOne({ userId: actor._id }).lean();
       const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
-      const locIds = (mgr?.managedLocations || []).map((id: any) => id.toString());
-      const or: any[] = [];
-      if (deptIds.length) or.push({ departmentId: { $in: deptIds } });
-      if (locIds.length) or.push({ locationId: { $in: locIds } });
-      if (!or.length) {
+      if (!deptIds.length) {
         return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
       }
-      profileFilter.$or = or;
+      profileFilter.departmentId = { $in: deptIds };
     } else if (actor.role === "team_leader") {
       const escapedEmail = (actor.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       profileFilter.teamLeaderEmail = { $regex: `^${escapedEmail}$`, $options: "i" };

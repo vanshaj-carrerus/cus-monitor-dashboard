@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../lib/utils';
 
+import { useAuth } from '@/components/auth-context';
+
 interface User {
   username: string;
   email: string;
@@ -451,6 +453,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
 }
 
 export default function LiveStreamPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -473,7 +476,7 @@ export default function LiveStreamPage() {
       const res = await fetch('/api/users', { cache: 'no-store', credentials: 'include' });
       const json = await res.json();
       if (json.success) {
-        setUsers((json.data || []).filter((u: User) => u.role !== 'manager'));
+        setUsers((json.data || []).filter((u: User) => u.role !== 'manager' && u.pcActive && u.username !== currentUser?.username));
       }
     } catch (err) {
       console.error("Fetch users failed", err);
@@ -481,7 +484,7 @@ export default function LiveStreamPage() {
       setLoading(false);
       if (showRefreshing) setRefreshing(false);
     }
-  }, []);
+  }, [currentUser?.username]);
 
   useEffect(() => {
     refreshUserStatuses(false);

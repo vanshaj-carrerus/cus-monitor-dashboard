@@ -44,7 +44,7 @@ export default function ScreenshotsPage() {
         const res = await fetch('/api/screenshots');
         const json = await res.json();
         if (json.success) {
-          setUsers(json.data);
+          setUsers(json.data.filter((u: User) => u.username !== user?.username));
         }
       } catch (err) {
         console.error(err);
@@ -53,7 +53,7 @@ export default function ScreenshotsPage() {
       }
     }
     fetchUsers();
-  }, []);
+  }, [user?.username]);
 
   const handleUserClick = async (user: User) => {
     setSelectedUser(user);

@@ -6,6 +6,7 @@ import Manager from "@/models/manager";
 import "@/models/department";
 import "@/models/location";
 import TimeEntry from "@/models/time_entry";
+import ActivityLog from "@/models/activity_log";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
 
@@ -126,19 +127,17 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Compute "PC active" via the presence of any TimeEntry for today.
-    // Keep `active` as the existing account/profile activation flag used elsewhere.
-    const dateStr = new Date().toISOString().split('T')[0];
-    const dayStart = new Date(dateStr + "T00:00:00.000Z");
+    // Compute "PC active" via activity logs from the last 5 minutes.
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const recentEntries = await TimeEntry.find({
-      userId: { $in: data.map((u: any) => u._id) },
-      date: dayStart
+    const recentLogs = await ActivityLog.find({
+      userId: { $in: data.map((u: any) => u._id.toString()) },
+      createdAt: { $gte: fiveMinutesAgo }
     })
       .select("userId")
       .lean();
 
-    const pcActiveIds = new Set(recentEntries.map((e: any) => e.userId.toString()));
+    const pcActiveIds = new Set(recentLogs.map((e: any) => e.userId));
     data.forEach((u: any) => {
       u.pcActive = pcActiveIds.has(u._id.toString());
     });

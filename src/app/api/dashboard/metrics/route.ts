@@ -160,8 +160,15 @@ export async function GET(req: NextRequest) {
       activeMap.set(p.userId.toString(), Boolean(p.active));
     }
 
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const activeLogsPerUser = await ActivityLog.find({
+      userId: { $in: activityUserIds },
+      createdAt: { $gte: fiveMinutesAgo }
+    }).select("userId").lean();
+
+    const activeIds = new Set(activeLogsPerUser.map(l => l.userId));
     const connectedTotal = users.length;
-    const connectedActive = userIds.reduce((acc: number, id) => acc + (activeMap.get(id.toString()) ? 1 : 0), 0);
+    const connectedActive = userIds.filter(id => activeIds.has(id.toString())).length;
     const connectedInactive = Math.max(0, connectedTotal - connectedActive);
 
     const timeEntries = (await TimeEntry.find({

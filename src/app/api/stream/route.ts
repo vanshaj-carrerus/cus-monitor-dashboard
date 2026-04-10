@@ -3,6 +3,7 @@ import Stream from "@/models/stream";
 import User from "@/models/user";
 import DBConnect from "../../../../lib/DB_Connect";
 import TimeEntry from "@/models/time_entry";
+import ActivityLog from "@/models/activity_log";
 import CommonUser from "@/models/common_user";
 import { getSession } from "../../../../lib/session";
 
@@ -61,24 +62,22 @@ function isAgentRequest(req: NextRequest): boolean {
 }
 
 async function getPcActiveStatus(userId: string): Promise<boolean> {
-    // "PC active" means we have received a recent heartbeat from the agent app.
-    // This is the only signal we should use to decide whether livestream is allowed.
+    // "PC active" means we have received a recent activity log from the agent app.
+    // This ensures the dashboard correctly reflects real-time presence.
     const userQuery: Array<Record<string, string>> = [{ username: userId }];
     if (userId.length === 24) userQuery.push({ _id: userId });
     const user = await User.findOne({ $or: userQuery }).select("_id").lean() as UserLookupDoc | null;
     if (!user?._id) return false;
 
-    const dateStr = new Date().toISOString().split('T')[0];
-    const dayStart = new Date(dateStr + "T00:00:00.000Z");
-
-    const entry = await TimeEntry.findOne({
-        userId: user._id,
-        date: dayStart
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const log = await ActivityLog.findOne({
+        userId: user._id.toString(),
+        createdAt: { $gte: fiveMinutesAgo }
     })
         .select("_id")
         .lean();
 
-    return Boolean(entry);
+    return Boolean(log);
 }
 
 async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<boolean> {

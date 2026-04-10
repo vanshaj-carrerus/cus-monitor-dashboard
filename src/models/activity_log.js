@@ -11,6 +11,7 @@ const ActivityLogSchema = new mongoose.Schema({
 
 // Compound index for fast per-user queries sorted by time
 ActivityLogSchema.index({ userId: 1, start_time: -1 });
+ActivityLogSchema.index({ createdAt: -1 });
 
 const ActivityLog = mongoose.models.ActivityLog || mongoose.model("ActivityLog", ActivityLogSchema);
 export default ActivityLog;

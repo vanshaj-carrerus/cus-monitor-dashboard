@@ -53,32 +53,37 @@ export async function GET(req: NextRequest) {
     if (status === "enable") profileFilter.active = true;
     if (status === "disable") profileFilter.active = false;
 
-    // Filter by specific role if requested
     let commonUserProfiles: any[] = [];
     let teamLeaderProfiles: any[] = [];
+    let managerProfiles: any[] = [];
     if (roleFilter === "team_leader") {
       commonUserProfiles = [];
       teamLeaderProfiles = await TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean();
     } else if (roleFilter === "common") {
       commonUserProfiles = await CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean();
       teamLeaderProfiles = [];
+    } else if (roleFilter === "manager") {
+      commonUserProfiles = [];
+      teamLeaderProfiles = [];
+      managerProfiles = actor.role === "admin" ? await Manager.find(profileFilter).lean() : [];
     } else {
-      // Default: get both
-      [commonUserProfiles, teamLeaderProfiles] = await Promise.all([
+      // Default: get all three
+      [commonUserProfiles, teamLeaderProfiles, managerProfiles] = await Promise.all([
         CommonUser.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
         TeamLeader.find(profileFilter).populate("departmentId", "name").populate("locationId", "name").lean(),
+        actor.role === "admin" ? Manager.find({}).lean() : Promise.resolve([]),
       ]);
     }
 
     const allowedIds = [
-      ...new Set([...commonUserProfiles, ...teamLeaderProfiles].map((p: any) => p.userId.toString())),
+      ...new Set([...commonUserProfiles, ...teamLeaderProfiles, ...managerProfiles].map((p: any) => p.userId.toString())),
     ];
 
     if (allowedIds.length === 0) {
       return NextResponse.json({ success: true, count: 0, total: 0, page, limit, data: [] }, { status: 200 });
     }
 
-    const userFilter: any = { _id: { $in: allowedIds }, role: { $in: ["common", "team_leader"] } };
+    const userFilter: any = { _id: { $in: allowedIds }, role: { $in: ["common", "team_leader", "manager"] } };
     if (search) {
       userFilter.$or = [
         { username: { $regex: search, $options: "i" } },
@@ -97,11 +102,17 @@ export async function GET(req: NextRequest) {
 
     const commonMap = new Map(commonUserProfiles.map((p: any) => [p.userId.toString(), p]));
     const teamLeaderMap = new Map(teamLeaderProfiles.map((p: any) => [p.userId.toString(), p]));
+    const managerMap = new Map(managerProfiles.map((p: any) => [p.userId.toString(), p]));
 
     const data = users.map((u: any) => {
       const key = u._id.toString();
-      const prof = u.role === "common" ? commonMap.get(key) : teamLeaderMap.get(key);
-      const active = prof ? Boolean(prof.active) : false;
+      let prof = null;
+      if (u.role === "common") prof = commonMap.get(key);
+      else if (u.role === "team_leader") prof = teamLeaderMap.get(key);
+      else if (u.role === "manager") prof = managerMap.get(key);
+
+      // Managers don't have an active flag yet, defaulting to true for them
+      const active = u.role === "manager" ? true : (prof ? Boolean(prof.active) : false);
       return {
         _id: u._id,
         username: u.username,

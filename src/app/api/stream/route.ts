@@ -94,8 +94,25 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
         }
     }
 
-    if (role === "admin" || role === "manager") return true;
+    if (role === "admin") return true;
     if (isAgentRequest(req)) return true; // Agent can view its own (or if it's the target)
+
+    // Resolve target to see their role to enforce admin-only restrictions
+    const possibleIds = await resolveUserIds(targetUserId);
+    const targetOid = possibleIds.find(id => id.length === 24);
+
+    let targetUser = null;
+    if (targetOid) {
+        targetUser = await User.findById(targetOid).select("role").lean();
+    } else {
+        targetUser = await User.findOne({ username: targetUserId }).select("role").lean();
+    }
+
+    if (targetUser && (targetUser.role === 'admin' || targetUser.role === 'manager') && role !== 'admin') {
+        return false;
+    }
+
+    if (role === "manager") return true;
 
     if (role === "team_leader") {
         if (!actorEmail) return false;

@@ -30,13 +30,13 @@ export async function POST() {
             return NextResponse.json({ success: true, checked: 0, deactivated: 0 }, { status: 200 });
         }
 
-        const cutoff = new Date(Date.now() - INACTIVITY_WINDOW_MS);
+        const dateStr = new Date().toISOString().split('T')[0];
+        const dayStart = new Date(dateStr + "T00:00:00.000Z");
 
-        // Look for any active user's time entry that has at least one recent heartbeat,
-        // regardless of day bucket, to avoid timezone/date-boundary mismatches.
+        // Look for any active user's time entry that exists for today
         const recentlyActiveEntries = (await TimeEntry.find({
             userId: { $in: activeUserIdStrings },
-            sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
+            date: dayStart
         })
             .select("userId")
             .lean()) as Array<{ userId: { toString: () => string } }>;

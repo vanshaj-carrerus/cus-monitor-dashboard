@@ -476,7 +476,7 @@ export default function LiveStreamPage() {
       const res = await fetch('/api/users', { cache: 'no-store', credentials: 'include' });
       const json = await res.json();
       if (json.success) {
-        setUsers((json.data || []).filter((u: User) => u.role !== 'manager' && u.pcActive && u.username !== currentUser?.username));
+        setUsers((json.data || []).filter((u: User) => u.role !== 'manager' && u.username !== currentUser?.username));
       }
     } catch (err) {
       console.error("Fetch users failed", err);

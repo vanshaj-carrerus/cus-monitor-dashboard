@@ -115,12 +115,14 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Compute "PC active" via recent heartbeats (TimeEntry.sessions.lastHeartbeat).
+    // Compute "PC active" via the presence of any TimeEntry for today.
     // Keep `active` as the existing account/profile activation flag used elsewhere.
-    const cutoff = new Date(Date.now() - 4 * 60 * 1000);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const dayStart = new Date(dateStr + "T00:00:00.000Z");
+
     const recentEntries = await TimeEntry.find({
       userId: { $in: data.map((u: any) => u._id) },
-      sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
+      date: dayStart
     })
       .select("userId")
       .lean();

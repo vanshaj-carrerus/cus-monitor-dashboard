@@ -68,10 +68,12 @@ async function getPcActiveStatus(userId: string): Promise<boolean> {
     const user = await User.findOne({ $or: userQuery }).select("_id").lean() as UserLookupDoc | null;
     if (!user?._id) return false;
 
-    const cutoff = new Date(Date.now() - 4 * 60 * 1000); // 4 minutes
+    const dateStr = new Date().toISOString().split('T')[0];
+    const dayStart = new Date(dateStr + "T00:00:00.000Z");
+
     const entry = await TimeEntry.findOne({
         userId: user._id,
-        sessions: { $elemMatch: { lastHeartbeat: { $gte: cutoff } } },
+        date: dayStart
     })
         .select("_id")
         .lean();

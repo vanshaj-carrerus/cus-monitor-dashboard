@@ -82,7 +82,16 @@ export async function GET(req: NextRequest) {
                         CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
                         TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId").lean()
                     ]);
-                    const allowedIds = [...new Set([...c, ...t].map((p: any) => p.userId.toString()))];
+                    const allowedIds = [...new Set([...c, ...t]
+                        .filter((p: any) => p.userId != null)
+                        .filter((p: any) => p.userId.toString() !== actor._id.toString())
+                        .map((p: any) => p.userId.toString())
+                    )];
+                    
+                    if (allowedIds.length === 0) {
+                        return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
+                    }
+                    
                     userFilter._id = { $in: allowedIds };
                 } else {
                     return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });

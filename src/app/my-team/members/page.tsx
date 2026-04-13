@@ -5,7 +5,6 @@ import {
   Search,
   Plus,
   Trash2,
-  User as UserIcon,
   Users,
   Building2,
   MapPin,
@@ -17,8 +16,11 @@ import {
   ChevronRight,
   Ban,
   X,
-  Edit2
+  Edit2,
+  Upload,
+  Loader2
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../../lib/utils';
@@ -55,6 +57,9 @@ export default function EmployeesPage() {
   const [editingLocId, setEditingLocId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [teamLeaders, setTeamLeaders] = useState<any[]>([]);
+
+  const [bulkResults, setBulkResults] = useState<{ successCount: number; failedCount: number; failures: any[] } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = async (nextPage = page, nextLimit = limit) => {
     try {
@@ -338,6 +343,59 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          alert('No data found in excel sheet');
+          setUploading(false);
+          return;
+        }
+
+        // Map excel columns to our expected format
+        // Expected columns: Name, Email, Role, Department, Team Leader Email
+        const users = data.map((row: any) => ({
+          name: row['Name'] || row['name'],
+          email: row['Email'] || row['email'],
+          role: row['Role'] || row['role'] || 'common',
+          departmentName: row['Department'] || row['department'],
+          teamLeaderEmail: row['Team Leader Email'] || row['team_leader_email'] || row['Team Leader']
+        }));
+
+        const res = await fetch('/api/users/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ users }),
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          setBulkResults(json);
+          fetchData();
+        } else {
+          alert(json.error || 'Bulk upload failed');
+        }
+        setUploading(false);
+      };
+      reader.readAsBinaryString(file);
+    } catch (err) {
+      alert('Failed to process excel file');
+      setUploading(false);
+    }
+  };
+
   const tabs = [
     { id: 'members', label: 'Members', icon: Users },
     ...(canManageStructure
@@ -399,6 +457,25 @@ export default function EmployeesPage() {
                     <Plus className="h-5 w-5" />
                     Add Member
                   </Button>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls, .csv"
+                      className="hidden"
+                      id="bulk-upload-input"
+                      onChange={handleBulkUpload}
+                      disabled={uploading}
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => document.getElementById('bulk-upload-input')?.click()}
+                      className="flex items-center gap-2 text-[#5E35B1] border-[#5E35B1]/20 rounded-xl bg-[#F5F3FF] px-6 py-3 h-auto font-bold cursor-pointer"
+                    >
+                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+                      Bulk Upload
+                    </Button>
+                  </div>
                   <Button variant="secondary" className="flex items-center gap-2 text-slate-400 border-none rounded-xl bg-slate-100/50 px-6 py-3 h-auto font-bold">
                     <Download className="h-5 w-5 rotate-180" />
                     Export
@@ -895,6 +972,64 @@ export default function EmployeesPage() {
                 <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Bulk Upload Results Modal */}
+      {bulkResults && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Upload Results</h3>
+                <p className="text-sm text-slate-500">
+                  Successfully invited {bulkResults.successCount} users. {bulkResults.failedCount} failures found.
+                </p>
+              </div>
+              <button onClick={() => setBulkResults(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1">
+              {bulkResults.failures.length > 0 ? (
+                <div className="space-y-4">
+                  <h4 className="font-bold text-red-500 flex items-center gap-2">
+                    <XCircle className="h-5 w-5" />
+                    Failed Entries
+                  </h4>
+                  <div className="border border-slate-100 rounded-xl overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-bold text-slate-700">Name</th>
+                          <th className="px-4 py-3 text-left font-bold text-slate-700">Email</th>
+                          <th className="px-4 py-3 text-left font-bold text-slate-700">Error</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {bulkResults.failures.map((f, i) => (
+                          <tr key={i} className="hover:bg-slate-50/50">
+                            <td className="px-4 py-3 text-slate-600">{f.userData.name || '-'}</td>
+                            <td className="px-4 py-3 text-slate-600">{f.userData.email || '-'}</td>
+                            <td className="px-4 py-3 text-red-500 text-xs">{f.error}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                  <p className="text-lg font-bold text-slate-700">All members were added successfully!</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+              <Button onClick={() => setBulkResults(null)} className="bg-[#5E35B1] text-white">
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       )}

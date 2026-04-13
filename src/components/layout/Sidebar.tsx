@@ -44,6 +44,7 @@ function itemsForRole(role: string): Item[] {
   const myTeamSub: SubItem[] = [
     { label: 'Members', href: '/my-team/members' },
     ...(role === 'admin' ? [{ label: 'Managers', href: '/my-team/managers', adminOnly: true } as SubItem] : []),
+    ...(role === 'admin' ? [{ label: 'Admins', href: '/my-team/admins', adminOnly: true } as SubItem] : []),
   ];
 
   return [

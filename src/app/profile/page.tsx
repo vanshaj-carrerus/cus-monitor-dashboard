@@ -62,7 +62,7 @@ export default function ProfilePage() {
             Download the CUS Monitor app for your device.
           </p>
           <Link
-            href="/cus-monitor.exe"
+            href="/CUS-Monitor_1.0.3_x64-setup.exe"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex rounded-xl bg-[#5E35B1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#4527A0]"

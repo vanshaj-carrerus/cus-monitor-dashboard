@@ -30,7 +30,7 @@ export default function EmployeesPage() {
   const { user } = useAuth();
   const canManageStructure = user?.role === 'admin';
 
-  const [activeTab, setActiveTab] = useState<'members' | 'departments' | 'location'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'departments' | 'location'>('members');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'enable' | 'disable'>('all');
 
@@ -60,6 +60,9 @@ export default function EmployeesPage() {
 
   const [bulkResults, setBulkResults] = useState<{ successCount: number; failedCount: number; failures: any[] } | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const [invites, setInvites] = useState<any[]>([]);
+  const [fetchingInvites, setFetchingInvites] = useState(false);
 
   const fetchData = async (nextPage = page, nextLimit = limit) => {
     try {
@@ -104,6 +107,27 @@ export default function EmployeesPage() {
     setLoading(true);
     fetchData(page, limit);
   }, [page, limit]);
+
+  const fetchInvites = async () => {
+    setFetchingInvites(true);
+    try {
+      const res = await fetch('/api/auth/invite', { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setInvites(data.invites);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFetchingInvites(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'invites') {
+      fetchInvites();
+    }
+  }, [activeTab]);
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const from = total === 0 ? 0 : (page - 1) * limit + 1;
@@ -343,6 +367,24 @@ export default function EmployeesPage() {
     }
   };
 
+  const deleteInvite = async (invite: any) => {
+    if (!confirm(`Delete invite for ${invite.email}?`)) return;
+    try {
+      const res = await fetch(`/api/auth/invite/${invite._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchInvites();
+      } else {
+        alert(data.error || 'Failed to delete invite');
+      }
+    } catch (err) {
+      alert('Failed to delete invite');
+    }
+  };
+
   const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -398,6 +440,7 @@ export default function EmployeesPage() {
 
   const tabs = [
     { id: 'members', label: 'Members', icon: Users },
+    { id: 'invites', label: 'Invites', icon: Plus },
     ...(canManageStructure
       ? [
         { id: 'departments', label: 'Departments', icon: Building2 },
@@ -406,7 +449,7 @@ export default function EmployeesPage() {
       : []),
   ] as const;
 
-  const effectiveTab = canManageStructure ? activeTab : 'members';
+  const effectiveTab = activeTab;
 
   return (
     <DashboardLayout>
@@ -416,7 +459,7 @@ export default function EmployeesPage() {
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id as 'members' | 'departments' | 'location')}
+            onClick={() => setActiveTab(tab.id as 'members' | 'invites' | 'departments' | 'location')}
             className={cn(
               "flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-bold text-base",
               effectiveTab === tab.id
@@ -750,6 +793,68 @@ export default function EmployeesPage() {
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {effectiveTab === 'invites' && (
+          <div className="p-8">
+            <div className="flex flex-col gap-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-[#0D1B3E]">Pending Invitations</h3>
+                <Button onClick={() => setIsAddMemberOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                  <Plus className="h-5 w-5" />
+                  Invite Member
+                </Button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-slate-50 border-y border-slate-100">
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</th>
+                      <th className="px-4 py-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expires At</th>
+                      <th className="px-4 py-3 text-right text-[10px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {fetchingInvites ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-slate-500">Loading…</td>
+                      </tr>
+                    ) : invites.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-slate-500">No pending invitations.</td>
+                      </tr>
+                    ) : (
+                      invites.map((invite: any) => (
+                        <tr key={invite._id} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="px-4 py-4 text-sm text-slate-500">{invite.email}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500 capitalize">{invite.role}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">{invite.departmentId?.name || '-'}</td>
+                          <td className="px-4 py-4 text-sm text-slate-500">
+                            {new Date(invite.expiresAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center justify-end">
+                              <button
+                                type="button"
+                                onClick={() => deleteInvite(invite)}
+                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                                title="Delete Invite"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

@@ -6,6 +6,43 @@ import { getSession } from "../../../../../lib/session";
 import Invite from "@/models/invite";
 import User from "@/models/user";
 import Manager from "@/models/manager";
+import Department from "@/models/department";
+
+export async function GET() {
+    try {
+        await DBConnect();
+        const session = await getSession();
+        if (!session) {
+            return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+        }
+
+        const actor = await User.findById(session.userId).select("role").lean();
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader")) {
+            return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+        }
+
+        let query: any = { status: "pending" };
+
+        // If manager or team leader, filter by what they can see
+        if (actor.role === "manager") {
+            const mgr = await Manager.findOne({ userId: actor._id }).lean();
+            const deptIds = (mgr?.managedDepartments || []);
+            query.departmentId = { $in: deptIds };
+        } else if (actor.role === "team_leader") {
+            query.teamLeaderId = actor._id;
+        }
+
+        const invites = await Invite.find(query)
+            .populate("departmentId", "name")
+            .populate("teamLeaderId", "username email")
+            .sort({ createdAt: -1 })
+            .lean();
+
+        return NextResponse.json({ success: true, invites });
+    } catch (error: any) {
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}
 
 export async function POST(request: Request) {
     try {
@@ -28,7 +65,7 @@ export async function POST(request: Request) {
         }
 
         const r = String(role).toLowerCase();
-        
+
         // Validate role
         if (!["admin", "manager", "common", "team_leader"].includes(r)) {
             return NextResponse.json({ success: false, error: "Invalid role." }, { status: 400 });

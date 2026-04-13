@@ -178,7 +178,7 @@ export default function AdminsManagementPage() {
                   </p>
                   <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/50 p-3">
                     {departments.map((d) => (
-                      <label key={d._id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label key={d._id} className="flex text-black! cursor-pointer items-center gap-2 text-sm">
                         <input
                           type="checkbox"
                           className="rounded border-slate-800"
@@ -204,7 +204,7 @@ export default function AdminsManagementPage() {
                   </p>
                   <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/50 p-3">
                     {locations.map((loc) => (
-                      <label key={loc._id} className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label key={loc._id} className="flex cursor-pointer text-black! items-center gap-2 text-sm">
                         <input
                           type="checkbox"
                           className="rounded border-slate-800"

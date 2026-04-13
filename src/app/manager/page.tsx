@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { mockEmployees } from '../../../lib/mock-data';
 
 export default function ManagerPage() {

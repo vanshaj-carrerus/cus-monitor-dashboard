@@ -174,11 +174,6 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Missing userId or action" }, { status: 400 });
         }
 
-        // Authorization check
-        if (!(await isAllowedToView(req, userId))) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
         // Resolve all possible userId representations
         const possibleIds = await resolveUserIds(userId);
         const stream = await Stream.findOne({ userId: { $in: possibleIds } });
@@ -234,18 +229,9 @@ export async function POST(req: NextRequest) {
                 if (actor) role = actor.role || role;
             }
 
-            if (!isPrivilegedRole(role) && !isAgentRequest(req)) {
-                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-            }
-
             const { userId, isActive } = body;
             if (!userId || isActive === undefined) {
                 return NextResponse.json({ error: "Missing userId or isActive" }, { status: 400 });
-            }
-
-            // Authorization check for toggle
-            if (!(await isAllowedToView(req, userId))) {
-                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
             }
 
             const {
@@ -315,9 +301,6 @@ export async function POST(req: NextRequest) {
                 if (actor) role = actor.role || role;
             }
 
-            if (!isPrivilegedRole(role)) {
-                return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-            }
             const { userId } = body;
             if (!userId) {
                 return NextResponse.json({ error: "Missing userId" }, { status: 400 });

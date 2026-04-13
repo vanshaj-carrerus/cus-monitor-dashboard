@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import "./department";
+import "./location";
 
 const ManagerSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },

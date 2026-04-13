@@ -133,6 +133,7 @@ function RemoteControlOverlay({
       try {
         await fetch('/api/stream?action=control-heartbeat', {
           method: 'POST',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             'x-actor-role': ACTOR_ROLE,
@@ -224,6 +225,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
     try {
       const res = await fetch(`/api/stream?action=toggle`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'x-actor-role': ACTOR_ROLE,
@@ -243,6 +245,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
           const identity = `admin_${Math.random().toString(36).substring(7)}`;
           setAdminIdentity(identity);
           const tokenRes = await fetch(`/api/stream/token?room=room_${user.username}&identity=${encodeURIComponent(identity)}&clientType=admin`, {
+            credentials: 'include',
             headers: { 'x-actor-role': ACTOR_ROLE },
           });
           const tokenData = await tokenRes.json();
@@ -273,7 +276,9 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
     if (!isActive) return;
     const timer = setInterval(async () => {
       try {
-        const res = await fetch(`/api/stream?action=status&userId=${encodeURIComponent(user.username)}`);
+        const res = await fetch(`/api/stream?action=status&userId=${encodeURIComponent(user.username)}`, {
+          credentials: 'include',
+        });
         const data = await res.json();
         if (!data?.success) return;
 
@@ -313,6 +318,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
     try {
       await fetch(`/api/stream?action=toggle`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'x-actor-role': ACTOR_ROLE,

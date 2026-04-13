@@ -41,7 +41,7 @@ export default function ScreenshotsPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const res = await fetch('/api/screenshots');
+        const res = await fetch('/api/screenshots', { credentials: 'include' });
         const json = await res.json();
         if (json.success) {
           setUsers(json.data.filter((u: User) => u.username !== user?.username));
@@ -59,7 +59,7 @@ export default function ScreenshotsPage() {
     setSelectedUser(user);
     setScreenshotsLoading(true);
     try {
-      const res = await fetch(`/api/screenshots?userId=${user._id}`);
+      const res = await fetch(`/api/screenshots?userId=${user._id}`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setUserScreenshots(json.data);

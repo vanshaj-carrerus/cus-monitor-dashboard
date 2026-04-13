@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing room/identity or invalid clientType' }, { status: 400 });
   }
 
-  if (clientType === 'admin' && !['admin', 'manager'].includes(actorRole)) {
+  if (clientType === 'admin' && !['admin', 'manager', 'team_leader'].includes(actorRole)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

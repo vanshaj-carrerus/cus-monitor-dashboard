@@ -3,7 +3,9 @@ import DBConnect from "../../../../../lib/DB_Connect";
 import { getSession } from "../../../../../lib/session";
 import User from "@/models/user";
 import CommonUser from "@/models/common_user";
+import TeamLeader from "@/models/team_leader";
 import Screenshot from "@/models/screenshot";
+import Manager from "@/models/manager";
 
 export async function GET(request: Request) {
   try {
@@ -14,7 +16,7 @@ export async function GET(request: Request) {
     }
 
     const user = await User.findById(session.userId).select("role _id email").lean();
-    if (!user || user.role !== "team_leader") {
+    if (!user || (user.role !== "team_leader" && user.role !== "manager")) {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -27,12 +29,31 @@ export async function GET(request: Request) {
 
     const escapedEmail = (user.email || "").replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // Get team member IDs with case-insensitive filtering
-    const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } })
-      .select("userId")
-      .lean() as Array<{ userId: string }>;
-    const teamMemberIds = teamMembers.map((m) => m.userId.toString());
-    const allowedUserIds = Array.from(new Set([...teamMemberIds, user._id.toString()]));
+    let allowedUserIds: string[] = [user._id.toString()];
+
+    if (user.role === "team_leader") {
+      // Get team member IDs with case-insensitive filtering
+      const teamMembers = await CommonUser.find({ teamLeaderEmail: { $regex: `^${escapedEmail}$`, $options: "i" } })
+        .select("userId")
+        .lean() as Array<{ userId: string }>;
+      allowedUserIds = Array.from(new Set([...teamMembers.map((m) => m.userId.toString()), user._id.toString()]));
+    } else if (user.role === "manager") {
+      const mgr = await Manager.findOne({ userId: user._id }).lean();
+      const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
+
+      if (deptIds.length) {
+        const [commonMembers, teamLeaders] = await Promise.all([
+          CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
+          TeamLeader.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
+        ]);
+
+        allowedUserIds = Array.from(new Set([
+          ...commonMembers.map((m: any) => m.userId.toString()),
+          ...teamLeaders.map((m: any) => m.userId.toString()),
+          user._id.toString(),
+        ]));
+      }
+    }
 
     // Build search filter
     const searchQuery = searchTerm

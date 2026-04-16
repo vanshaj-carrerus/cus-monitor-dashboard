@@ -19,6 +19,18 @@ export async function PATCH(
     const body = await request.json();
     const { role, managedDepartmentIds, managedLocationIds } = body;
 
+    const target = await User.findById(userId).select("role").lean();
+    if (!target) {
+      return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
+    }
+
+    if (target.role === "admin_compliance" && session.role !== "admin_compliance") {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admin_compliance can manage compliance admins." }, { status: 403 });
+    }
+    if (role === "admin_compliance" && session.role !== "admin_compliance") {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admin_compliance can assign compliance admin role." }, { status: 403 });
+    }
+
     // Update role if provided
     if (role) {
       await User.findByIdAndUpdate(userId, { role });

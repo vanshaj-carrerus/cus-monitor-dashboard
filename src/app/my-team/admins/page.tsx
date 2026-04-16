@@ -139,21 +139,21 @@ export default function AdminsManagementPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Role</label>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase">Role</label>
                     <select
                       value={selections[a._id]?.role || 'admin'}
                       onChange={(e) => setSelections(prev => ({
                         ...prev,
                         [a._id]: { ...prev[a._id], role: e.target.value }
                       }))}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5E35B1]"
+                      className="rounded-lg text-slate-600 border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5E35B1]"
                     >
                       <option value="admin">Admin</option>
-                      <option value="admin_compliance">Compliance Admin</option>
+                      {user?.role === 'admin_compliance' && <option value="admin_compliance">Compliance Admin</option>}
                       <option value="manager">Manager</option>
                       <option value="team_leader">Team Leader</option>
                       <option value="common">Common User</option>
-                      <option value="common_compliance">Compliance User</option>
+                      {user?.role === 'admin_compliance' && <option value="common_compliance">Compliance User</option>}
                     </select>
                   </div>
                   <Button
@@ -170,61 +170,6 @@ export default function AdminsManagementPage() {
                       </span>
                     )}
                   </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <p className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <Building2 className="h-4 w-4" /> Departments (multi)
-                  </p>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/50 p-3">
-                    {departments.map((d) => (
-                      <label key={d._id} className="flex text-black! cursor-pointer items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-800"
-                          checked={(selections[a._id]?.dept || []).includes(d._id)}
-                          onChange={() =>
-                            setSelections((prev) => ({
-                              ...prev,
-                              [a._id]: {
-                                ...prev[a._id],
-                                dept: toggleId(prev[a._id]?.dept || [], d._id),
-                              },
-                            }))
-                          }
-                        />
-                        {d.name}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <MapPin className="h-4 w-4" /> Locations (multi)
-                  </p>
-                  <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50/50 p-3">
-                    {locations.map((loc) => (
-                      <label key={loc._id} className="flex cursor-pointer text-black! items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-800"
-                          checked={(selections[a._id]?.loc || []).includes(loc._id)}
-                          onChange={() =>
-                            setSelections((prev) => ({
-                              ...prev,
-                              [a._id]: {
-                                ...prev[a._id],
-                                loc: toggleId(prev[a._id]?.loc || [], loc._id),
-                              },
-                            }))
-                          }
-                        />
-                        {loc.name}
-                      </label>
-                    ))}
-                  </div>
                 </div>
               </div>
             </Card>

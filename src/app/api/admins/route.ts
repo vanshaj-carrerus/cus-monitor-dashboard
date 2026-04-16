@@ -12,8 +12,11 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
-    // Find all users with admin role
-    const admins = await User.find({ role: "admin" }).select("username email role").sort({ username: 1 }).lean();
+    // Only compliance admins can list compliance admins; normal admins see only normal admins.
+    const query: any = session.role === "admin_compliance"
+      ? { role: { $in: ["admin", "admin_compliance"] } }
+      : { role: "admin" };
+    const admins = await User.find(query).select("username email role").sort({ username: 1 }).lean();
 
     const ids = admins.map((m: any) => m._id);
 

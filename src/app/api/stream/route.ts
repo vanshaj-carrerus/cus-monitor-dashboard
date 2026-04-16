@@ -56,7 +56,7 @@ function getActorRole(req: NextRequest): string {
 }
 
 function isPrivilegedRole(role: string): boolean {
-    return role === "admin" || role === "manager" || role === "team_leader";
+    return role === "admin" || role === "manager" || role === "team_leader" || role === "admin_compliance";
 }
 
 function isAgentRequest(req: NextRequest): boolean {
@@ -95,7 +95,7 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
         }
     }
 
-    if (role === "admin") return true;
+    if (role === "admin" || role === "admin_compliance") return true;
     if (isAgentRequest(req)) return true; // Agent can view its own (or if it's the target)
 
     // Resolve target to see their role to enforce admin-only restrictions
@@ -109,7 +109,10 @@ async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<
         targetUser = await User.findOne({ username: targetUserId }).select("role").lean();
     }
 
-    if (targetUser && (targetUser.role === 'admin' || targetUser.role === 'manager') && role !== 'admin') {
+    if (targetUser && (targetUser.role === 'admin' || targetUser.role === 'manager') && role !== 'admin' && role !== 'admin_compliance') {
+        return false;
+    }
+    if (targetUser && (targetUser.role === 'common_compliance' || targetUser.role === 'admin_compliance') && role !== 'admin_compliance') {
         return false;
     }
 

@@ -17,11 +17,14 @@ export async function GET() {
         }
 
         const actor = await User.findById(session.userId).select("role").lean();
-        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader")) {
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader" && actor.role !== "admin_compliance")) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 
         let query: any = { status: "pending" };
+        if (actor.role === "admin_compliance") {
+            query.role = { $in: ["common_compliance", "admin_compliance"] };
+        }
 
         // If manager or team leader, filter by what they can see
         if (actor.role === "manager") {
@@ -53,7 +56,7 @@ export async function POST(request: Request) {
         }
 
         const actor = await User.findById(session.userId).select("role").lean();
-        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader")) {
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader" && actor.role !== "admin_compliance")) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 
@@ -66,18 +69,28 @@ export async function POST(request: Request) {
 
         const r = String(role).toLowerCase();
 
-        // Validate role
-        if (!["admin", "manager", "common", "team_leader"].includes(r)) {
-            return NextResponse.json({ success: false, error: "Invalid role." }, { status: 400 });
+        const allowedRoles = actor.role === "admin_compliance"
+            ? ["common_compliance", "admin_compliance"]
+            : actor.role === "admin"
+                ? ["common", "team_leader", "manager", "admin"]
+                : actor.role === "manager"
+                    ? ["common", "team_leader"]
+                    : ["common"];
+
+        if (!allowedRoles.includes(r)) {
+            return NextResponse.json({ success: false, error: "Invalid role or permission denied." }, { status: 403 });
         }
 
-        // Common users require department and team leader
         if (r === "common" && (!departmentId || !teamLeaderId)) {
             return NextResponse.json({ success: false, error: "Department and Team Leader are required for common users." }, { status: 400 });
         }
 
+        if (r === "common_compliance" && !departmentId) {
+            return NextResponse.json({ success: false, error: "Department is required for compliance users." }, { status: 400 });
+        }
+
         if (actor.role === "manager") {
-            if (["admin", "manager"].includes(r)) {
+            if (["admin", "manager", "common_compliance", "admin_compliance"].includes(r)) {
                 return NextResponse.json({ success: false, error: "Managers cannot invite this role." }, { status: 403 });
             }
             const mgr = await Manager.findOne({ userId: actor._id }).lean();
@@ -90,11 +103,9 @@ export async function POST(request: Request) {
                 return NextResponse.json({ success: false, error: "Location not in your scope." }, { status: 403 });
             }
         } else if (actor.role === "team_leader") {
-            // Team leaders can only invite common users to their team
             if (r !== "common") {
                 return NextResponse.json({ success: false, error: "Team leaders can only invite common users." }, { status: 403 });
             }
-            // Team leader must be the one assigning themselves
             if (teamLeaderId !== actor._id.toString()) {
                 return NextResponse.json({ success: false, error: "Team leaders can only invite to their own team." }, { status: 403 });
             }

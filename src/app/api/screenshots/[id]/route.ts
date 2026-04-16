@@ -23,8 +23,8 @@ export async function DELETE(
             return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
         }
 
-        // Only admin, manager, and team_leader can delete screenshots
-        if (!["admin", "manager", "team_leader"].includes(user.role)) {
+        // Only admin, manager, team_leader, and admin_compliance can delete screenshots
+        if (!["admin", "manager", "team_leader", "admin_compliance"].includes(user.role)) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 
@@ -34,6 +34,14 @@ export async function DELETE(
         const screenshot = await Screenshot.findById(screenshotId).populate("userId", "role").lean();
         if (!screenshot) {
             return NextResponse.json({ success: false, error: "Screenshot not found" }, { status: 404 });
+        }
+
+        const targetRole = screenshot.userId?.role;
+        if (['common_compliance', 'admin_compliance'].includes(targetRole) && user.role !== 'admin_compliance') {
+            return NextResponse.json({ success: false, error: 'Forbidden: Only Compliance admins can manage Compliance users' }, { status: 403 });
+        }
+        if (['admin', 'manager'].includes(targetRole) && user.role !== 'admin' && user.role !== 'admin_compliance') {
+            return NextResponse.json({ success: false, error: 'Forbidden: Only admins can manage manager or admin screenshots' }, { status: 403 });
         }
 
         // Check permissions based on role

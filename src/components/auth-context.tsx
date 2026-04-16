@@ -29,7 +29,7 @@ const AuthContext = React.createContext<{
 export const useAuth = () => React.useContext(AuthContext);
 
 export function isMemberRole(role: string) {
-  return role === 'common';
+  return role === 'common' || role === 'common_compliance';
 }
 
 function memberCanAccess(pathname: string) {
@@ -94,7 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.replace('/reports/time-tracker');
       return;
     }
-    if (user.role !== 'admin' && pathname?.startsWith('/my-team/managers')) {
+    if (
+      user.role !== 'admin' &&
+      user.role !== 'admin_compliance' &&
+      pathname &&
+      (pathname.startsWith('/my-team/managers') || pathname.startsWith('/my-team/admins'))
+    ) {
       router.replace('/my-team/members');
     }
   }, [user, loading, pathname, router, isPublic]);

@@ -43,8 +43,8 @@ function itemsForRole(role: string): Item[] {
 
   const myTeamSub: SubItem[] = [
     { label: 'Members', href: '/my-team/members' },
-    ...(role === 'admin' ? [{ label: 'Managers', href: '/my-team/managers', adminOnly: true } as SubItem] : []),
-    ...(role === 'admin' ? [{ label: 'Admins', href: '/my-team/admins', adminOnly: true } as SubItem] : []),
+    ...((role === 'admin' || role === 'admin_compliance') ? [{ label: 'Managers', href: '/my-team/managers', adminOnly: true } as SubItem] : []),
+    ...((role === 'admin' || role === 'admin_compliance') ? [{ label: 'Admins', href: '/my-team/admins', adminOnly: true } as SubItem] : []),
   ];
 
   return [
@@ -144,7 +144,7 @@ export function Sidebar({ role }: { role: string }) {
                     )}
                   >
                     {item.subItems
-                      .filter((si) => !(si.adminOnly && role !== 'admin'))
+                      .filter((si) => !(si.adminOnly && role !== 'admin' && role !== 'admin_compliance'))
                       .map((subItem) => (
                         <li key={subItem.href}>
                           <Link

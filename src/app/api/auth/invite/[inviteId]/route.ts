@@ -16,7 +16,7 @@ export async function DELETE(
         }
 
         const actor = await User.findById(session.userId).select("role").lean();
-        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader")) {
+        if (!actor || (actor.role !== "admin" && actor.role !== "manager" && actor.role !== "team_leader" && actor.role !== "admin_compliance")) {
             return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
         }
 

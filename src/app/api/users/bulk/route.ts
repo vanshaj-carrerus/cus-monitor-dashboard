@@ -49,7 +49,7 @@ export async function POST(request: Request) {
                 if (!email || !role) throw new Error("Email and role are required.");
 
                 const r = String(role).toLowerCase();
-                if (!["admin", "manager", "common", "team_leader"].includes(r)) {
+                if (!["admin", "manager", "common", "team_leader", "common_compliance", "admin_compliance"].includes(r)) {
                     throw new Error(`Invalid role: ${role}`);
                 }
 
@@ -69,6 +69,9 @@ export async function POST(request: Request) {
 
                 if (r === "common" && (!deptId || !tlId)) {
                     throw new Error("Valid Department and Team Leader Email are required for common users.");
+                }
+                if (r === "common_compliance" && !deptId) {
+                    throw new Error("Valid Department is required for compliance users.");
                 }
 
                 const token = crypto.randomBytes(32).toString("hex");

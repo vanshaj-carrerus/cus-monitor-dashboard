@@ -14,6 +14,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: false, error: "Email and role are required." }, { status: 400 });
         }
 
+        const r = String(role).toLowerCase();
+        const validRoles = ["admin", "manager", "common", "team_leader", "common_compliance", "admin_compliance"];
+        if (!validRoles.includes(r)) {
+            return NextResponse.json({ success: false, error: "Invalid role." }, { status: 400 });
+        }
+
         const token = crypto.randomBytes(32).toString("hex");
 
         const invite = await Invite.findOneAndUpdate(

@@ -37,11 +37,16 @@ export default function ScreenshotsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userScreenshots, setUserScreenshots] = useState<Screenshot[]>([]);
   const [screenshotsLoading, setScreenshotsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function fetchUsers() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/screenshots', { credentials: 'include' });
+        const res = await fetch(
+          `/api/screenshots?limit=1000&search=${encodeURIComponent(searchTerm)}`,
+          { credentials: 'include' }
+        );
         const json = await res.json();
         if (json.success) {
           setUsers(json.data.filter((u: User) => u.username !== user?.username));
@@ -53,7 +58,7 @@ export default function ScreenshotsPage() {
       }
     }
     fetchUsers();
-  }, [user?.username]);
+  }, [user?.username, searchTerm]);
 
   const handleUserClick = async (user: User) => {
     setSelectedUser(user);
@@ -118,6 +123,8 @@ export default function ScreenshotsPage() {
             <div className="relative">
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name or email..."
                 className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pl-4 pr-10 text-sm text-gray-500 focus:border-[#5E35B1] focus:outline-none dark:border-slate-800 sm:w-64"
               />

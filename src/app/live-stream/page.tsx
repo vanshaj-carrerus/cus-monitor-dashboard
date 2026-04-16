@@ -479,7 +479,7 @@ export default function LiveStreamPage() {
     }
 
     try {
-      const res = await fetch('/api/users', { cache: 'no-store', credentials: 'include' });
+      const res = await fetch('/api/users?page=1&limit=1000', { cache: 'no-store', credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setUsers((json.data || []).filter((u: User) => u.username !== currentUser?.username));

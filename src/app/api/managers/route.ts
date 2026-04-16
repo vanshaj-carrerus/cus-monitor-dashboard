@@ -8,7 +8,7 @@ export async function GET() {
   try {
     await DBConnect();
     const session = await getSession();
-    if (!session || session.role !== "admin") {
+    if (!session || (session.role !== "admin" && session.role !== "admin_compliance")) {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 

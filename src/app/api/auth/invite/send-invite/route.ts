@@ -14,6 +14,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Email and role are required." }, { status: 400 });
         }
 
+        const r = String(role).toLowerCase();
+        const validRoles = ["admin", "manager", "common", "team_leader", "common_compliance", "admin_compliance"];
+        if (!validRoles.includes(r)) {
+            return NextResponse.json({ error: "Invalid role." }, { status: 400 });
+        }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
         }

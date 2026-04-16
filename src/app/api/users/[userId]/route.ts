@@ -34,7 +34,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
 
     const actor = await User.findById(session.userId).select("role").lean();
     if (!actor) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    if (actor.role !== "admin" && actor.role !== "manager") {
+    if (actor.role !== "admin" && actor.role !== "admin_compliance" && actor.role !== "manager") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -81,7 +81,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         }
         updates.email = email;
       }
-      if (role && ["common", "team_leader", "manager", "admin"].includes(role)) {
+      if (role && ["common", "team_leader", "manager", "admin", "common_compliance", "admin_compliance"].includes(role)) {
         updates.role = role;
       }
     }
@@ -91,9 +91,11 @@ export async function PATCH(request: Request, { params }: Ctx) {
       return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
     }
 
-    // Security: Only admins can edit managers or other admins
-    if ((target.role === 'manager' || target.role === 'admin') && actor.role !== 'admin') {
-      return NextResponse.json({ success: false, error: "Forbidden: Only admins can manage these accounts." }, { status: 403 });
+    // Security: Only admins or Compliance admins can manage manager/admin accounts,
+    // and only Compliance admins can manage Compliance users.
+    if ((target.role === 'manager' || target.role === 'admin' || target.role === 'common_compliance' || target.role === 'admin_compliance')
+      && actor.role !== 'admin' && actor.role !== 'admin_compliance') {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admins or Compliance admins can manage these accounts." }, { status: 403 });
     }
 
     if (Object.keys(updates).length) {
@@ -121,7 +123,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         Manager.deleteOne({ userId }),
       ]);
 
-      if (updates.role === 'common') {
+      if (updates.role === 'common' || updates.role === 'common_compliance') {
         const emailToUse = updates.email || (await User.findById(userId).select("email").lean())?.email;
         await new CommonUser({ userId, ...roleUpdate, userEmail: emailToUse }).save();
       } else if (updates.role === 'team_leader') {
@@ -130,7 +132,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
         await new Manager({ userId }).save();
       }
     } else if (Object.keys(roleUpdate).length) {
-      if (target.role === "common") {
+      if (target.role === "common" || target.role === "common_compliance") {
         if (updates.email) roleUpdate.userEmail = updates.email;
         await CommonUser.updateOne({ userId }, { $set: roleUpdate });
       } else if (target.role === "team_leader") {
@@ -159,7 +161,7 @@ export async function DELETE(_: Request, { params }: Ctx) {
 
     const actor = await User.findById(session.userId).select("role").lean();
     if (!actor) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    if (actor.role !== "admin" && actor.role !== "manager") {
+    if (actor.role !== "admin" && actor.role !== "admin_compliance" && actor.role !== "manager") {
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -175,9 +177,11 @@ export async function DELETE(_: Request, { params }: Ctx) {
       return NextResponse.json({ success: false, error: "User not found." }, { status: 404 });
     }
 
-    // Security: Only admins can delete managers or other admins
-    if ((target.role === 'manager' || target.role === 'admin') && actor.role !== 'admin') {
-      return NextResponse.json({ success: false, error: "Forbidden: Only admins can manage these accounts." }, { status: 403 });
+    // Security: Only admins or Compliance admins can manage manager/admin accounts,
+    // and only Compliance admins can manage Compliance users.
+    if ((target.role === 'manager' || target.role === 'admin' || target.role === 'common_compliance' || target.role === 'admin_compliance')
+      && actor.role !== 'admin' && actor.role !== 'admin_compliance') {
+      return NextResponse.json({ success: false, error: "Forbidden: Only admins or Compliance admins can manage these accounts." }, { status: 403 });
     }
 
     await Promise.all([

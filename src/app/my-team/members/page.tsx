@@ -885,6 +885,8 @@ export default function EmployeesPage() {
                   <option value="team_leader">Team Leader</option>
                   <option value="manager">Manager</option>
                   {user?.role === 'admin' && <option value="admin">Admin</option>}
+                  {user?.role === 'admin_compliance' && <option value="common_compliance">Compliance User</option>}
+                  {user?.role === 'admin_compliance' && <option value="admin_compliance">Compliance Admin</option>}
                 </select>
               </div>
               {inviteForm.role === 'common' && (
@@ -897,8 +899,8 @@ export default function EmployeesPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department {inviteForm.role === 'common' && '*'}</label>
-                <select required={inviteForm.role === 'common'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department {(inviteForm.role === 'common' || inviteForm.role === 'common_compliance') && '*'}</label>
+                <select required={inviteForm.role === 'common' || inviteForm.role === 'common_compliance'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
                   <option value="">Select Department</option>
                   {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
                 </select>

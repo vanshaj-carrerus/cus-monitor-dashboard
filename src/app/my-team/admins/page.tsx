@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/components/auth-context';
-import { Building2, Loader2, MapPin, Save, UserCog, ShieldCheck } from 'lucide-react';
+import { Building2, Loader2, MapPin, Save, ShieldCheck } from 'lucide-react';
 
 type Opt = { _id: string; name: string; address?: string };
 
@@ -59,11 +59,11 @@ export default function AdminsManagementPage() {
   };
 
   useEffect(() => {
-    if (authLoading || user?.role !== 'admin') return;
+    if (authLoading || (user?.role !== 'admin' && user?.role !== 'admin_compliance')) return;
     fetchData();
   }, [authLoading, user?.role]);
 
-  if (authLoading || !user || user.role !== 'admin') {
+  if (authLoading || !user || (user.role !== 'admin' && user.role !== 'admin_compliance')) {
     return (
       <DashboardLayout>
         <div className="flex justify-center py-20">
@@ -149,9 +149,11 @@ export default function AdminsManagementPage() {
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#5E35B1]"
                     >
                       <option value="admin">Admin</option>
+                      <option value="admin_compliance">Compliance Admin</option>
                       <option value="manager">Manager</option>
                       <option value="team_leader">Team Leader</option>
                       <option value="common">Common User</option>
+                      <option value="common_compliance">Compliance User</option>
                     </select>
                   </div>
                   <Button

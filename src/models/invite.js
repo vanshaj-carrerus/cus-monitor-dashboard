@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const InviteSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
-    role: { type: String, enum: ['admin', 'manager', 'common', 'team_leader'], required: true },
+    role: { type: String, enum: ['admin', 'manager', 'common', 'team_leader', 'common_compliance', 'admin_compliance'], required: true },
     status: { type: String, enum: ['pending', 'accepted', 'expired'], default: 'pending' },
     token: { type: String, required: true, unique: true },
     name: { type: String },
@@ -15,4 +15,13 @@ const InviteSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Invite = mongoose.models.Invite || mongoose.model("Invite", InviteSchema);
+
+if (mongoose.models.Invite && mongoose.models.Invite.schema.path('role') && mongoose.models.Invite.schema.path('role').options?.enum) {
+    const rolePath = mongoose.models.Invite.schema.path('role');
+    const enumValues = rolePath.options.enum || [];
+    ['common_compliance', 'admin_compliance'].forEach((role) => {
+        if (!enumValues.includes(role)) enumValues.push(role);
+    });
+}
+
 export default Invite;

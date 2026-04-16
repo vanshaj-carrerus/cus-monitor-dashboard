@@ -42,18 +42,15 @@ export async function POST(request: Request) {
 
         let teamLeaderId = null;
         let teamLeaderEmail = null;
-        if (invite.role === "common" && invite.teamLeaderId) {
-            // Ensure teamLeaderId is in valid format - convert if it's an email string
-            let tl = invite.teamLeaderId;
+        if ((invite.role === "common" || invite.role === "common_compliance") && invite.teamLeaderId) {
+            const tl = invite.teamLeaderId;
             if (typeof tl === 'string' && tl.includes('@')) {
-                // It's an email, look up the user
                 const teamLeaderUser = await User.findOne({ email: tl }).select("_id email").lean();
                 if (teamLeaderUser) {
                     teamLeaderId = teamLeaderUser._id;
                     teamLeaderEmail = teamLeaderUser.email;
                 }
             } else {
-                // Assume it's an ObjectId, look up the email
                 const teamLeaderUser = await User.findById(tl).select("email").lean();
                 if (teamLeaderUser) {
                     teamLeaderId = tl;
@@ -80,12 +77,21 @@ export async function POST(request: Request) {
         if (invite.departmentId) roleData.departmentId = invite.departmentId;
         if (invite.locationId) roleData.locationId = invite.locationId;
         if (invite.managerId) roleData.managerId = invite.managerId;
-        if (invite.role === "common" && teamLeaderEmail) roleData.teamLeaderEmail = teamLeaderEmail;
+        if ((invite.role === "common" || invite.role === "common_compliance") && teamLeaderEmail) roleData.teamLeaderEmail = teamLeaderEmail;
 
-        if (invite.role === "common") roleData.userEmail = invite.email.toLowerCase();
+        if (invite.role === "common" || invite.role === "common_compliance") {
+            roleData.userEmail = invite.email.toLowerCase();
+        }
+
         if (invite.role === "common") {
             if (!roleData.departmentId || !roleData.teamLeaderEmail) {
                 return NextResponse.json({ error: "Department and Team Leader are required for common users." }, { status: 400 });
+            }
+            const newCommonUser = new CommonUser(roleData);
+            await newCommonUser.save();
+        } else if (invite.role === "common_compliance") {
+            if (!roleData.departmentId) {
+                return NextResponse.json({ error: "Department is required for compliance users." }, { status: 400 });
             }
             const newCommonUser = new CommonUser(roleData);
             await newCommonUser.save();

@@ -29,10 +29,60 @@ export async function GET(req: NextRequest) {
 
     const url = new URL(req.url);
     const page = Math.max(1, Number(url.searchParams.get("page") || 1));
-    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 10)));
+    const limit = url.searchParams.has("limit")
+      ? Math.min(1000, Math.max(1, Number(url.searchParams.get("limit") || 1000)))
+      : 1000;
     const search = (url.searchParams.get("search") || "").trim();
     const status = (url.searchParams.get("status") || "all").toLowerCase(); // all|enable|disable
     const roleFilter = (url.searchParams.get("role") || "").toLowerCase(); // Specific role filter
+
+    if (actor.role === "admin_compliance") {
+      const allowedRoles = ['common', 'team_leader', 'manager', 'admin', 'common_compliance', 'admin_compliance'];
+      const filteredRoles = roleFilter && allowedRoles.includes(roleFilter) ? [roleFilter] : allowedRoles;
+      const userFilter: any = { role: { $in: filteredRoles } };
+      if (search) {
+        userFilter.$or = [
+          { username: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const total = await User.countDocuments(userFilter);
+      const skip = (page - 1) * limit;
+      const users = await User.find(userFilter)
+        .select("username email role")
+        .sort({ username: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+      const data = users.map((u: any) => ({
+        _id: u._id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        active: ['manager', 'admin', 'admin_compliance'].includes(u.role),
+        pcActive: false,
+        departmentId: null,
+        locationId: null,
+        teamLeaderId: null,
+      }));
+
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const recentLogs = await ActivityLog.find({
+        userId: { $in: data.map((u: any) => u._id.toString()) },
+        createdAt: { $gte: fiveMinutesAgo }
+      })
+        .select("userId")
+        .lean();
+
+      const pcActiveIds = new Set(recentLogs.map((e: any) => e.userId));
+      data.forEach((u: any) => {
+        u.pcActive = pcActiveIds.has(u._id.toString());
+      });
+
+      return NextResponse.json({ success: true, count: data.length, total, page, limit, data }, { status: 200 });
+    }
 
     const profileFilter: any = {};
     if (actor.role === "manager") {

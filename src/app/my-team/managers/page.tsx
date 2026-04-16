@@ -27,7 +27,7 @@ export default function ManagersAdminPage() {
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || user?.role !== 'admin') return;
+    if (authLoading || (user?.role !== 'admin' && user?.role !== 'admin_compliance')) return;
     void (async () => {
       setLoading(true);
       try {
@@ -57,7 +57,7 @@ export default function ManagersAdminPage() {
     })();
   }, [authLoading, user?.role]);
 
-  if (authLoading || !user || user.role !== 'admin') {
+  if (authLoading || !user || (user.role !== 'admin' && user.role !== 'admin_compliance')) {
     return (
       <DashboardLayout>
         <div className="flex justify-center py-20">

@@ -28,17 +28,17 @@ export async function GET(req: NextRequest) {
             const targetUser = await User.findById(filterUserId).select('role').lean();
             if (!targetUser) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
 
-            // Security: Only admins can see Managers or Admins screenshots
-            if ((targetUser.role === 'manager' || targetUser.role === 'admin') && actor.role !== 'admin') {
+            if ((targetUser.role === 'manager' || targetUser.role === 'admin') && actor.role !== 'admin' && actor.role !== 'admin_compliance') {
+                return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+            }
+            if ((targetUser.role === 'common_compliance' || targetUser.role === 'admin_compliance') && actor.role !== 'admin_compliance') {
                 return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
             }
 
-            // Security: Managers can only see their department's users
             if (actor.role === 'manager') {
                 const mgr = await Manager.findOne({ userId: actor._id }).lean();
                 const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
 
-                // Managers cannot view their own or other managers' screenshots
                 if (filterUserId === actor._id.toString()) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
                 const [c, t] = await Promise.all([
@@ -54,7 +54,6 @@ export async function GET(req: NextRequest) {
                 }
             }
 
-            // Security: Team Leaders can only see their team members
             if (actor.role === 'team_leader') {
                 const member = await CommonUser.findOne({
                     userId: filterUserId,
@@ -66,17 +65,32 @@ export async function GET(req: NextRequest) {
             const screenshots = await Screenshot.find({ userId: filterUserId }).sort({ createdAt: -1 }).lean();
             return NextResponse.json({ success: true, count: screenshots.length, data: screenshots }, { status: 200 });
         } else {
+            const page = Math.max(1, Number(url.searchParams.get("page") || 1));
+            const limit = url.searchParams.has("limit")
+                ? Math.min(1000, Math.max(1, Number(url.searchParams.get("limit") || 1000)))
+                : null;
+            const search = (url.searchParams.get("search") || "").trim();
+
             const allowedRoles = ['common', 'team_leader'];
-            if (actor.role === 'admin') {
+            if (actor.role === 'admin' || actor.role === 'admin_compliance') {
                 allowedRoles.push('manager');
             }
+            if (actor.role === 'admin_compliance') {
+                allowedRoles.push('admin', 'common_compliance', 'admin_compliance');
+            }
 
-            let userFilter: any = { role: { $in: allowedRoles } };
+            const userFilter: any = { role: { $in: allowedRoles } };
+            if (search) {
+                userFilter.$or = [
+                    { username: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                ];
+            }
 
             if (actor.role === 'manager') {
                 const mgr = await Manager.findOne({ userId: actor._id }).lean();
                 const deptIds = (mgr?.managedDepartments || []).map((id: any) => id.toString());
-                
+
                 if (deptIds.length) {
                     const [c, t] = await Promise.all([
                         CommonUser.find({ departmentId: { $in: deptIds } }).select("userId").lean(),
@@ -87,27 +101,30 @@ export async function GET(req: NextRequest) {
                         .filter((p: any) => p.userId.toString() !== actor._id.toString())
                         .map((p: any) => p.userId.toString())
                     )];
-                    
+
                     if (allowedIds.length === 0) {
                         return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
                     }
-                    
+
                     userFilter._id = { $in: allowedIds };
                 } else {
                     return NextResponse.json({ success: true, count: 0, data: [] }, { status: 200 });
                 }
-            }
- else if (actor.role === 'team_leader') {
+            } else if (actor.role === 'team_leader') {
                 const members = await CommonUser.find({
                     teamLeaderEmail: { $regex: `^${(actor as any).email}$`, $options: 'i' }
                 }).select("userId").lean();
                 userFilter._id = { $in: members.map(m => m.userId.toString()) };
             }
 
-            const users = await User.find(userFilter).lean();
+            let query = User.find(userFilter).lean();
+            if (limit !== null) {
+                const skip = (page - 1) * limit;
+                query = query.skip(skip).limit(limit);
+            }
+            const users = await query;
             return NextResponse.json({ success: true, count: users.length, data: users }, { status: 200 });
         }
-
     } catch (error: any) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }

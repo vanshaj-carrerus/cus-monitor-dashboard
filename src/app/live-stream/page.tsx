@@ -6,7 +6,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '../../../lib/utils';
-
 import { useAuth } from '@/components/auth-context';
 
 interface User {
@@ -219,9 +218,95 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
   const [lkUrl, setLkUrl] = useState<string | null>(null);
   const [statusLabel, setStatusLabel] = useState<'view-only' | 'control-active' | 'paused(inactive)'>('view-only');
   const [adminIdentity, setAdminIdentity] = useState<string>('');
+  const [fallbackActive, setFallbackActive] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const dcRef = useRef<RTCDataChannel | null>(null);
+
+  const startFallback = useCallback(async () => {
+    console.log("Starting WebRTC Fallback...");
+    setFallbackActive(true);
+
+    const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    pcRef.current = pc;
+
+    const dc = pc.createDataChannel('control');
+    dcRef.current = dc;
+
+    pc.ontrack = (e) => {
+      console.log("Fallback track received:", e.track);
+      if (videoRef.current) {
+        if (e.streams && e.streams[0]) {
+          videoRef.current.srcObject = e.streams[0];
+        } else {
+          const stream = new MediaStream();
+          stream.addTrack(e.track);
+          videoRef.current.srcObject = stream;
+        }
+        videoRef.current.play().catch(err => console.error("Video play failed:", err));
+      }
+    };
+
+    pc.onicecandidate = (e) => {
+      if (e.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'candidate',
+          candidate: e.candidate.candidate,
+          sdpMid: e.candidate.sdpMid,
+          sdpMLineIndex: e.candidate.sdpMLineIndex,
+          target_id: user.username
+        }));
+      }
+    };
+
+    const ws = new WebSocket('wss://cus-monitor-mediator.onrender.com');
+    wsRef.current = ws;
+
+    ws.onopen = async () => {
+      console.log("Connected to Mediator WS");
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      ws.send(JSON.stringify({
+        type: 'offer',
+        sdp: offer.sdp,
+        target_id: user.username
+      }));
+    };
+
+    ws.onmessage = async (msg) => {
+      const sig = JSON.parse(msg.data);
+      if (sig.type === 'answer') {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: sig.sdp }));
+      } else if (sig.type === 'candidate') {
+        const candidateData = {
+          candidate: sig.candidate,
+          sdpMid: sig.sdpMid,
+          sdpMLineIndex: sig.sdpMLineIndex === undefined ? undefined : Number(sig.sdpMLineIndex)
+        };
+        await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+      }
+    };
+
+    ws.onclose = () => console.log("Mediator WS closed");
+    ws.onerror = (e) => console.error("Mediator WS error", e);
+
+  }, [user.username]);
+
+  const stopFallback = useCallback(() => {
+    setFallbackActive(false);
+    pcRef.current?.close();
+    wsRef.current?.close();
+    pcRef.current = null;
+    wsRef.current = null;
+    dcRef.current = null;
+  }, []);
 
   const toggleStream = async (start: boolean) => {
     setLoading(true);
+    setError(null); // Clear any previous error states
+    if (start) setFallbackActive(false);
     try {
       const res = await fetch(`/api/stream?action=toggle`, {
         method: 'POST',
@@ -253,20 +338,24 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
             setLkToken(tokenData.token);
             setLkUrl(tokenData.url);
             setIsActive(true);
+            setFallbackActive(false);
             setStatusLabel(isControlMode ? 'control-active' : 'view-only');
           } else {
-            setError("Failed to generate access token");
+            setError("Failed to generate access token. Using fallback...");
+            startFallback();
           }
         } else {
           setIsActive(false);
           setIsControlMode(false);
+          stopFallback();
           setStatusLabel('view-only');
           setLkToken(null);
           setAdminIdentity('');
         }
       }
     } catch {
-      setError("Failed to communicate with server");
+      setError("Failed to communicate with server. Using fallback...");
+      startFallback();
     } finally {
       setLoading(false);
     }
@@ -305,11 +394,40 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
     return () => clearInterval(timer);
   }, [isActive, user.username, isControlMode]);
 
+  const isActiveRef = useRef(isActive);
   useEffect(() => {
-    // IMPORTANT: Do not auto-stop the stream when an admin closes the modal.
-    // Multiple admins may be watching the same user; closing must not affect others.
-    return () => { };
+    isActiveRef.current = isActive;
+  }, [isActive]);
+
+  useEffect(() => {
+    return () => {
+      // When the component unmounts, if the stream is still active, we must notify the agent to stop.
+      // This loophole was previously consuming thousands of LiveKit minutes.
+      if (isActiveRef.current) {
+        fetch(`/api/stream?action=toggle`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-actor-role': ACTOR_ROLE,
+          },
+          body: JSON.stringify({
+            userId: user.username,
+            isActive: false,
+            reasonStopped: 'admin_closed_modal',
+          }),
+          keepalive: true, // Ensures the request completes even if the page is closed or navigates
+        }).catch(() => { });
+      }
+    };
   }, [user.username]);
+
+  const handleClose = async () => {
+    if (isActive) {
+      await toggleStream(false);
+    }
+    onClose();
+  };
 
   const setControlMode = useCallback(async (next: boolean) => {
     setIsControlMode(next);
@@ -352,7 +470,7 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full bg-slate-50 p-2 text-slate-400 transition-hover hover:bg-slate-100 hover:text-slate-600"
           >
             <X className="h-5 w-5" />
@@ -360,8 +478,9 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
         </div>
 
         <div className="relative aspect-video bg-slate-900 flex items-center justify-center overflow-hidden">
-          {isActive && lkToken && lkUrl ? (
+          {isActive && lkToken && lkUrl && !fallbackActive ? (
             <LiveKitRoom
+              key={lkToken}
               token={lkToken}
               serverUrl={lkUrl}
               connect={true}
@@ -374,7 +493,11 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
                 setControlMode(false);
                 setLkToken(null);
               }}
-              onError={(e) => setError(e.message)}
+              onError={(e) => {
+                console.error("LiveKit Error:", e);
+                setError("LiveKit failed. Switching to WebRTC fallback...");
+                startFallback();
+              }}
             >
               <VideoPlayer />
               <RemoteControlOverlay
@@ -385,6 +508,33 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
                 }}
               />
             </LiveKitRoom>
+          ) : fallbackActive ? (
+            <div className="relative h-full w-full bg-slate-950 flex items-center justify-center">
+              <div className="absolute top-4 left-4 z-30 rounded-lg bg-red-600/80 px-3 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+                FALLBACK MODE (P2P) • {user.username.toUpperCase()}
+              </div>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="h-full w-full object-contain z-10"
+                onMouseMove={(e) => {
+                  if (dcRef.current?.readyState === 'open') {
+                    const rect = videoRef.current?.getBoundingClientRect();
+                    if (rect) {
+                      const x = (e.clientX - rect.left) / rect.width;
+                      const y = (e.clientY - rect.top) / rect.height;
+                      dcRef.current.send(JSON.stringify({ type: 'move', x, y }));
+                    }
+                  }
+                }}
+                onClick={() => {
+                  if (dcRef.current?.readyState === 'open') {
+                    dcRef.current.send(JSON.stringify({ type: 'click', button: 'left' }));
+                  }
+                }}
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center gap-6 text-center">
               <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center">

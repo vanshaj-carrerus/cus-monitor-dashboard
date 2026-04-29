@@ -5,10 +5,10 @@ import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
 import "@/models/department";
 import "@/models/location";
-import TimeEntry from "@/models/time_entry";
-import ActivityLog from "@/models/activity_log";
 import DBConnect from "../../../../lib/DB_Connect";
 import { getSession } from "../../../../lib/session";
+
+const HEARTBEAT_ONLINE_WINDOW_MS = 4 * 60 * 1000;
 
 export async function GET(req: NextRequest) {
   try {
@@ -37,6 +37,13 @@ export async function GET(req: NextRequest) {
     const roleFilter = (url.searchParams.get("role") || "").toLowerCase(); // Specific role filter
 
     if (actor.role === "admin_compliance") {
+      const isOnlineByLastLogin = (lastLogin: Date | string | null | undefined): boolean => {
+        if (!lastLogin) return false;
+        const ts = new Date(lastLogin).getTime();
+        if (Number.isNaN(ts)) return false;
+        return Date.now() - ts <= HEARTBEAT_ONLINE_WINDOW_MS;
+      };
+
       const allowedRoles = ['common', 'team_leader', 'manager', 'admin', 'common_compliance', 'admin_compliance'];
       const filteredRoles = roleFilter && allowedRoles.includes(roleFilter) ? [roleFilter] : allowedRoles;
       const userFilter: any = { role: { $in: filteredRoles } };
@@ -50,38 +57,82 @@ export async function GET(req: NextRequest) {
       const total = await User.countDocuments(userFilter);
       const skip = (page - 1) * limit;
       const users = await User.find(userFilter)
-        .select("username email role")
+        .select("_id username email role")
         .sort({ username: 1 })
         .skip(skip)
         .limit(limit)
         .lean();
 
-      const data = users.map((u: any) => ({
-        _id: u._id,
-        username: u.username,
-        email: u.email,
-        role: u.role,
-        active: ['manager', 'admin', 'admin_compliance'].includes(u.role),
-        pcActive: false,
-        departmentId: null,
-        locationId: null,
-        teamLeaderId: null,
-      }));
+      const userIds = users.map((u: any) => u._id);
 
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      const recentLogs = await ActivityLog.find({
-        userId: { $in: data.map((u: any) => u._id.toString()) },
-        createdAt: { $gte: fiveMinutesAgo }
-      })
-        .select("userId")
-        .lean();
+      const [commonProfiles, teamLeaderProfiles] = await Promise.all([
+        CommonUser.find({ userId: { $in: userIds } })
+          .select("userId active lastLogin departmentId locationId teamLeaderEmail")
+          .lean(),
+        TeamLeader.find({ userId: { $in: userIds } })
+          .select("userId active lastLogin departmentId locationId")
+          .lean(),
+      ]);
 
-      const pcActiveIds = new Set(recentLogs.map((e: any) => e.userId));
-      data.forEach((u: any) => {
-        u.pcActive = pcActiveIds.has(u._id.toString());
+      const commonMap = new Map(commonProfiles.map((p: any) => [p.userId.toString(), p]));
+      const teamLeaderMap = new Map(teamLeaderProfiles.map((p: any) => [p.userId.toString(), p]));
+
+      const data = users.map((u: any) => {
+        const key = u._id.toString();
+
+        if (u.role === "common" || u.role === "common_compliance") {
+          const prof = commonMap.get(key);
+          const active = Boolean(prof?.active);
+          const pcActive = isOnlineByLastLogin(prof?.lastLogin);
+          return {
+            _id: u._id,
+            username: u.username,
+            email: u.email,
+            role: u.role,
+            active,
+            pcActive,
+            departmentId: prof?.departmentId || null,
+            locationId: prof?.locationId || null,
+            teamLeaderId: prof?.teamLeaderId || prof?.teamLeaderEmail || null,
+          };
+        }
+
+        if (u.role === "team_leader") {
+          const prof = teamLeaderMap.get(key);
+          const active = Boolean(prof?.active);
+          const pcActive = isOnlineByLastLogin(prof?.lastLogin);
+          return {
+            _id: u._id,
+            username: u.username,
+            email: u.email,
+            role: u.role,
+            active,
+            pcActive,
+            departmentId: prof?.departmentId || null,
+            locationId: prof?.locationId || null,
+            teamLeaderId: null,
+          };
+        }
+
+        // Managers/admins aren't governed by CommonUser/TeamLeader profiles.
+        const active = ['manager', 'admin', 'admin_compliance'].includes(u.role);
+        return {
+          _id: u._id,
+          username: u.username,
+          email: u.email,
+          role: u.role,
+          active,
+          pcActive: active,
+          departmentId: null,
+          locationId: null,
+          teamLeaderId: null,
+        };
       });
 
-      return NextResponse.json({ success: true, count: data.length, total, page, limit, data }, { status: 200 });
+      return NextResponse.json(
+        { success: true, count: data.length, total, page, limit, data },
+        { status: 200 },
+      );
     }
 
     const profileFilter: any = {};
@@ -160,32 +211,20 @@ export async function GET(req: NextRequest) {
 
       // Managers don't have an active flag yet, defaulting to true for them
       const active = u.role === "manager" ? true : (prof ? Boolean(prof.active) : false);
+      const lastLoginAt = prof?.lastLogin ? new Date(prof.lastLogin).getTime() : 0;
+      const isRecentHeartbeat = Number.isFinite(lastLoginAt) && lastLoginAt > 0 && (Date.now() - lastLoginAt <= HEARTBEAT_ONLINE_WINDOW_MS);
       return {
         _id: u._id,
         username: u.username,
         email: u.email,
         role: u.role,
         active,
-        pcActive: false,
+        // Treat managers as reachable by default; for tracked roles use heartbeat recency.
+        pcActive: u.role === "manager" ? true : Boolean(isRecentHeartbeat),
         departmentId: prof?.departmentId || null,
         locationId: prof?.locationId || null,
         teamLeaderId: prof?.teamLeaderId || prof?.teamLeaderEmail || null,
       };
-    });
-
-    // Compute "PC active" via activity logs from the last 5 minutes.
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-
-    const recentLogs = await ActivityLog.find({
-      userId: { $in: data.map((u: any) => u._id.toString()) },
-      createdAt: { $gte: fiveMinutesAgo }
-    })
-      .select("userId")
-      .lean();
-
-    const pcActiveIds = new Set(recentLogs.map((e: any) => e.userId));
-    data.forEach((u: any) => {
-      u.pcActive = pcActiveIds.has(u._id.toString());
     });
 
     // Final security check for managers: strictly filter out any unexpected managers or admins

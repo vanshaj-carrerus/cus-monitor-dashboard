@@ -14,6 +14,9 @@ interface User {
   role: string;
   active: boolean;
   pcActive?: boolean;
+  departmentId?: { _id?: string; name?: string } | string | null;
+  locationId?: { _id?: string; name?: string } | string | null;
+  teamLeaderId?: string | null;
 }
 
 interface UserCardProps {
@@ -22,6 +25,7 @@ interface UserCardProps {
 }
 
 function UserCard({ user, onViewStream }: UserCardProps) {
+  const isPcActive = typeof user.pcActive === 'boolean' ? user.pcActive : user.active;
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:border-purple-200 hover:shadow-xl hover:shadow-purple-500/5">
       <div className="mb-4 flex items-center justify-between">
@@ -36,8 +40,8 @@ function UserCard({ user, onViewStream }: UserCardProps) {
       <div className="mb-6 space-y-1">
         <h4 className="text-sm font-bold text-slate-900 truncate">{user.username}</h4>
         <p className="text-[11px] font-medium text-slate-400 truncate">{user.email}</p>
-        <p className={cn("text-[11px] font-bold uppercase tracking-wider", user.pcActive ? "text-green-600" : "text-red-500")}>
-          {user.pcActive ? 'PC Active' : 'PC Inactive'}
+        <p className={cn("text-[11px] font-bold uppercase tracking-wider", isPcActive ? "text-green-600" : "text-red-500")}>
+          {isPcActive ? 'PC Active' : 'PC Inactive'}
         </p>
       </div>
 
@@ -615,7 +619,23 @@ export default function LiveStreamPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [departments, setDepartments] = useState<Array<{ _id: string; name: string }>>([]);
+  const [locations, setLocations] = useState<Array<{ _id: string; name: string }>>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('all');
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const canSeeFilters =
+    currentUser?.role === 'manager' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.role === 'admin_compliance';
+
+  const extractRefId = (ref: User['departmentId'] | User['locationId']): string | null => {
+    if (!ref) return null;
+    if (typeof ref === 'string') return ref;
+    if (typeof ref === 'object' && ref._id) return String(ref._id);
+    return null;
+  };
 
   const refreshUserStatuses = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
@@ -647,11 +667,46 @@ export default function LiveStreamPage() {
   }, [refreshUserStatuses]);
 
   useEffect(() => {
+    if (!canSeeFilters) return;
+
+    const loadOptions = async () => {
+      try {
+        const [deptRes, locRes] = await Promise.all([
+          fetch('/api/departments', { cache: 'no-store', credentials: 'include' }),
+          fetch('/api/locations', { cache: 'no-store', credentials: 'include' }),
+        ]);
+
+        const deptJson = await deptRes.json();
+        const locJson = await locRes.json();
+
+        if (deptJson?.departments) setDepartments(deptJson.departments);
+        if (locJson?.locations) setLocations(locJson.locations);
+      } catch (err) {
+        console.error('Failed to load filter options', err);
+      }
+    };
+
+    void loadOptions();
+  }, [canSeeFilters]);
+
+  useEffect(() => {
     const lower = search.toLowerCase();
-    setFilteredUsers(users.filter(u =>
-      u.username.toLowerCase().includes(lower) || u.email.toLowerCase().includes(lower)
-    ));
-  }, [search, users]);
+    setFilteredUsers(
+      users.filter((u) => {
+        const searchOk = u.username.toLowerCase().includes(lower) || u.email.toLowerCase().includes(lower);
+
+        const deptOk =
+          selectedDepartmentId === 'all' ||
+          (extractRefId(u.departmentId) ? extractRefId(u.departmentId) === selectedDepartmentId : false);
+
+        const locOk =
+          selectedLocationId === 'all' ||
+          (extractRefId(u.locationId) ? extractRefId(u.locationId) === selectedLocationId : false);
+
+        return searchOk && deptOk && locOk;
+      }),
+    );
+  }, [search, users, selectedDepartmentId, selectedLocationId]);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -675,7 +730,36 @@ export default function LiveStreamPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 justify-end">
+          {canSeeFilters && (
+            <>
+              <select
+                value={selectedDepartmentId}
+                onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                className="w-56 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-[14px] text-slate-600 shadow-sm transition-all focus:border-[#5E35B1] focus:ring-4 focus:ring-purple-50 focus:outline-none"
+              >
+                <option value="all">All Departments</option>
+                {departments.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedLocationId}
+                onChange={(e) => setSelectedLocationId(e.target.value)}
+                className="w-56 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-[14px] text-slate-600 shadow-sm transition-all focus:border-[#5E35B1] focus:ring-4 focus:ring-purple-50 focus:outline-none"
+              >
+                <option value="all">All Locations</option>
+                {locations.map((l) => (
+                  <option key={l._id} value={l._id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
           <div className="relative group">
             <input
               type="text"

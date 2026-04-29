@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import Stream from "@/models/stream";
 import User from "@/models/user";
 import DBConnect from "../../../../lib/DB_Connect";
-import TimeEntry from "@/models/time_entry";
-import ActivityLog from "@/models/activity_log";
 import CommonUser from "@/models/common_user";
 import TeamLeader from "@/models/team_leader";
 import Manager from "@/models/manager";
@@ -23,6 +21,7 @@ type StreamToggleBody = {
     controllerId?: string;
     reasonStopped?: string;
 };
+const HEARTBEAT_ONLINE_WINDOW_MS = 4 * 60 * 1000;
 
 /**
  * Resolves a userId input (could be username, ObjectId string, or OS username)
@@ -64,22 +63,25 @@ function isAgentRequest(req: NextRequest): boolean {
 }
 
 async function getPcActiveStatus(userId: string): Promise<boolean> {
-    // "PC active" means we have received a recent activity log from the agent app.
-    // This ensures the dashboard correctly reflects real-time presence.
+    // "PC active" means we've seen a recent heartbeat (lastLogin) from the monitor app.
     const userQuery: Array<Record<string, string>> = [{ username: userId }];
     if (userId.length === 24) userQuery.push({ _id: userId });
-    const user = await User.findOne({ $or: userQuery }).select("_id").lean() as UserLookupDoc | null;
+
+    const user = await User.findOne({ $or: userQuery }).select("_id role").lean() as (UserLookupDoc & { role?: string }) | null;
     if (!user?._id) return false;
 
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const log = await ActivityLog.findOne({
-        userId: user._id.toString(),
-        createdAt: { $gte: fiveMinutesAgo }
-    })
-        .select("_id")
-        .lean();
+    // Higher roles don't have CommonUser/TeamLeader profiles; treat them as always eligible/active.
+    if (user.role === "manager" || user.role === "admin" || user.role === "admin_compliance") return true;
 
-    return Boolean(log);
+    const [commonProfile, teamLeaderProfile] = await Promise.all([
+        CommonUser.findOne({ userId: user._id }).select("lastLogin").lean(),
+        TeamLeader.findOne({ userId: user._id }).select("lastLogin").lean(),
+    ]);
+    const lastLogin = commonProfile?.lastLogin || teamLeaderProfile?.lastLogin;
+    if (!lastLogin) return false;
+    const ts = new Date(lastLogin).getTime();
+    if (Number.isNaN(ts)) return false;
+    return (Date.now() - ts) <= HEARTBEAT_ONLINE_WINDOW_MS;
 }
 
 async function isAllowedToView(req: NextRequest, targetUserId: string): Promise<boolean> {

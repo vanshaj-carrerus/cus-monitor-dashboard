@@ -62,7 +62,15 @@ export async function GET(req: NextRequest) {
                 if (!member) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
             }
 
-            const screenshots = await Screenshot.find({ userId: filterUserId }).sort({ createdAt: -1 }).lean();
+            const createdAfterParam = url.searchParams.get("createdAfter");
+            const screenshotFilter: Record<string, unknown> = { userId: filterUserId };
+            if (createdAfterParam) {
+                const d = new Date(createdAfterParam);
+                if (!Number.isNaN(d.getTime())) {
+                    screenshotFilter.createdAt = { $gte: d };
+                }
+            }
+            const screenshots = await Screenshot.find(screenshotFilter).sort({ createdAt: -1 }).lean();
             return NextResponse.json({ success: true, count: screenshots.length, data: screenshots }, { status: 200 });
         } else {
             const page = Math.max(1, Number(url.searchParams.get("page") || 1));

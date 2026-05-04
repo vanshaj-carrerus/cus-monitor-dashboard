@@ -2,18 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Image as ImageIcon,
-  BarChart3,
-  Calendar,
   X,
-  Trash2,
   ExternalLink,
-  AlertTriangle
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
-import { cn } from '../../../lib/utils';
 import { useAuth } from '@/components/auth-context';
+import Image from 'next/image';
 
 interface User {
   _id: string;
@@ -31,7 +26,6 @@ export default function ScreenshotsPage() {
   const { user } = useAuth();
   const canManageScreenshots = user?.role === 'admin' || user?.role === 'manager' || user?.role === 'team_leader';
 
-  const [activeTab, setActiveTab] = useState<'gallery' | 'productivity'>('gallery');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -64,7 +58,13 @@ export default function ScreenshotsPage() {
     setSelectedUser(user);
     setScreenshotsLoading(true);
     try {
-      const res = await fetch(`/api/screenshots?userId=${user._id}`, { credentials: 'include' });
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const qs = new URLSearchParams({
+        userId: user._id,
+        createdAfter: weekAgo.toISOString(),
+      });
+      const res = await fetch(`/api/screenshots?${qs.toString()}`, { credentials: 'include' });
       const json = await res.json();
       if (json.success) {
         setUserScreenshots(json.data);
@@ -76,29 +76,29 @@ export default function ScreenshotsPage() {
     }
   };
 
-  const handleDeleteScreenshot = async (screenshotId: string) => {
-    if (!confirm('Are you sure you want to delete this screenshot? This action cannot be undone.')) {
-      return;
-    }
+  // const handleDeleteScreenshot = async (screenshotId: string) => {
+  //   if (!confirm('Are you sure you want to delete this screenshot? This action cannot be undone.')) {
+  //     return;
+  //   }
 
-    try {
-      const res = await fetch(`/api/screenshots/${screenshotId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      const json = await res.json();
+  //   try {
+  //     const res = await fetch(`/api/screenshots/${screenshotId}`, {
+  //       method: 'DELETE',
+  //       credentials: 'include',
+  //     });
+  //     const json = await res.json();
 
-      if (res.ok) {
-        // Remove the screenshot from the local state
-        setUserScreenshots(prev => prev.filter(shot => shot._id !== screenshotId));
-      } else {
-        alert(json.error || 'Failed to delete screenshot');
-      }
-    } catch (err) {
-      console.error('Error deleting screenshot:', err);
-      alert('Failed to delete screenshot');
-    }
-  };
+  //     if (res.ok) {
+  //       // Remove the screenshot from the local state
+  //       setUserScreenshots(prev => prev.filter(shot => shot._id !== screenshotId));
+  //     } else {
+  //       alert(json.error || 'Failed to delete screenshot');
+  //     }
+  //   } catch (err) {
+  //     console.error('Error deleting screenshot:', err);
+  //     alert('Failed to delete screenshot');
+  //   }
+  // };
 
   const handleOpenInNewTab = (imageUrl: string) => {
     window.open(imageUrl, '_blank', 'noopener,noreferrer');
@@ -109,7 +109,7 @@ export default function ScreenshotsPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Screenshots</h1>
-        <p className="text-sm text-slate-500">View user screenshots captured on specific dates from this page.</p>
+        <p className="text-sm text-slate-500">View user screenshots from the last 7 days.</p>
       </div>
 
       {/* Content Card */}
@@ -164,7 +164,7 @@ export default function ScreenshotsPage() {
             <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Screenshots - {selectedUser.username}
+                  Screenshots (last 7 days) - {selectedUser.username}
                 </h3>
                 <p className="text-sm text-slate-500">{selectedUser.email}</p>
               </div>
@@ -180,18 +180,18 @@ export default function ScreenshotsPage() {
               {screenshotsLoading ? (
                 <p className="text-center text-slate-500">Loading screenshots...</p>
               ) : userScreenshots.length === 0 ? (
-                <p className="text-center text-slate-500">No screenshots available for this user.</p>
+                <p className="text-center text-slate-500">No screenshots in the last 7 days for this user.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {userScreenshots.map((shot) => (
                     <div key={shot._id} className="rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800 group relative">
-                      <img src={shot.imageUrl || '/placeholder.png'} alt="Screenshot" className="w-full h-auto object-cover bg-slate-100" />
-                      <div className="p-3 bg-slate-50 dark:bg-slate-800/50">
+                      <Image src={shot.imageUrl || '/placeholder.png'} alt="Screenshot" className="w-full h-auto object-cover bg-slate-100" width={500} height={500} />
+                      <div className="p-3 flex justify-between gap-2 items-center bg-slate-50 dark:bg-slate-800/50">
                         <p className="text-xs text-slate-500 mb-2">
                           {new Date(shot.createdAt).toLocaleString()}
                         </p>
                         {canManageScreenshots && (
-                          <div className="flex items-center gap-2">
+                          <div className="">
                             <button
                               onClick={() => handleOpenInNewTab(shot.imageUrl)}
                               className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"

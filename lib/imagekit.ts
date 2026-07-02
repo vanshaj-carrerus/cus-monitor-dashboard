@@ -1,23 +1,17 @@
-import { upload } from "@imagekit/next";
-import { getUploadAuthParams } from "@imagekit/next/server";
+import ImageKit from "@imagekit/nodejs";
 
 function trimEnv(value: string | undefined) {
     return value?.trim().replace(/^["']|["']$/g, "") ?? "";
 }
 
 export function ensureImageKitConfigured() {
-    const publicKey = trimEnv(process.env.IMAGEKIT_PUBLIC_KEY);
     const privateKey = trimEnv(process.env.IMAGEKIT_PRIVATE_KEY);
 
-    const missing: string[] = [];
-    if (!publicKey) missing.push("IMAGEKIT_PUBLIC_KEY");
-    if (!privateKey) missing.push("IMAGEKIT_PRIVATE_KEY");
-
-    if (missing.length > 0) {
-        throw new Error(`Missing ImageKit environment variables: ${missing.join(", ")}`);
+    if (!privateKey) {
+        throw new Error("Missing ImageKit environment variables: IMAGEKIT_PRIVATE_KEY");
     }
 
-    return { publicKey, privateKey };
+    return { privateKey };
 }
 
 export async function uploadScreenshotToImageKit(
@@ -25,18 +19,14 @@ export async function uploadScreenshotToImageKit(
     userId: string,
     email: string
 ): Promise<string> {
-    const { publicKey, privateKey } = ensureImageKitConfigured();
-    const { token, expire, signature } = getUploadAuthParams({ publicKey, privateKey });
+    const { privateKey } = ensureImageKitConfigured();
+    const imagekit = new ImageKit({ privateKey });
 
-    const result = await upload({
+    const result = await imagekit.files.upload({
         file: `data:image/png;base64,${base64Data}`,
         fileName: `screenshot_${Date.now()}.png`,
         folder: `/cus_spy_monitor/${userId}`,
         tags: ["monitoring", email],
-        token,
-        expire,
-        signature,
-        publicKey,
         useUniqueFileName: true,
     });
 

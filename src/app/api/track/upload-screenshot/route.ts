@@ -1,15 +1,9 @@
 // src/app/api/track/upload-screenshot/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { v2 as cloudinary, UploadApiResponse } from "cloudinary";
 import DBConnect from "../../../../../lib/DB_Connect";
-import Screenshot from "@/models/screenshot"
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import Screenshot from "@/models/screenshot";
+import { cloudinary, ensureCloudinaryConfigured, getCloudinaryUploadErrorMessage } from "../../../../../lib/cloudinary";
 
 function getCorsHeaders(origin: string | null) {
     const allowedOrigins = [
@@ -56,28 +50,21 @@ export async function POST(req: NextRequest) {
         const user = await User.findById(userId);
         const email = user?.email || "unknown";
 
-        // Convert base64 to Buffer
+        // Normalize base64 payload (strip data URI prefix if present)
         let base64Data = image;
         if (image.startsWith("data:image")) {
             base64Data = image.split(",")[1];
         }
-        const buffer = Buffer.from(base64Data, "base64");
+        ensureCloudinaryConfigured();
 
-        // Upload to Cloudinary using a stream
-        const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-            const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: `cus_spy_monitor/${userId}`, // Organizes screenshots by user
-                    resource_type: "image",
-                    tags: ["monitoring", email]
-                },
-                (error, result) => {
-                    if (error) reject(error);
-                    else resolve(result as UploadApiResponse);
-                }
-            );
-            uploadStream.end(buffer);
-        });
+        const result = await cloudinary.uploader.upload(
+            `data:image/png;base64,${base64Data}`,
+            {
+                folder: `cus_spy_monitor/${userId}`,
+                resource_type: "image",
+                tags: ["monitoring", email],
+            }
+        );
 
         // Save to MongoDB
         const screenshotData: any = {
@@ -102,10 +89,15 @@ export async function POST(req: NextRequest) {
         );
 
     } catch (error: any) {
-        console.error("Upload Error:", error);
+        const httpCode = error?.http_code ?? error?.error?.http_code;
+        console.error("Upload Error:", {
+            message: error?.message ?? error?.error?.message,
+            http_code: httpCode,
+            name: error?.name,
+        });
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
-            { status: 500, headers: getCorsHeaders(origin) }
+            { error: getCloudinaryUploadErrorMessage(error) },
+            { status: httpCode === 403 || httpCode === 401 ? httpCode : 500, headers: getCorsHeaders(origin) }
         );
     }
 }

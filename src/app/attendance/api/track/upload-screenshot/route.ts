@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Screenshot from "@/models/screenshot";
 import DBConnect from "../../../../../../lib/DB_Connect";
 import { cloudinary, ensureCloudinaryConfigured, getCloudinaryUploadErrorMessage } from "../../../../../../lib/cloudinary";
+import { uploadScreenshotToImageKit } from "../../../../../../lib/imagekit";
 
 function getCorsHeaders(origin: string | null) {
     const allowedOrigins = [
@@ -55,23 +56,29 @@ export async function POST(req: NextRequest) {
         if (image.startsWith("data:image")) {
             base64Data = image.split(",")[1];
         }
-        ensureCloudinaryConfigured();
-
-        const result = await cloudinary.uploader.upload(
-            `data:image/png;base64,${base64Data}`,
-            {
-                folder: `cus_spy_monitor/${userId}`,
-                resource_type: "image",
-                tags: ["monitoring", email],
-            }
-        );
+        let imageUrl: string;
+        try {
+            imageUrl = await uploadScreenshotToImageKit(base64Data, userId, email);
+        } catch (imageKitError) {
+            console.warn("ImageKit upload failed, falling back to Cloudinary:", imageKitError);
+            ensureCloudinaryConfigured();
+            const result = await cloudinary.uploader.upload(
+                `data:image/png;base64,${base64Data}`,
+                {
+                    folder: `cus_spy_monitor/${userId}`,
+                    resource_type: "image",
+                    tags: ["monitoring", email],
+                }
+            );
+            imageUrl = result.secure_url;
+        }
 
         // Save to MongoDB
         const screenshotData: any = {
             userId,
             sessionId,
             email,
-            imageUrl: result.secure_url,
+            imageUrl,
         };
         if (timestamp) {
             screenshotData.createdAt = new Date(timestamp);
@@ -82,7 +89,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
             {
                 success: true,
-                url: result.secure_url,
+                url: imageUrl,
                 dbId: newScreenshot._id
             },
             { headers: getCorsHeaders(origin) }

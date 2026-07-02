@@ -27,13 +27,13 @@ export async function POST(request: Request) {
             await CommonUser.findOneAndUpdate(
                 { userId },
                 { $set: { active: true, lastLogin: now } },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: 'after' }
             );
         } else if (user?.role === "team_leader") {
             await TeamLeader.findOneAndUpdate(
                 { userId },
                 { $set: { active: true, lastLogin: now } },
-                { upsert: true, new: true }
+                { upsert: true, returnDocument: 'after' }
             );
         }
 

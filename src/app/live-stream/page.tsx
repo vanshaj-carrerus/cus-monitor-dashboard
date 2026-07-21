@@ -277,11 +277,18 @@ function RemoteControlOverlay({
 function P2PVideoPlayer({
   stream,
   connectionState,
+  phase,
+  statusMessage,
+  error,
 }: {
   stream: MediaStream | null;
   connectionState: RTCPeerConnectionState | "idle" | "connecting";
+  phase: import("@/hooks/useP2PViewer").P2PPhase;
+  statusMessage: string;
+  error: string | null;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isFailed = phase === "failed" || connectionState === "failed" || Boolean(error);
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -292,21 +299,51 @@ function P2PVideoPlayer({
 
   if (!stream) {
     return (
-      <div className="flex flex-col items-center gap-5 p-10 text-center">
+      <div className="flex h-full flex-col items-center justify-center gap-5 p-8 text-center">
         <div className="relative flex h-20 w-20 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
-          <div className="absolute inset-0 animate-ping rounded-full border border-primary/30" />
-          <RefreshCw className="relative h-9 w-9 animate-spin text-primary" />
+          <div
+            className={cn(
+              "absolute inset-0 rounded-full border-2",
+              isFailed ? "border-red-400/30" : "border-primary/20",
+            )}
+          />
+          {!isFailed && (
+            <div className="absolute inset-0 animate-ping rounded-full border border-primary/30" />
+          )}
+          {isFailed ? (
+            <AlertCircle className="relative h-9 w-9 text-red-400" />
+          ) : (
+            <RefreshCw className="relative h-9 w-9 animate-spin text-primary" />
+          )}
         </div>
-        <div className="space-y-1">
-          <p className="text-sm font-bold text-white">
-            {connectionState === "connecting"
-              ? "Negotiating secure P2P link..."
-              : "Awaiting video track"}
+        <div className="max-w-lg space-y-2">
+          <p
+            className={cn(
+              "text-sm font-bold",
+              isFailed ? "text-red-300" : "text-white",
+            )}
+          >
+            {isFailed
+              ? "Connection failed"
+              : phase === "waiting-agent"
+                ? "Waiting for desktop agent…"
+                : phase === "ice" || phase === "answering"
+                  ? "Negotiating secure P2P link…"
+                  : "Connecting…"}
           </p>
-          <p className="text-xs text-slate-400">
-            Direct peer connection via WebRTC
+          <p
+            className={cn(
+              "text-xs leading-relaxed",
+              isFailed ? "text-red-200/90" : "text-slate-300",
+            )}
+          >
+            {error || statusMessage || "Direct peer connection via WebRTC"}
           </p>
+          {!isFailed && (
+            <p className="pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Phase: {phase} · State: {connectionState}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -332,13 +369,19 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
   >("view-only");
   const [adminIdentity, setAdminIdentity] = useState<string>("");
 
-  const { stream, connectionState, error: p2pError, sendCommand } =
-    useP2PViewer({
-      userId: user.username,
-      enabled: isActive,
-      adminId: adminIdentity,
-      controlEnabled: isControlMode,
-    });
+  const {
+    stream,
+    connectionState,
+    phase,
+    statusMessage,
+    error: p2pError,
+    sendCommand,
+  } = useP2PViewer({
+    userId: user.username,
+    enabled: isActive,
+    adminId: adminIdentity,
+    controlEnabled: isControlMode,
+  });
 
   useEffect(() => {
     if (p2pError) setError(p2pError);
@@ -541,7 +584,13 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
                 <span className="rounded-full bg-primary/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
                   P2P Direct
                 </span>
-                <ConnectionBadge state={connectionState} />
+                <ConnectionBadge
+                  state={
+                    phase === "failed" || p2pError
+                      ? "failed"
+                      : connectionState
+                  }
+                />
               </div>
 
               {isControlMode && (
@@ -553,6 +602,9 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
               <P2PVideoPlayer
                 stream={stream}
                 connectionState={connectionState}
+                phase={phase}
+                statusMessage={statusMessage}
+                error={p2pError ?? error}
               />
               <RemoteControlOverlay
                 enabled={isControlMode}

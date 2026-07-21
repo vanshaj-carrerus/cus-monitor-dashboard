@@ -47,6 +47,9 @@ export function useP2PViewer({
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const adminIdRef = useRef(adminId);
   const controlEnabledRef = useRef(controlEnabled);
+  const remoteDescriptionSetRef = useRef(false);
+  const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
+  const offerReceivedRef = useRef(false);
 
   useEffect(() => {
     adminIdRef.current = adminId;
@@ -68,8 +71,24 @@ export function useP2PViewer({
       channelRef.current = null;
     }
 
+    remoteDescriptionSetRef.current = false;
+    pendingIceRef.current = [];
+    offerReceivedRef.current = false;
+
     setStream(null);
     setConnectionState("idle");
+  }, []);
+
+  const flushPendingIce = useCallback(async (pc: RTCPeerConnection) => {
+    const pending = pendingIceRef.current;
+    pendingIceRef.current = [];
+    for (const candidate of pending) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.warn("[P2P Viewer] Failed to add queued ICE candidate:", err);
+      }
+    }
   }, []);
 
   const handleSignalingEvent = useCallback(
@@ -82,7 +101,12 @@ export function useP2PViewer({
 
       try {
         if (event === "sdp-offer" && payload.sdp) {
+          if (remoteDescriptionSetRef.current) return;
+
+          offerReceivedRef.current = true;
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+          remoteDescriptionSetRef.current = true;
+          await flushPendingIce(pc);
 
           if (controlEnabledRef.current) {
             const dc = pc.createDataChannel("remote-control");
@@ -97,6 +121,10 @@ export function useP2PViewer({
             sdp: answer,
           });
         } else if (event === "ice-candidate" && payload.candidate) {
+          if (!remoteDescriptionSetRef.current) {
+            pendingIceRef.current.push(payload.candidate);
+            return;
+          }
           await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
         }
       } catch (err) {
@@ -104,7 +132,7 @@ export function useP2PViewer({
         setError(err instanceof Error ? err.message : "Signaling failed");
       }
     },
-    [],
+    [flushPendingIce],
   );
 
   useEffect(() => {
@@ -114,11 +142,15 @@ export function useP2PViewer({
     }
 
     let cancelled = false;
+    let requestInterval: ReturnType<typeof setInterval> | null = null;
 
     const start = async () => {
       try {
         setError(null);
         setConnectionState("connecting");
+        remoteDescriptionSetRef.current = false;
+        pendingIceRef.current = [];
+        offerReceivedRef.current = false;
 
         const pc = new RTCPeerConnection(rtcConfig);
         pcRef.current = pc;
@@ -162,9 +194,19 @@ export function useP2PViewer({
 
         channelRef.current = channel;
 
-        await broadcastSignalingEvent(channel, "request-stream", {
-          adminId: adminIdRef.current,
-        });
+        // Agent may join signaling a second or two after the toggle API
+        // flips isActive — keep requesting until we get an offer.
+        const requestStream = () => {
+          if (cancelled || offerReceivedRef.current || !channelRef.current) {
+            return;
+          }
+          void broadcastSignalingEvent(channelRef.current, "request-stream", {
+            adminId: adminIdRef.current,
+          });
+        };
+
+        requestStream();
+        requestInterval = setInterval(requestStream, 2000);
       } catch (err) {
         console.error("[P2P Viewer] Failed to start:", err);
         setError(err instanceof Error ? err.message : "Failed to connect");
@@ -176,6 +218,7 @@ export function useP2PViewer({
 
     return () => {
       cancelled = true;
+      if (requestInterval) clearInterval(requestInterval);
       if (channelRef.current) {
         void broadcastSignalingEvent(channelRef.current, "stop-stream", {
           adminId: adminIdRef.current,

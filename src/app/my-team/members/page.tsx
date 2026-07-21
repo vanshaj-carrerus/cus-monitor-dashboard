@@ -453,27 +453,36 @@ export default function EmployeesPage() {
 
   return (
     <DashboardLayout>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-on-surface">Team Management</h1>
+          <p className="max-w-2xl text-base text-on-surface-variant">
+            Manage your organization&apos;s hierarchy, access control, and team structures.
+          </p>
+        </div>
+      </div>
+
       {/* Tabs */}
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 flex gap-1 rounded-lg bg-surface-container p-1 w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id as 'members' | 'invites' | 'departments' | 'location')}
             className={cn(
-              "flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-bold text-base",
+              "flex items-center gap-2 px-4 py-2 rounded-md transition-all font-semibold text-sm",
               effectiveTab === tab.id
-                ? "bg-[#F5F3FF] text-[#0D1B3E] border border-[#5E35B1]/20"
-                : "text-slate-500 hover:bg-slate-50"
+                ? "bg-surface-container-lowest text-primary shadow-sm font-bold"
+                : "text-on-surface-variant hover:bg-surface-container-low"
             )}
           >
-            <tab.icon className={cn("h-5 w-5", effectiveTab === tab.id ? "text-[#0D1B3E]" : "text-slate-400")} />
+            <tab.icon className={cn("h-5 w-5", effectiveTab === tab.id ? "text-on-surface" : "text-slate-400")} />
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden min-h-125">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm min-h-125">
         {effectiveTab === 'members' && (
           <div className="p-8">
             <div className="flex flex-col gap-8">
@@ -484,7 +493,7 @@ export default function EmployeesPage() {
                   <input
                     type="text"
                     placeholder="Search user by name or email"
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/10"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -496,7 +505,7 @@ export default function EmployeesPage() {
                       <ChevronDown className="h-4 w-4" />
                     </button>
                   </div>
-                  <Button onClick={() => setIsAddMemberOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                  <Button onClick={() => setIsAddMemberOpen(true)} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                     <Plus className="h-5 w-5" />
                     Add Member
                   </Button>
@@ -513,7 +522,7 @@ export default function EmployeesPage() {
                       type="button"
                       variant="secondary"
                       onClick={() => document.getElementById('bulk-upload-input')?.click()}
-                      className="flex items-center gap-2 text-[#5E35B1] border-[#5E35B1]/20 rounded-xl bg-[#F5F3FF] px-6 py-3 h-auto font-bold cursor-pointer"
+                      className="flex items-center gap-2 text-primary border-primary/20 rounded-xl bg-secondary px-6 py-3 h-auto font-bold cursor-pointer"
                     >
                       {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                       Bulk Upload
@@ -661,7 +670,7 @@ export default function EmployeesPage() {
                         onClick={() => setPage(p)}
                         className={cn(
                           "w-8 h-8 flex items-center justify-center rounded-lg text-sm",
-                          p === page ? "bg-[#5E35B1] text-white" : "text-slate-500 hover:bg-slate-100"
+                          p === page ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-100"
                         )}
                       >
                         {p}
@@ -692,10 +701,10 @@ export default function EmployeesPage() {
                   <input
                     type="text"
                     placeholder="Search for a department..."
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/10"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/10"
                   />
                 </div>
-                <Button onClick={() => setIsAddDeptOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                <Button onClick={() => setIsAddDeptOpen(true)} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                   <Plus className="h-5 w-5" />
                   Add Department
                 </Button>
@@ -708,7 +717,7 @@ export default function EmployeesPage() {
                   departments.map((dept: any) => (
                     <div key={dept._id} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-shadow">
                       <div className="space-y-1">
-                        <h3 className="font-bold text-lg text-[#0D1B3E]">{dept.name}</h3>
+                        <h3 className="font-bold text-lg text-on-surface">{dept.name}</h3>
                         <div className="flex items-center gap-4 text-sm text-slate-400">
                           <span className="flex items-center gap-1.5">
                             {dept.description || 'No description available'}
@@ -720,7 +729,7 @@ export default function EmployeesPage() {
                           type="button"
                           onClick={() => openEditDept(dept)}
                           variant="ghost"
-                          className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
+                          className="text-on-surface bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
                         >
                           Edit
                         </Button>
@@ -750,10 +759,10 @@ export default function EmployeesPage() {
                   <input
                     type="text"
                     placeholder="Search for a location..."
-                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/10"
+                    className="w-full pl-12 pr-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/10"
                   />
                 </div>
-                <Button onClick={() => setIsAddLocOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                <Button onClick={() => setIsAddLocOpen(true)} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                   <Plus className="h-5 w-5" />
                   Add Location
                 </Button>
@@ -765,7 +774,7 @@ export default function EmployeesPage() {
                   locations.map((loc: any) => (
                     <div key={loc._id} className="flex items-center justify-between p-6 bg-white border border-slate-100 rounded-2xl hover:shadow-sm transition-shadow">
                       <div className="space-y-1">
-                        <h3 className="font-bold text-lg text-[#0D1B3E]">{loc.name}</h3>
+                        <h3 className="font-bold text-lg text-on-surface">{loc.name}</h3>
                         <div className="flex items-center gap-4 text-sm text-slate-400">
                           <span className="flex items-center gap-1.5">
                             {loc.address || 'No address available'}
@@ -777,7 +786,7 @@ export default function EmployeesPage() {
                           type="button"
                           onClick={() => openEditLoc(loc)}
                           variant="ghost"
-                          className="text-[#0D1B3E] bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
+                          className="text-on-surface bg-slate-50 hover:bg-slate-100 px-6 py-2 h-auto text-sm font-bold rounded-xl border border-slate-100"
                         >
                           Edit
                         </Button>
@@ -802,8 +811,8 @@ export default function EmployeesPage() {
           <div className="p-8">
             <div className="flex flex-col gap-8">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-[#0D1B3E]">Pending Invitations</h3>
-                <Button onClick={() => setIsAddMemberOpen(true)} className="bg-[#5E35B1] hover:bg-[#5E35B1]/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
+                <h3 className="text-xl font-bold text-on-surface">Pending Invitations</h3>
+                <Button onClick={() => setIsAddMemberOpen(true)} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                   <Plus className="h-5 w-5" />
                   Invite Member
                 </Button>
@@ -872,15 +881,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleInvite} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                <input required type="text" value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="text" value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input required type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
-                <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="common">Common User</option>
                   <option value="team_leader">Team Leader</option>
                   <option value="manager">Manager</option>
@@ -892,7 +901,7 @@ export default function EmployeesPage() {
               {inviteForm.role === 'common' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Leader *</label>
-                  <select required value={inviteForm.teamLeaderId} onChange={e => setInviteForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <select required value={inviteForm.teamLeaderId} onChange={e => setInviteForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                     <option value="">Select a Team Leader</option>
                     {teamLeaders.map((tl: any) => (<option key={tl._id} value={tl._id}>{tl.username || tl.email}</option>))}
                   </select>
@@ -900,21 +909,21 @@ export default function EmployeesPage() {
               )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department {(inviteForm.role === 'common' || inviteForm.role === 'common_compliance') && '*'}</label>
-                <select required={inviteForm.role === 'common' || inviteForm.role === 'common_compliance'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select required={inviteForm.role === 'common' || inviteForm.role === 'common_compliance'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="">Select Department</option>
                   {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
-                <select value={inviteForm.locationId} onChange={e => setInviteForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select value={inviteForm.locationId} onChange={e => setInviteForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="">None</option>
                   {locations.map((l: any) => (<option key={l._id} value={l._id}>{l.name}</option>))}
                 </select>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white!' type="button" variant="ghost" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Send Invite</Button>
+                <Button type="submit" className="bg-primary text-white">Send Invite</Button>
               </div>
             </form>
           </div>
@@ -932,15 +941,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleAddDept} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
-                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white!' type="button" variant="ghost" onClick={() => setIsAddDeptOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+                <Button type="submit" className="bg-primary text-white">Save</Button>
               </div>
             </form>
           </div>
@@ -958,15 +967,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleAddLoc} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location Name</label>
-                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
-                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white!' type="button" variant="ghost" onClick={() => setIsAddLocOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+                <Button type="submit" className="bg-primary text-white">Save</Button>
               </div>
             </form>
           </div>
@@ -984,15 +993,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleEditDept} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department Name</label>
-                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="text" value={deptForm.name} onChange={e => setDeptForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+                <textarea value={deptForm.description} onChange={e => setDeptForm(f => ({ ...f, description: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white! hover:text-white!' type="button" variant="ghost" onClick={() => { setIsEditDeptOpen(false); setEditingDeptId(''); }}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+                <Button type="submit" className="bg-primary text-white">Save</Button>
               </div>
             </form>
           </div>
@@ -1010,15 +1019,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleEditLoc} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location Name</label>
-                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input required type="text" value={locForm.name} onChange={e => setLocForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
-                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" rows={3}></textarea>
+                <textarea value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white!' type="button" variant="ghost" onClick={() => { setIsEditLocOpen(false); setEditingLocId(''); }}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+                <Button type="submit" className="bg-primary text-white">Save</Button>
               </div>
             </form>
           </div>
@@ -1036,16 +1045,16 @@ export default function EmployeesPage() {
             <form onSubmit={handleEditMember} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
-                <input type="text" value={editForm.username} onChange={e => setEditForm(f => ({ ...f, username: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input type="text" value={editForm.username} onChange={e => setEditForm(f => ({ ...f, username: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none" />
+                <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
               </div>
               {canManageStructure && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
-                  <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                  <select value={editForm.role} onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                     <option value="common">Common User</option>
                     <option value="team_leader">Team Leader</option>
                     <option value="manager">Manager</option>
@@ -1055,28 +1064,28 @@ export default function EmployeesPage() {
               )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                <select value={editForm.departmentId} onChange={e => setEditForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select value={editForm.departmentId} onChange={e => setEditForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="">None</option>
                   {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
-                <select value={editForm.locationId} onChange={e => setEditForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select value={editForm.locationId} onChange={e => setEditForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="">None</option>
                   {locations.map((l: any) => (<option key={l._id} value={l._id}>{l.name}</option>))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Leader</label>
-                <select value={editForm.teamLeaderId} onChange={e => setEditForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-[#5E35B1] focus:outline-none">
+                <select value={editForm.teamLeaderId} onChange={e => setEditForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
                   <option value="">None</option>
                   {teamLeaders.map((tl: any) => (<option key={tl._id} value={tl._id}>{tl.username || tl.email}</option>))}
                 </select>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button className='text-white!' type="button" variant="ghost" onClick={() => setIsEditMemberOpen(false)}>Cancel</Button>
-                <Button type="submit" className="bg-[#5E35B1] text-white">Save</Button>
+                <Button type="submit" className="bg-primary text-white">Save</Button>
               </div>
             </form>
           </div>
@@ -1133,7 +1142,7 @@ export default function EmployeesPage() {
               )}
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-              <Button onClick={() => setBulkResults(null)} className="bg-[#5E35B1] text-white">
+              <Button onClick={() => setBulkResults(null)} className="bg-primary text-white">
                 Close
               </Button>
             </div>

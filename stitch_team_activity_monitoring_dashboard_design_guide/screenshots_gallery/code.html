@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InsightEngine | Screenshots Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#213145",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "surface-container-high": "#dce9ff",
+                        "on-surface-variant": "#45464d",
+                        "outline-variant": "#c6c6cd",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "secondary-container": "#2170e4",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#cbdbf5",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#271901",
+                        "on-primary-fixed": "#131b2e",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-surface": "#0b1c30",
+                        "inverse-primary": "#bec6e0",
+                        "primary": "#000000",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "secondary": "#0058be",
+                        "on-secondary-container": "#fefcff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-secondary-fixed": "#001a42",
+                        "outline": "#76777d",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "secondary-fixed": "#d8e2ff",
+                        "tertiary": "#000000",
+                        "background": "#f8f9ff",
+                        "on-primary-container": "#7c839b",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#98805d",
+                        "surface-tint": "#565e74",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary-fixed": "#fcdeb5",
+                        "surface": "#f8f9ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#004395",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "primary-container": "#131b2e",
+                        "error-container": "#ffdad6",
+                        "tertiary-container": "#271901",
+                        "surface-container-low": "#eff4ff",
+                        "on-background": "#0b1c30"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "24px",
+                        "base": "4px",
+                        "stack-lg": "32px",
+                        "card-padding": "20px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Inter"],
+                        "data-tabular": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-blur { backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.8); }
+        .screenshot-card:hover .zoom-overlay { opacity: 1; }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background selection:bg-secondary-container selection:text-on-secondary-container overflow-hidden h-screen flex">
+<!-- SideNavBar Integration -->
+<aside class="bg-inverse-surface dark:bg-primary-container docked h-screen w-64 left-0 top-0 flex-shrink-0 flex flex-col py-container-margin px-stack-md shadow-sm z-50" id="main-sidebar">
+<div class="mb-stack-lg">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary dark:text-on-primary-fixed mb-1">Enterprise Admin</h1>
+<p class="text-on-primary-fixed-variant text-label-caps font-label-caps">Global View</p>
+</div>
+<nav class="flex-grow space-y-1 overflow-y-auto hide-scrollbar">
+<!-- Dashboard -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<!-- Team -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md text-body-md">Team</span>
+</a>
+<!-- Live Stream -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">live_tv</span>
+<span class="font-body-md text-body-md">Live Stream</span>
+</a>
+<!-- Screenshots (Active) -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-secondary-container bg-secondary-container rounded-lg font-bold" href="#">
+<span class="material-symbols-outlined">screenshot</span>
+<span class="font-body-md text-body-md">Screenshots</span>
+</a>
+<!-- Reports -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">assessment</span>
+<span class="font-body-md text-body-md">Reports</span>
+</a>
+<!-- Activity Log -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md text-body-md">Activity Log</span>
+</a>
+<!-- User Portal -->
+<a class="flex items-center gap-3 py-3 px-4 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors group" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-body-md text-body-md">User Portal</span>
+</a>
+</nav>
+<div class="mt-auto pt-container-margin">
+<button class="w-full bg-secondary text-on-secondary py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined">person_add</span>
+                Invite Member
+            </button>
+</div>
+</aside>
+<!-- Main View -->
+<main class="flex-grow flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar Integration -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-lowest flex justify-between items-center w-full h-16 px-container-margin sticky top-0 z-40 border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-md text-headline-md font-black text-on-surface dark:text-on-surface">InsightEngine</span>
+<!-- Global Search -->
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full w-64 focus:ring-2 focus:ring-secondary text-body-md font-body-md" placeholder="Search capture contents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-stack-md">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female executive with short blonde hair, wearing a navy blue blazer and minimalist silver earrings. The background is a soft, out-of-focus modern corporate office with blue and white tones, matching a professional and secure enterprise aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1iNk5srWt7jrSyCSu3PWfqKTg2-sNw0omBI-IyLUTFwe1drsLTdqnIRZgrO4P_3hlhAc6IrwQgcCKOPhmBJskPm59ZjCi9Uy4crcG8t3JMSQh0s1CsHG2cTC26A8nWZAKAKQtfyMCVaR65wuKqXie_khlA87h3oDToZ3FukSw3eOzqXuVGqCOYcOQAM0fVrOuNWAZ6ofjbSv2XG3-39nBFFEVoJi6_Y2qbQjXy5XT79oB18nCl1FS2tOhaVBWRq6dSdlLUFYHTqM"/>
+</div>
+</div>
+</header>
+<!-- Gallery Body -->
+<div class="flex-grow flex overflow-hidden">
+<!-- User Filter Sidebar (Sub-navigation) -->
+<aside class="w-72 bg-surface flex flex-col border-r border-outline-variant">
+<div class="p-stack-md">
+<h2 class="font-label-caps text-label-caps text-on-surface-variant mb-stack-sm px-2">FILTER BY USER</h2>
+<div class="space-y-1">
+<!-- Active User -->
+<div class="flex items-center gap-3 p-3 bg-surface-container-high rounded-xl cursor-pointer border border-secondary-fixed">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="font-body-md text-body-md font-bold truncate">John Doe</p>
+<p class="text-xs text-on-surface-variant truncate">j.doe@enterprise.com</p>
+</div>
+</div>
+<!-- Other Users -->
+<div class="flex items-center gap-3 p-3 hover:bg-surface-container transition-colors rounded-xl cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-bold">AS</div>
+<div class="overflow-hidden">
+<p class="font-body-md text-body-md truncate">Alice Smith</p>
+<p class="text-xs text-on-surface-variant truncate">a.smith@enterprise.com</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 hover:bg-surface-container transition-colors rounded-xl cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-bold">RK</div>
+<div class="overflow-hidden">
+<p class="font-body-md text-body-md truncate">Robert King</p>
+<p class="text-xs text-on-surface-variant truncate">r.king@enterprise.com</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 hover:bg-surface-container transition-colors rounded-xl cursor-pointer group">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-bold">MW</div>
+<div class="overflow-hidden">
+<p class="font-body-md text-body-md truncate">Maria Wong</p>
+<p class="text-xs text-on-surface-variant truncate">m.wong@enterprise.com</p>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto p-stack-md border-t border-outline-variant bg-surface-container-low">
+<button class="w-full flex items-center justify-between text-body-md font-bold text-secondary px-2">
+<span>View All Users</span>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</aside>
+<!-- Gallery Canvas -->
+<div class="flex-grow overflow-y-auto p-container-margin hide-scrollbar">
+<!-- Timeline Group: Today -->
+<section class="mb-stack-lg">
+<div class="flex items-center gap-stack-md mb-gutter">
+<h3 class="font-headline-sm text-headline-sm">Today</h3>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<span class="text-label-caps font-label-caps text-on-surface-variant">OCT 24, 2023</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter">
+<!-- Screenshot Card 1 -->
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300" onclick="openFullscreen('Today, 10:45 AM', 'Productivity Suite - Project Delta')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A clean, sharp screenshot of a modern project management software dashboard showing a Gantt chart and kanban board. The UI of the captured app is professional and detailed with blue and grey tones, fitting perfectly within the high-density information environment of the main dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpfq2YMIIzrsMUy9FLz8kYmTcwekffOOBhhQ4toI-gc75hRRpLWGfBWW9Vh62zy-Sp5Rs7lzW_6ly1F3LyVnoAdfvey7OVdR9yL4g_I6s1wvOL7dcAcvVwi28YyLSKrp6y_VXP3peuGEu9Y3Gr8RSPTTasgEOE3EIFEzRN6FB0Z1zDgq3P51XsCRlTFqeybQs-YBktiDjIDwXiv8KD3-CJt8Pwuo1XpdVGYp76QNa4dHmJu76GaWijMd7P2DNmFDYVyFoVIi_Vm-A"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3 flex justify-between items-center">
+<div class="overflow-hidden">
+<p class="text-body-md font-bold truncate">Project Delta Review</p>
+<p class="text-xs text-on-surface-variant">10:45 AM • active_window.exe</p>
+</div>
+<div class="bg-secondary/10 px-2 py-1 rounded text-[10px] font-bold text-secondary">IDLE</div>
+</div>
+</div>
+<!-- Screenshot Card 2 -->
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300" onclick="openFullscreen('Today, 09:12 AM', 'Security Console - Monitoring')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A screenshot showing a complex security monitoring tool with multiple terminal windows, lines of green and white code, and a network map visualization. The style is authoritative and efficient, reflecting a high-security monitoring environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBEAjecaYibva-CiX68SRyFHcJVekS4-rOwTYZiYf4Cv4aL5jgCcFtIqtuQyiuZjpokBjRbOPQ6ITnlvI6MNovCwJ_ZfKbzwnTugEYtfs4UUsueUo0Qks0Q4k2880BUQGJRVv1Im0A0ykGX5qH9IHOeRxUuFgld2T66IF9C31hx0x4ibowUZB9uV9GH7Kdye03EKYC-gwzB4wrTJ-5KKyTelVBm4vDYiZ7DKZlFoCmSa0XjG1xZDdpgwXVNx4IBmdE2z-W-71NvLQ"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3 flex justify-between items-center">
+<div class="overflow-hidden">
+<p class="text-body-md font-bold truncate">Security Protocol Check</p>
+<p class="text-xs text-on-surface-variant">09:12 AM • shell_64.exe</p>
+</div>
+<div class="bg-error/10 px-2 py-1 rounded text-[10px] font-bold text-error">ALERT</div>
+</div>
+</div>
+<!-- Screenshot Card 3 -->
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300" onclick="openFullscreen('Today, 08:30 AM', 'Communication Platform')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A screenshot of a corporate messaging platform like Slack or Teams, showing organized channels and a professional conversation thread. The lighting is bright and clear, adhering to the modern light-mode theme of the application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVzd0exbA44ZEOdmq9_VB2vk7Ovqgw3STrCzTJCmcbnVOYBGdJrov1ek7u_DbikeXr9uRsdjsd_RTQroSHSiq8bKc54jG_mU_6gL6zSVI8r7E-CrzEZyHmpd4lreGLPXNMxw4yBefMGXi_KX6cRiysbrxzYMByywQ4g67NKQjLQhbxH-FsUrnk0-22ik0cTpZhcQMZQZRFJDigga5Z41vFPfRU-hvwfYqs_xBR-4UZ4-idkv-n-PvtSNgrbAHVhGS7CbmABBMXUtM"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3 flex justify-between items-center">
+<div class="overflow-hidden">
+<p class="text-body-md font-bold truncate">Daily Sync Chat</p>
+<p class="text-xs text-on-surface-variant">08:30 AM • comms_hub.app</p>
+</div>
+<div class="bg-surface-container-highest px-2 py-1 rounded text-[10px] font-bold text-on-surface-variant">CHAT</div>
+</div>
+</div>
+<!-- Screenshot Card 4 -->
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300" onclick="openFullscreen('Today, 07:45 AM', 'Data Analytics Tool')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A screenshot displaying a high-level data analytics dashboard with colorful bar charts, line graphs, and statistical cards. The visualization is clean, with no area fills in the charts as per the design guidelines, emphasizing clarity and functional precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMizrk0e38Vf2nGiuK42V2iThNp8Btr37Cq8gXCbTydDGGJ9_JOMHeXq_g03f-CwwstA5hI04G1_ya10bAu4MZHw2g1O-kam5K7uS68nhZCR4dARlk8PFfHlVbu8_cdYhw8ZKSOcD-gMfqywN_BlD81nWdl-dWFRHH_YWYaOHGhmGW3HK07TiCx33ZGU_7j0_M12MTIzeadx0-XjIafj3nBSK-oqweQzfL67DZ1r9f_wPmn3fpSGzxl7BTXl5NWUeu3qrHiOxYd3U"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3 flex justify-between items-center">
+<div class="overflow-hidden">
+<p class="text-body-md font-bold truncate">Quarterly Report Audit</p>
+<p class="text-xs text-on-surface-variant">07:45 AM • metrics_view.v2</p>
+</div>
+<div class="bg-secondary/10 px-2 py-1 rounded text-[10px] font-bold text-secondary">ACTIVE</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Timeline Group: Yesterday -->
+<section>
+<div class="flex items-center gap-stack-md mb-gutter">
+<h3 class="font-headline-sm text-headline-sm">Yesterday</h3>
+<div class="h-[1px] flex-grow bg-outline-variant"></div>
+<span class="text-label-caps font-label-caps text-on-surface-variant">OCT 23, 2023</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-gutter opacity-80 hover:opacity-100 transition-opacity">
+<!-- Yesterday Items -->
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm" onclick="openFullscreen('Yesterday, 04:20 PM', 'Client Portal Interface')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A screenshot of a client-facing web portal with a minimalist layout, featuring high-quality white space and soft slate-blue accents. The user interface looks professional and secure, intended for an enterprise environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqG9H4riBlmEo8JqsAD03zCDfQ1oLgbpHqAda2JgfrhqqwtAplo5gH_9ZpwXWv6SWBsfKQaKpX2q_Mb94a5871qw0H-TGO8wlQamA3JT2jYecDPCJ3GBKUsGphPb1L2q97yB4T2FL4wZeIfjX2diuIoglskjLJnIak-R7f1U6tiEN_dbsH10q7fQLPHKYzWcb_wlJPcrwGynE1gjFuN7MnD0WWcA2CzKYpi--2tDUzoCajst_iIbpP1T1KBFbqhgXWZ9hSwvO-UpU"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3">
+<p class="text-body-md font-bold truncate">Client Portal Dev</p>
+<p class="text-xs text-on-surface-variant">04:20 PM • chrome.exe</p>
+</div>
+</div>
+<div class="screenshot-card group relative bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden cursor-pointer shadow-sm" onclick="openFullscreen('Yesterday, 02:15 PM', 'Cloud Infrastructure Monitor')">
+<div class="aspect-video relative overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A screenshot of a cloud infrastructure monitoring tool showing server health nodes in a 3D-like layout. The colors are muted except for a few glowing blue status icons, portraying a sophisticated framework for real-time monitoring." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOgHxUNE2dx5XQLLGM_nTajXcilWxxk8yOpw4PoJWmcjNRlbDWo5sc1bMF3lheg23hV2eqE-VVjXlL_GhKBOGantqW8gm629nSqo1z2pw31gZC0J_Od06GwF1-8S8qo9kwpzCxLfGiVQ9JYcINX9-rP11xKFF8dwP3wYHURLzRE1-OuIfzBHnSFOd9jyFkB3k58SEG4GAHv_k4JcNifauWfxt-pnwnq6OJ6l1Fs9BF6AJkRC8VUbeE2YO_7J4YhLkWC3tZ4yYkZOA"/>
+<div class="zoom-overlay opacity-0 absolute inset-0 bg-primary/20 flex items-center justify-center transition-opacity duration-300">
+<span class="material-symbols-outlined text-on-primary text-4xl">fullscreen</span>
+</div>
+</div>
+<div class="p-3">
+<p class="text-body-md font-bold truncate">Infrastructure Check</p>
+<p class="text-xs text-on-surface-variant">02:15 PM • cloud_watch.app</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Fullscreen Modal Overlay -->
+<div class="fixed inset-0 z-[100] hidden flex-col items-center justify-center bg-inverse-surface/95 backdrop-blur-md transition-all duration-300 p-container-margin" id="fullscreen-overlay">
+<button class="absolute top-8 right-8 text-on-primary bg-white/10 p-3 rounded-full hover:bg-white/20 transition-all" onclick="closeFullscreen()">
+<span class="material-symbols-outlined text-3xl">close</span>
+</button>
+<div class="w-full max-w-6xl flex flex-col gap-stack-md">
+<div class="flex justify-between items-end px-2">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-primary" id="modal-title">Capture Preview</h2>
+<p class="font-body-lg text-body-lg text-on-primary-fixed-variant" id="modal-subtitle">Timestamp info</p>
+</div>
+<div class="flex gap-stack-sm">
+<button class="bg-on-primary text-primary px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-primary-fixed transition-colors">
+<span class="material-symbols-outlined">download</span> Download
+                    </button>
+<button class="bg-white/10 text-on-primary px-6 py-2 rounded-xl font-bold flex items-center gap-2 border border-white/20 hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined">flag</span> Report
+                    </button>
+</div>
+</div>
+<div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black">
+<img class="w-full h-full object-contain" data-alt="A massive, high-definition display of a technical enterprise screenshot. The screen is filled with detailed charts and data visualizations, presented in a crisp, sharp layout. The dark background of the viewer emphasizes the vibrant yet professional blue and teal highlights of the captured application." id="modal-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5Ke6Mcq8ada4XRY_Qf2M3lxetQiep9w8sq7Yoh358aKzAI2xp49Q20Z7kl_nuoIlMIxqWTEH7h-5jNJ_Mek6GXxORvGqvOnzZXjW11aU5-SfUTeS_ujcV4M5Z3pM_uF2hmMz0tsSyKGCZomoEXJsULZX6Xc-jqOrSS3qgVVDanvITd59fRGWezxKiv9_Y2IPOY1TlO6r3HrDOTHAtWpKwU_TtMfRv6bbXF9q7OjMylxSwPPpRo6X1Dlhz_VZ8IOZlXkvSfHByPzU"/>
+</div>
+</div>
+</div>
+<script>
+        function openFullscreen(timestamp, title) {
+            const overlay = document.getElementById('fullscreen-overlay');
+            const modalImg = document.getElementById('modal-img');
+            const modalTitle = document.getElementById('modal-title');
+            const modalSubtitle = document.getElementById('modal-subtitle');
+
+            modalTitle.innerText = title;
+            modalSubtitle.innerText = timestamp;
+            
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            
+            // Add entry animation
+            overlay.animate([
+                { opacity: 0, transform: 'scale(1.05)' },
+                { opacity: 1, transform: 'scale(1)' }
+            ], {
+                duration: 300,
+                easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+            });
+        }
+
+        function closeFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            
+            const animation = overlay.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0.98)' }
+            ], {
+                duration: 200,
+                easing: 'ease-in'
+            });
+
+            animation.onfinish = () => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            };
+        }
+
+        // Close on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeFullscreen();
+        });
+
+        // Hover Micro-interactions
+        document.querySelectorAll('.screenshot-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body></html>

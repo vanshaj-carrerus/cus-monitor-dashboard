@@ -72,12 +72,12 @@ export default function TimeTrackerPage() {
             className={cn(
               "flex items-center gap-2 rounded-lg px-6 py-2.5 text-[14px] font-bold transition-all",
               activeView === 'org'
-                ? "bg-[#F5F3FF] text-[#0D1B3E] border border-[#5E35B1]/20 shadow-sm"
+                ? "bg-secondary text-on-surface border border-primary/20 shadow-sm"
                 : "text-slate-500 hover:bg-slate-50"
             )}
           >
             <div className={cn("p-1 rounded-md", activeView === 'org' ? "bg-white" : "bg-transparent")}>
-              <Users2 className={cn("h-4 w-4", activeView === 'org' ? "text-[#0D1B3E]" : "text-slate-400")} />
+              <Users2 className={cn("h-4 w-4", activeView === 'org' ? "text-on-surface" : "text-slate-400")} />
             </div>
             Organization View
           </button>
@@ -87,12 +87,12 @@ export default function TimeTrackerPage() {
             className={cn(
               "flex items-center gap-2 rounded-lg px-6 py-2.5 text-[14px] font-bold transition-all",
               activeView === 'ind'
-                ? "bg-[#F5F3FF] text-[#0D1B3E] border border-[#5E35B1]/20 shadow-sm"
+                ? "bg-secondary text-on-surface border border-primary/20 shadow-sm"
                 : "text-slate-500 hover:bg-slate-50"
             )}
           >
             <div className={cn("p-1 rounded-md", activeView === 'ind' ? "bg-white" : "bg-transparent")}>
-              <User className={cn("h-4 w-4", activeView === 'ind' ? "text-[#0D1B3E]" : "text-slate-400")} />
+              <User className={cn("h-4 w-4", activeView === 'ind' ? "text-on-surface" : "text-slate-400")} />
             </div>
             Individual View
           </button>
@@ -104,7 +104,7 @@ export default function TimeTrackerPage() {
             <span className="text-slate-300">—</span>
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-[13px] text-slate-600 outline-none" />
             <Calendar className="h-5 w-5 text-slate-300" />
-            <Button size="sm" onClick={fetchReports} className="rounded-lg bg-[#5E35B1] text-white hover:bg-[#4527A0] px-3 py-1.5 h-auto">Apply</Button>
+            <Button size="sm" onClick={fetchReports} className="rounded-lg bg-primary text-white hover:bg-primary/90 px-3 py-1.5 h-auto">Apply</Button>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function TimeTrackerPage() {
                     placeholder="Search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 pl-12 text-[14px] text-slate-600 focus:border-[#5E35B1] focus:outline-none placeholder:text-slate-300"
+                    className="w-full rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3 pl-12 text-[14px] text-slate-600 focus:border-primary focus:outline-none placeholder:text-slate-300"
                   />
                   <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
                 </div>
@@ -133,7 +133,7 @@ export default function TimeTrackerPage() {
                     onClick={() => setOrgFilter('manager')}
                     className={cn(
                       "rounded-lg px-4 py-2 text-[12px] font-bold transition-all",
-                      orgFilter === 'manager' ? "bg-[#5E35B1] text-white shadow-lg shadow-purple-200" : "text-slate-500 hover:bg-slate-100"
+                      orgFilter === 'manager' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-500 hover:bg-slate-100"
                     )}
                   >
                     Manager
@@ -142,7 +142,7 @@ export default function TimeTrackerPage() {
                     onClick={() => setOrgFilter('loc_dept')}
                     className={cn(
                       "rounded-lg px-4 py-2 text-[12px] font-bold transition-all",
-                      orgFilter === 'loc_dept' ? "bg-[#5E35B1] text-white shadow-lg shadow-purple-200" : "text-slate-500 hover:bg-slate-100"
+                      orgFilter === 'loc_dept' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-500 hover:bg-slate-100"
                     )}
                   >
                     Location & Department
@@ -155,11 +155,11 @@ export default function TimeTrackerPage() {
                 </div>
               )}
 
-              <div className="text-[16px] font-bold text-[#0D1B3E] whitespace-nowrap overflow-hidden text-ellipsis">
+              <div className="text-[16px] font-bold text-on-surface whitespace-nowrap overflow-hidden text-ellipsis">
                 {activeView === 'org' ? (
-                  <>Total Team Productivity: <span className="text-[#0D1B3E]">{formatTimeSpent(totalProductive)}</span></>
+                  <>Total Team Productivity: <span className="text-on-surface">{formatTimeSpent(totalProductive)}</span></>
                 ) : (
-                  <>Total Productivity: <span className="text-[#0D1B3E]">0hrs 0Min 0Sec</span></>
+                  <>Total Productivity: <span className="text-on-surface">0hrs 0Min 0Sec</span></>
                 )}
               </div>
             </div>
@@ -302,7 +302,7 @@ export default function TimeTrackerPage() {
               ) : activeView === 'org' ? (
                 reports.map((row: any, idx: number) => (
                   <tr key={row._id || idx} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-4 py-5 font-bold text-[#0D1B3E] text-[13px]">
+                    <td className="px-4 py-5 font-bold text-on-surface text-[13px]">
                       {row.username || ' '}
                       {row.role && <div className="text-[10px] font-medium text-slate-400 mt-1 capitalize">{row.role}</div>}
                     </td>
@@ -337,7 +337,7 @@ export default function TimeTrackerPage() {
               <ChevronLeft className="h-6 w-6" />
             </button>
             <div className="flex gap-3">
-              <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#5E35B1] text-white font-bold shadow-lg shadow-purple-200">
+              <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20">
                 1
               </button>
               {activeView === 'org' && (

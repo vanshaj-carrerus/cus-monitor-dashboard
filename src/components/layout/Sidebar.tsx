@@ -12,6 +12,7 @@ import {
   User,
   Clock,
   KeyRound,
+  UserPlus,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { isMemberRole } from '@/components/auth-context';
@@ -20,17 +21,17 @@ import Image from 'next/image';
 type SubItem = { label: string; href: string; adminOnly?: boolean };
 type Item =
   | {
-    icon: typeof LayoutDashboard;
-    label: string;
-    href: string;
-    subItems?: undefined;
-  }
+      icon: typeof LayoutDashboard;
+      label: string;
+      href: string;
+      subItems?: undefined;
+    }
   | {
-    icon: typeof LayoutDashboard;
-    label: string;
-    href: string;
-    subItems: SubItem[];
-  };
+      icon: typeof LayoutDashboard;
+      label: string;
+      href: string;
+      subItems: SubItem[];
+    };
 
 function itemsForRole(role: string): Item[] {
   if (isMemberRole(role)) {
@@ -43,8 +44,12 @@ function itemsForRole(role: string): Item[] {
 
   const myTeamSub: SubItem[] = [
     { label: 'Members', href: '/my-team/members' },
-    ...((role === 'admin' || role === 'admin_compliance') ? [{ label: 'Managers', href: '/my-team/managers', adminOnly: true } as SubItem] : []),
-    ...((role === 'admin' || role === 'admin_compliance') ? [{ label: 'Admins', href: '/my-team/admins', adminOnly: true } as SubItem] : []),
+    ...((role === 'admin' || role === 'admin_compliance')
+      ? [{ label: 'Managers', href: '/my-team/managers', adminOnly: true } as SubItem]
+      : []),
+    ...((role === 'admin' || role === 'admin_compliance')
+      ? [{ label: 'Admins', href: '/my-team/admins', adminOnly: true } as SubItem]
+      : []),
   ];
 
   return [
@@ -81,10 +86,19 @@ export function Sidebar({ role }: { role: string }) {
   useEffect(() => {
     const initialOpenMenus: Record<string, boolean> = {};
     sidebarItems.forEach((item) => {
-      if (item.subItems?.some((si) => pathname === si.href || pathname.startsWith(si.href + '/'))) {
+      if (
+        item.subItems?.some(
+          (si) => pathname === si.href || pathname.startsWith(si.href + '/'),
+        )
+      ) {
         initialOpenMenus[item.label] = true;
       }
-      if (item.subItems?.some((si) => pathname.startsWith('/my-team') && si.href.startsWith('/my-team'))) {
+      if (
+        item.subItems?.some(
+          (si) =>
+            pathname.startsWith('/my-team') && si.href.startsWith('/my-team'),
+        )
+      ) {
         initialOpenMenus[item.label] = true;
       }
     });
@@ -98,106 +112,140 @@ export function Sidebar({ role }: { role: string }) {
     }));
   };
 
-  const linkActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const linkActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + '/');
+
+  const isAdmin = !isMemberRole(role);
 
   return (
-    <aside className="fixed left-0 top-0 z-50 h-screen w-64 border-r border-slate-200 bg-white">
-      <div className="flex h-full flex-col overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-dashed border-slate-200 p-6">
-          <div className="flex cursor-pointer items-center gap-2 transition-transform hover:scale-105">
-            <div className="flex shrink-0 items-center justify-center rounded-xl text-white">
-              <Image src={"/logo.png"} alt="CUS Monitor" width={40} height={40} />
-            </div>
-            <span className="text-xl font-bold text-[#5E35B1]">CUS Monitor</span>
-          </div>
+    <aside className="fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col bg-inverse-surface py-6 px-4 shadow-sm md:flex">
+      <div className="mb-8 px-2">
+        <div className="mb-4 flex items-center gap-2">
+          <Image src="/logo.png" alt="CUS Monitor" width={36} height={36} />
+          <span className="text-lg font-bold text-white">CUS Monitor</span>
         </div>
+        <h1 className="text-sm font-bold text-inverse-on-surface">
+          {isAdmin ? 'Enterprise Admin' : 'User Portal'}
+        </h1>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-inverse-primary/70">
+          {isAdmin ? 'Global View' : 'Personal Workspace'}
+        </p>
+      </div>
 
-        <ul className="mt-6 space-y-1 px-3 font-medium">
-          {sidebarItems.map((item) => (
-            <li key={item.label}>
-              {item.subItems ? (
-                <div className="space-y-1">
-                  <div
-                    onClick={() => toggleMenu(item.label)}
-                    className={cn(
-                      'group flex cursor-pointer items-center rounded-xl p-3 text-slate-500 transition-all hover:bg-slate-50',
-                      (openMenus[item.label] ||
-                        item.subItems.some((si) => linkActive(si.href))) &&
-                      'font-bold text-[#5E35B1]'
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="ml-3 flex-1">{item.label}</span>
-                    <svg
-                      className={cn('h-4 w-4 transition-transform', openMenus[item.label] && 'rotate-180')}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m19 9-7 7-7-7" />
-                    </svg>
-                  </div>
-                  <ul
-                    className={cn(
-                      'ml-9 space-y-1 overflow-auto transition-all duration-300',
-                      openMenus[item.label] ? 'max-h-auto opacity-100' : 'max-h-0 opacity-0'
-                    )}
-                  >
-                    {item.subItems
-                      .filter((si) => !(si.adminOnly && role !== 'admin' && role !== 'admin_compliance'))
-                      .map((subItem) => (
-                        <li key={subItem.href}>
-                          <Link
-                            href={subItem.href}
-                            className={cn(
-                              'flex items-center rounded-xl p-2 text-sm text-slate-500 transition-all hover:bg-slate-50',
-                              linkActive(subItem.href) && 'bg-[#5E35B1] text-white hover:bg-[#5E35B1]/90'
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                'mr-3 h-1.5 w-1.5 rounded-full',
-                                linkActive(subItem.href) ? 'bg-white' : 'bg-slate-300'
-                              )}
-                            />
-                            {subItem.label}
-                          </Link>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ) : (
-                <Link
-                  href={item.href}
+      <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto">
+        {sidebarItems.map((item) => (
+          <div key={item.label}>
+            {item.subItems ? (
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleMenu(item.label)}
                   className={cn(
-                    'group flex items-center rounded-xl p-3 text-slate-500 transition-all hover:bg-slate-50',
-                    linkActive(item.href) && 'bg-[#5E35B1] text-white hover:bg-[#5E35B1]/90'
+                    'flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                    openMenus[item.label] ||
+                      item.subItems.some((si) => linkActive(si.href))
+                      ? 'font-bold text-inverse-on-surface'
+                      : 'text-inverse-primary/80 hover:bg-white/10 hover:text-inverse-on-surface',
                   )}
                 >
-                  <item.icon
+                  <item.icon className="h-5 w-5 shrink-0" />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <svg
                     className={cn(
-                      'h-5 w-5 transition duration-75',
-                      linkActive(item.href) ? 'text-white' : 'text-slate-400 group-hover:text-slate-900'
+                      'h-4 w-4 transition-transform',
+                      openMenus[item.label] && 'rotate-180',
                     )}
-                  />
-                  <span className="ml-3">{item.label}</span>
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
-
-        {!isMemberRole(role) && (
-          <div className="mt-auto border-t border-slate-200 p-4">
-            <Link href="/forgot-password" className="flex items-center rounded-xl p-3 text-slate-500 hover:bg-slate-50">
-              <KeyRound className="h-5 w-5 text-slate-400" />
-              <span className="ml-3">Forgot password</span>
-            </Link>
-            <Link href="/support" className="flex items-center rounded-xl p-3 text-slate-500 hover:bg-slate-50">
-              <HelpCircle className="h-5 w-5 text-slate-400" />
-              <span className="ml-3">Support Forum</span>
-            </Link>
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m19 9-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                <ul
+                  className={cn(
+                    'ml-4 space-y-0.5 overflow-hidden transition-all duration-300',
+                    openMenus[item.label]
+                      ? 'max-h-96 opacity-100'
+                      : 'max-h-0 opacity-0',
+                  )}
+                >
+                  {item.subItems
+                    .filter(
+                      (si) =>
+                        !(
+                          si.adminOnly &&
+                          role !== 'admin' &&
+                          role !== 'admin_compliance'
+                        ),
+                    )
+                    .map((subItem) => (
+                      <li key={subItem.href}>
+                        <Link
+                          href={subItem.href}
+                          className={cn(
+                            'flex items-center rounded-lg px-3 py-2 text-sm transition-colors',
+                            linkActive(subItem.href)
+                              ? 'bg-secondary-container font-bold text-on-secondary-container'
+                              : 'text-inverse-primary/70 hover:bg-white/10 hover:text-inverse-on-surface',
+                          )}
+                        >
+                          {subItem.label}
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ) : (
+              <Link
+                href={item.href}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+                  linkActive(item.href)
+                    ? 'bg-secondary-container font-bold text-on-secondary-container'
+                    : 'text-inverse-primary/80 hover:bg-white/10 hover:text-inverse-on-surface',
+                )}
+              >
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span>{item.label}</span>
+              </Link>
+            )}
           </div>
+        ))}
+      </nav>
+
+      <div className="mt-auto space-y-2 border-t border-white/10 pt-4">
+        {isAdmin && (
+          <Link
+            href="/my-team/members"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <UserPlus className="h-4 w-4" />
+            Invite Member
+          </Link>
+        )}
+        {!isMemberRole(role) && (
+          <>
+            <Link
+              href="/forgot-password"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-inverse-primary/70 hover:bg-white/10"
+            >
+              <KeyRound className="h-4 w-4" />
+              <span>Forgot password</span>
+            </Link>
+            <Link
+              href="/support"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-inverse-primary/70 hover:bg-white/10"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Support Forum</span>
+            </Link>
+          </>
         )}
       </div>
     </aside>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InsightEngine | Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #E2E8F0;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-surface": "#213145",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "on-tertiary-fixed-variant": "#574425",
+                      "surface-container-high": "#dce9ff",
+                      "on-surface-variant": "#45464d",
+                      "outline-variant": "#c6c6cd",
+                      "on-primary": "#ffffff",
+                      "surface-variant": "#d3e4fe",
+                      "secondary-container": "#2170e4",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#271901",
+                      "on-primary-fixed": "#131b2e",
+                      "primary-fixed-dim": "#bec6e0",
+                      "on-surface": "#0b1c30",
+                      "inverse-primary": "#bec6e0",
+                      "primary": "#000000",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "secondary": "#0058be",
+                      "on-secondary-container": "#fefcff",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-secondary-fixed": "#001a42",
+                      "outline": "#76777d",
+                      "tertiary-fixed-dim": "#dec29a",
+                      "secondary-fixed": "#d8e2ff",
+                      "tertiary": "#000000",
+                      "background": "#f8f9ff",
+                      "on-primary-container": "#7c839b",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#98805d",
+                      "surface-tint": "#565e74",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#dae2fd",
+                      "tertiary-fixed": "#fcdeb5",
+                      "surface": "#f8f9ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#004395",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container": "#e5eeff",
+                      "primary-container": "#131b2e",
+                      "error-container": "#ffdad6",
+                      "tertiary-container": "#271901",
+                      "surface-container-low": "#eff4ff",
+                      "on-background": "#0b1c30"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-sm": "8px",
+                      "gutter": "16px",
+                      "container-margin": "24px",
+                      "base": "4px",
+                      "stack-lg": "32px",
+                      "card-padding": "20px",
+                      "stack-md": "16px"
+              },
+              "fontFamily": {
+                      "display-lg-mobile": ["Inter"],
+                      "data-tabular": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "display-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full py-container-margin px-stack-md bg-inverse-surface dark:bg-primary-container text-secondary-fixed dark:text-secondary-fixed-dim shadow-sm w-64 shrink-0 z-50">
+<div class="mb-stack-lg px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary dark:text-on-primary-fixed mb-1">Enterprise Admin</h1>
+<p class="font-label-caps text-label-caps opacity-70 tracking-wider">Global View</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Dashboard Active -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-secondary-container bg-secondary-container rounded-lg font-bold transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-body-md text-body-md">Team</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="live_tv">live_tv</span>
+<span class="font-body-md text-body-md">Live Stream</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="screenshot">screenshot</span>
+<span class="font-body-md text-body-md">Screenshots</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-body-md text-body-md">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-body-md text-body-md">Activity Log</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-body-md text-body-md">User Portal</span>
+</a>
+</nav>
+<div class="mt-auto">
+<button class="w-full py-2.5 bg-secondary text-on-secondary rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                    Invite Member
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full h-16 px-container-margin sticky top-0 z-40 bg-surface-container-lowest dark:bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-md text-headline-md font-black text-on-surface dark:text-on-surface tracking-tight">InsightEngine</span>
+<div class="hidden md:flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant ml-4">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-64 placeholder:text-on-surface-variant" placeholder="Search members, activities..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 text-on-surface hover:bg-surface-container-low rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined p-2 text-on-surface hover:bg-surface-container-low rounded-full transition-colors" data-icon="settings">settings</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, professional headshot of a senior executive in a corporate setting, with soft natural lighting and a blurred office background. The style is modern, professional, and reflects a high-trust leadership persona with muted corporate colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8ypdAYU6By_TpKjQh2Od2rkaWbxvXPkLBksAKUozZtytnUA6oKaUU7Qi_Q_QB026rFKHjazKKRaU_BKUl8hPfvoP1bCu7kdxYlfw0mfbl-6bwZBCq-Jq-xdGIManF6XJkF46FwqypSbI1KEA6WjqiCv_ZKERvWHWHVwOU-qyb0Dolw3eBMaTRZh48USgatC2kB6mZAGZGo6f9rF7eors0FSjKj1gtKZtYR1sRioPd0ncoEeH7Lw00iFSSOX-lOHHmYZg0FPM-AqU"/>
+</div>
+</div>
+</header>
+<!-- Dashboard Content Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-container-margin space-y-stack-lg custom-scrollbar">
+<!-- 1. Header with View Filter -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-gutter">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Productivity Overview</h2>
+<p class="text-on-surface-variant font-body-md">Real-time engagement and output analytics</p>
+</div>
+<div class="flex p-1 bg-surface-container rounded-xl border border-outline-variant w-fit self-start">
+<button class="px-4 py-1.5 rounded-lg text-on-secondary-container bg-secondary-container font-bold text-label-caps uppercase tracking-wider">Organization</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors font-bold text-label-caps uppercase tracking-wider">Team</button>
+<button class="px-4 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors font-bold text-label-caps uppercase tracking-wider">Individual</button>
+</div>
+</div>
+<!-- 2. KPI Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="group">group</span>
+<span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-label-caps">+12%</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-caps uppercase">Total Members</p>
+<h3 class="text-display-lg font-display-lg text-on-surface mt-1">1,284</h3>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="person_check">person_check</span>
+<span class="text-secondary bg-surface-container px-2 py-0.5 rounded text-label-caps">94% Active</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-caps uppercase">Active Members</p>
+<h3 class="text-display-lg font-display-lg text-on-surface mt-1">1,110</h3>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="timer">timer</span>
+<span class="text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded text-label-caps">This Week</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-caps uppercase">Total Active Hours</p>
+<h3 class="text-display-lg font-display-lg text-on-surface mt-1">42,800</h3>
+</div>
+</div>
+<!-- Card 4: Hours Breakdown Integrated -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant shadow-sm flex flex-col">
+<div class="flex justify-between mb-4">
+<p class="text-on-surface-variant font-label-caps uppercase">Hour Classification</p>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="pie_chart">pie_chart</span>
+</div>
+<div class="space-y-3">
+<div>
+<div class="flex justify-between text-body-md mb-1">
+<span class="font-bold">Productive</span>
+<span>28.5k hrs</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full" style="width: 65%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-body-md mb-1">
+<span class="font-bold">Unproductive</span>
+<span>8.2k hrs</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+<div class="bg-error h-full" style="width: 20%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-body-md mb-1">
+<span class="font-bold">Neutral</span>
+<span>6.1k hrs</span>
+</div>
+<div class="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
+<div class="bg-on-tertiary-container h-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Main Area: Productivity Line Chart -->
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-stack-lg">
+<h3 class="font-headline-sm text-headline-sm">Productivity Over Time</h3>
+<div class="flex items-center gap-2">
+<span class="flex items-center gap-1.5 text-label-caps text-on-surface-variant">
+<span class="w-3 h-3 rounded-full bg-secondary"></span> Current Period
+                            </span>
+<span class="flex items-center gap-1.5 text-label-caps text-on-surface-variant ml-4">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span> Previous Period
+                            </span>
+</div>
+</div>
+<div class="relative h-80 w-full overflow-hidden">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 1000 300">
+<defs>
+<lineargradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0058be" stop-opacity="0.1"></stop>
+<stop offset="100%" stop-color="#0058be" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid lines -->
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="1000" y1="50" y2="50"></line>
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="1000" y1="150" y2="150"></line>
+<line stroke="#E2E8F0" stroke-width="1" x1="0" x2="1000" y1="250" y2="250"></line>
+<!-- Area and Main Line -->
+<path d="M0,250 Q100,220 200,240 T400,100 T600,150 T800,80 T1000,120 V300 H0 Z" fill="url(#chartGradient)"></path>
+<path d="M0,250 Q100,220 200,240 T400,100 T600,150 T800,80 T1000,120" fill="none" stroke="#0058be" stroke-linecap="round" stroke-width="3"></path>
+<!-- Comparison Line -->
+<path d="M0,270 Q150,260 300,240 T600,180 T900,160 T1000,180" fill="none" stroke="#c6c6cd" stroke-dasharray="8 4" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<!-- Y Axis labels -->
+<div class="absolute left-0 top-0 h-full flex flex-col justify-between text-label-caps text-on-surface-variant pointer-events-none pb-8">
+<span>100%</span>
+<span>50%</span>
+<span>0%</span>
+</div>
+</div>
+<div class="flex justify-between mt-4 px-4 text-label-caps text-on-surface-variant uppercase tracking-widest">
+<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+</div>
+</div>
+<!-- 4. Two-column grid: Top vs Least Productive -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- Top Productive -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="px-card-padding py-stack-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm">Top Productive Members</h3>
+<button class="text-secondary font-bold text-label-caps hover:underline">VIEW ALL</button>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary flex items-center justify-center font-bold text-secondary bg-surface-container">AK</div>
+<div>
+<p class="font-bold text-body-md">Alex Karsanov</p>
+<p class="text-label-caps text-on-surface-variant">Product Design</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-secondary">98%</p>
+<p class="text-label-caps text-emerald-600">38h Productive</p>
+</div>
+</div>
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary flex items-center justify-center font-bold text-secondary bg-surface-container">SL</div>
+<div>
+<p class="font-bold text-body-md">Sarah Lewis</p>
+<p class="text-label-caps text-on-surface-variant">Engineering</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-secondary">95%</p>
+<p class="text-label-caps text-emerald-600">36.5h Productive</p>
+</div>
+</div>
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-secondary flex items-center justify-center font-bold text-secondary bg-surface-container">JM</div>
+<div>
+<p class="font-bold text-body-md">James Miller</p>
+<p class="text-label-caps text-on-surface-variant">Marketing</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-secondary">92%</p>
+<p class="text-label-caps text-emerald-600">34h Productive</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Least Productive -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="px-card-padding py-stack-md border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<h3 class="font-headline-sm text-headline-sm">Underperforming Pulse</h3>
+<button class="text-error font-bold text-label-caps hover:underline">INTERVENE</button>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center font-bold text-on-surface-variant bg-surface-container-low">DH</div>
+<div>
+<p class="font-bold text-body-md">David Han</p>
+<p class="text-label-caps text-on-surface-variant">Operations</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-error">42%</p>
+<p class="text-label-caps text-error">12h Unproductive</p>
+</div>
+</div>
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center font-bold text-on-surface-variant bg-surface-container-low">MP</div>
+<div>
+<p class="font-bold text-body-md">Maria Pena</p>
+<p class="text-label-caps text-on-surface-variant">Sales</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-error">51%</p>
+<p class="text-label-caps text-error">9h Unproductive</p>
+</div>
+</div>
+<div class="p-card-padding flex items-center justify-between hover:bg-surface-container-low transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center font-bold text-on-surface-variant bg-surface-container-low">TT</div>
+<div>
+<p class="font-bold text-body-md">Tom Taylor</p>
+<p class="text-label-caps text-on-surface-variant">Support</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-display-lg text-headline-sm text-error">58%</p>
+<p class="text-label-caps text-error">7h Unproductive</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 5. Usage Analysis: Web/App usage bar charts -->
+<div class="bg-surface-container-lowest p-card-padding rounded-xl border border-outline-variant shadow-sm mb-8">
+<h3 class="font-headline-sm text-headline-sm mb-stack-lg">App &amp; Web Resource Analysis</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+<!-- Productive Apps -->
+<div>
+<h4 class="font-label-caps text-label-caps uppercase text-on-surface-variant mb-4 tracking-widest">Most Used Productive Assets</h4>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="code">code</span>
+<span class="font-bold text-body-md">VS Code</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">32%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">124h 20m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 32%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="palette">palette</span>
+<span class="font-bold text-body-md">Figma Desktop</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">28%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">108h 15m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 28%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="terminal">terminal</span>
+<span class="font-bold text-body-md">Slack Terminal</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">15%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">58h 40m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Unproductive/Entertainment -->
+<div>
+<h4 class="font-label-caps text-label-caps uppercase text-error mb-4 tracking-widest">Time Sink &amp; Leisure Assets</h4>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="play_circle">play_circle</span>
+<span class="font-bold text-body-md">YouTube (Web)</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">18%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">72h 10m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-error" style="width: 18%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="forum">forum</span>
+<span class="font-bold text-body-md">Reddit</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">12%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">46h 30m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-error" style="width: 12%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-bold text-body-md">Amazon (Web)</span>
+</div>
+<div class="text-right">
+<span class="font-bold text-on-surface">6%</span>
+<span class="text-on-surface-variant text-label-caps ml-2">24h 05m</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-error" style="width: 6%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction script -->
+<script>
+        document.querySelectorAll('.hover\\:bg-surface-container-low').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                item.style.transform = 'translateX(4px)';
+                item.style.transition = 'transform 0.2s ease-out';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body></html>

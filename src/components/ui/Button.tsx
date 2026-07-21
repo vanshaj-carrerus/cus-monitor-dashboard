@@ -9,10 +9,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const variants = {
-      primary: 'bg-blue-600 text-black focus:ring-blue-500',
-      secondary: 'bg-slate-100 text-slate-900 focus:ring-slate-500  dark:text-black',
-      danger: 'bg-red-600 text-black focus:ring-red-500',
-      ghost: 'bg-transparent  text-slate-700 dark:text-black ',
+      primary: 'bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary',
+      secondary:
+        'bg-secondary text-secondary-foreground hover:bg-surface-container focus:ring-primary border border-outline-variant',
+      danger: 'bg-error text-on-error hover:bg-error/90 focus:ring-error',
+      ghost: 'bg-transparent text-on-surface-variant hover:bg-surface-container-low',
     };
 
     const sizes = {
@@ -25,15 +26,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+          'inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
           variants[variant],
           sizes[size],
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 
 Button.displayName = 'Button';

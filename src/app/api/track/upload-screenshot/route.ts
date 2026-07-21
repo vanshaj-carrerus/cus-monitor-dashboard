@@ -5,6 +5,7 @@ import DBConnect from "../../../../../lib/DB_Connect";
 import Screenshot from "@/models/screenshot";
 import { cloudinary, ensureCloudinaryConfigured, getCloudinaryUploadErrorMessage } from "../../../../../lib/cloudinary";
 import { uploadScreenshotToImageKit } from "../../../../../lib/imagekit";
+import { uploadScreenshotToSirv } from "../../../../../lib/sirv";
 
 function getCorsHeaders(origin: string | null) {
     const allowedOrigins = [
@@ -61,16 +62,21 @@ export async function POST(req: NextRequest) {
             imageUrl = await uploadScreenshotToImageKit(base64Data, userId, email);
         } catch (imageKitError) {
             console.warn("ImageKit upload failed, falling back to Cloudinary:", imageKitError);
-            ensureCloudinaryConfigured();
-            const result = await cloudinary.uploader.upload(
-                `data:image/png;base64,${base64Data}`,
-                {
-                    folder: `cus_spy_monitor/${userId}`,
-                    resource_type: "image",
-                    tags: ["monitoring", email],
-                }
-            );
-            imageUrl = result.secure_url;
+            try {
+                ensureCloudinaryConfigured();
+                const result = await cloudinary.uploader.upload(
+                    `data:image/png;base64,${base64Data}`,
+                    {
+                        folder: `cus_spy_monitor/${userId}`,
+                        resource_type: "image",
+                        tags: ["monitoring", email],
+                    }
+                );
+                imageUrl = result.secure_url;
+            } catch (cloudinaryError) {
+                console.warn("Cloudinary upload failed, falling back to Sirv:", cloudinaryError);
+                imageUrl = await uploadScreenshotToSirv(base64Data, userId, email);
+            }
         }
 
         // Save to MongoDB

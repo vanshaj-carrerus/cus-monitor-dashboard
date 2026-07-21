@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InsightEngine | Activity Log</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-surface": "#213145",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "on-tertiary-fixed-variant": "#574425",
+                      "surface-container-high": "#dce9ff",
+                      "on-surface-variant": "#45464d",
+                      "outline-variant": "#c6c6cd",
+                      "on-primary": "#ffffff",
+                      "surface-variant": "#d3e4fe",
+                      "secondary-container": "#2170e4",
+                      "on-error": "#ffffff",
+                      "surface-dim": "#cbdbf5",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#271901",
+                      "on-primary-fixed": "#131b2e",
+                      "primary-fixed-dim": "#bec6e0",
+                      "on-surface": "#0b1c30",
+                      "inverse-primary": "#bec6e0",
+                      "primary": "#000000",
+                      "on-primary-fixed-variant": "#3f465c",
+                      "secondary": "#0058be",
+                      "on-secondary-container": "#fefcff",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-secondary-fixed": "#001a42",
+                      "outline": "#76777d",
+                      "tertiary-fixed-dim": "#dec29a",
+                      "secondary-fixed": "#d8e2ff",
+                      "tertiary": "#000000",
+                      "background": "#f8f9ff",
+                      "on-primary-container": "#7c839b",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#98805d",
+                      "surface-tint": "#565e74",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#dae2fd",
+                      "tertiary-fixed": "#fcdeb5",
+                      "surface": "#f8f9ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#004395",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container": "#e5eeff",
+                      "primary-container": "#131b2e",
+                      "error-container": "#ffdad6",
+                      "tertiary-container": "#271901",
+                      "surface-container-low": "#eff4ff",
+                      "on-background": "#0b1c30"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "stack-sm": "8px",
+                      "gutter": "16px",
+                      "container-margin": "24px",
+                      "base": "4px",
+                      "stack-lg": "32px",
+                      "card-padding": "20px",
+                      "stack-md": "16px"
+              },
+              "fontFamily": {
+                      "display-lg-mobile": ["Inter"],
+                      "data-tabular": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "display-lg": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg-mobile": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "data-tabular": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "headline-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9ff;
+            color: #0b1c30;
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .activity-row:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-hidden">
+<!-- SideNavBar Shell -->
+<aside class="hidden md:flex flex-col h-screen w-64 left-0 top-0 bg-inverse-surface fixed z-50 py-container-margin px-stack-md shrink-0">
+<div class="mb-stack-lg px-2">
+<h1 class="font-headline-sm text-headline-sm font-bold text-on-primary">Enterprise Admin</h1>
+<p class="text-on-primary-fixed-variant text-xs opacity-70">Global View</p>
+</div>
+<nav class="flex-1 space-y-1 custom-scrollbar overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">groups</span>
+                Team
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">live_tv</span>
+                Live Stream
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">screenshot</span>
+                Screenshots
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">assessment</span>
+                Reports
+            </a>
+<!-- Active State Logic: Activity Log -->
+<a class="flex items-center gap-3 px-3 py-2 text-on-secondary-container bg-secondary-container rounded-lg font-bold font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">history</span>
+                Activity Log
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-primary-fixed-variant hover:bg-surface-variant hover:text-on-surface-variant transition-colors rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+                User Portal
+            </a>
+</nav>
+<div class="mt-auto pt-stack-md border-t border-white/10">
+<button class="w-full bg-secondary-container text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined text-sm">person_add</span>
+                Invite Member
+            </button>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<main class="flex-1 md:ml-64 flex flex-col h-screen">
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center w-full h-16 px-container-margin sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-md text-headline-md font-black text-on-surface">InsightEngine</span>
+<div class="hidden lg:flex items-center bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant w-80">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder:text-on-surface-variant/50" placeholder="Search activity logs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">settings</button>
+<div class="w-8 h-8 rounded-full bg-secondary-fixed overflow-hidden flex items-center justify-center border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional close-up headshot of a female executive with a friendly expression. She is wearing a modern tailored blazer in a neutral tone against a soft-focus office background with warm lighting, conveying an atmosphere of competence and approachable leadership in a high-tech corporate environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOllRVMZsnbfmCev_NxUs7QKQaHNSULK7b0T7LolEC1XHdDmFMT1MI-BHDCzIpsv4p7Bt9shCei1KUg39J1VNWryWOxTwLAAqXHcPiS2AHTJdatiak4UoAUMTAdPioqmBnVbm_J8vv8laHrX60Df9p0fWN6sXWs9dWwnTSMRY6_jXXkYfHTKDaX4dw8FpWqcloa7239nKhD6BPb2BGqkPBQxw9wNgnIhTT7hBOq50d02n5AuwrKRXbVT4R-9ScX9F3dJBSXQi3Mzc"/>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<div class="flex-1 overflow-y-auto bg-surface custom-scrollbar p-6">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Activity Log</h2>
+<p class="text-on-surface-variant text-body-md">Comprehensive audit trail of organizational interactions.</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant">
+<button class="px-4 py-1.5 text-label-caps font-label-caps bg-secondary-container text-white rounded shadow-sm">All Activity</button>
+<button class="px-4 py-1.5 text-label-caps font-label-caps text-on-surface-variant hover:bg-surface-variant transition-colors rounded">Security Only</button>
+<button class="px-4 py-1.5 text-label-caps font-label-caps text-on-surface-variant hover:bg-surface-variant transition-colors rounded">Export CSV</button>
+</div>
+</div>
+<!-- Date Group: Today -->
+<section class="space-y-4">
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant px-3 py-1 bg-surface-container-high rounded-full">TODAY, OCT 24, 2023</span>
+<div class="h-px bg-outline-variant flex-1"></div>
+</div>
+<!-- User Group: Alex Rivera -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed-dim flex items-center justify-center font-bold text-on-primary-fixed">AR</div>
+<div>
+<span class="font-headline-sm text-[14px] text-on-surface block leading-tight">Alex Rivera</span>
+<span class="text-xs text-on-surface-variant">Senior Cloud Architect</span>
+</div>
+</div>
+<span class="text-xs font-medium text-secondary">3 Events</span>
+</div>
+<div class="divide-y divide-outline-variant">
+<!-- Entry Item -->
+<div class="activity-row flex flex-wrap items-center px-card-padding py-4 gap-y-4 transition-all">
+<div class="w-full md:w-1/4 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-blue-50 flex items-center justify-center border border-blue-100 shrink-0">
+<span class="material-symbols-outlined text-blue-600">cloud</span>
+</div>
+<div class="min-w-0">
+<p class="font-bold text-body-md text-on-surface truncate">AWS Management</p>
+<p class="text-xs text-on-surface-variant truncate">Infrastructure Ops</p>
+</div>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">WEBSITE/URL</p>
+<p class="text-body-md text-secondary hover:underline cursor-pointer truncate">console.aws.amazon.com/ec2/...</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">PAGE TITLE</p>
+<p class="text-body-md text-on-surface truncate">Instance Details: i-04dfa22</p>
+</div>
+<div class="w-full md:w-1/4 flex items-center justify-between">
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">START TIME</p>
+<p class="text-body-md text-on-surface">14:22:10</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps font-label-caps text-on-surface-variant">DURATION</p>
+<p class="text-body-md font-bold text-on-surface">42m 15s</p>
+</div>
+</div>
+</div>
+<!-- Entry Item -->
+<div class="activity-row flex flex-wrap items-center px-card-padding py-4 gap-y-4 transition-all">
+<div class="w-full md:w-1/4 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-slate-50 flex items-center justify-center border border-slate-200 shrink-0">
+<span class="material-symbols-outlined text-slate-800">terminal</span>
+</div>
+<div class="min-w-0">
+<p class="font-bold text-body-md text-on-surface truncate">VS Code</p>
+<p class="text-xs text-on-surface-variant truncate">Desktop App</p>
+</div>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">WEBSITE/URL</p>
+<p class="text-body-md text-on-surface-variant italic">Local Process</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">PAGE TITLE</p>
+<p class="text-body-md text-on-surface truncate">src/main/resources/config.yaml</p>
+</div>
+<div class="w-full md:w-1/4 flex items-center justify-between">
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">START TIME</p>
+<p class="text-body-md text-on-surface">13:05:44</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps font-label-caps text-on-surface-variant">DURATION</p>
+<p class="text-body-md font-bold text-on-surface">1h 12m</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- User Group: Sarah Jenkins -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center font-bold text-on-tertiary-fixed">SJ</div>
+<div>
+<span class="font-headline-sm text-[14px] text-on-surface block leading-tight">Sarah Jenkins</span>
+<span class="text-xs text-on-surface-variant">Product Designer</span>
+</div>
+</div>
+<span class="text-xs font-medium text-secondary">1 Event</span>
+</div>
+<div class="divide-y divide-outline-variant">
+<!-- Entry Item -->
+<div class="activity-row flex flex-wrap items-center px-card-padding py-4 gap-y-4 transition-all">
+<div class="w-full md:w-1/4 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-pink-50 flex items-center justify-center border border-pink-100 shrink-0">
+<span class="material-symbols-outlined text-pink-600">palette</span>
+</div>
+<div class="min-w-0">
+<p class="font-bold text-body-md text-on-surface truncate">Figma</p>
+<p class="text-xs text-on-surface-variant truncate">Design Platform</p>
+</div>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">WEBSITE/URL</p>
+<p class="text-body-md text-secondary hover:underline cursor-pointer truncate">figma.com/file/Wj19kZpx9...</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">PAGE TITLE</p>
+<p class="text-body-md text-on-surface truncate">V2.4 Dashboard Prototyping</p>
+</div>
+<div class="w-full md:w-1/4 flex items-center justify-between">
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">START TIME</p>
+<p class="text-body-md text-on-surface">15:45:00</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps font-label-caps text-on-surface-variant">DURATION</p>
+<p class="text-body-md font-bold text-on-surface">2h 30m</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Date Group: Yesterday -->
+<section class="space-y-4 opacity-75">
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant px-3 py-1 bg-surface-container-high rounded-full">YESTERDAY, OCT 23, 2023</span>
+<div class="h-px bg-outline-variant flex-1"></div>
+</div>
+<!-- User Group: Marcus Chen -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="bg-surface-container-low px-card-padding py-3 flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed-dim flex items-center justify-center font-bold text-on-secondary-fixed">MC</div>
+<div>
+<span class="font-headline-sm text-[14px] text-on-surface block leading-tight">Marcus Chen</span>
+<span class="text-xs text-on-surface-variant">Security Lead</span>
+</div>
+</div>
+<span class="text-xs font-medium text-secondary">2 Events</span>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="activity-row flex flex-wrap items-center px-card-padding py-4 gap-y-4 transition-all">
+<div class="w-full md:w-1/4 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-red-50 flex items-center justify-center border border-red-100 shrink-0">
+<span class="material-symbols-outlined text-red-600">security</span>
+</div>
+<div class="min-w-0">
+<p class="font-bold text-body-md text-on-surface truncate">IAM Controller</p>
+<p class="text-xs text-on-surface-variant truncate">Security Admin</p>
+</div>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">WEBSITE/URL</p>
+<p class="text-body-md text-secondary hover:underline cursor-pointer truncate">internal.security.vault/iam</p>
+</div>
+<div class="w-1/2 md:w-1/4">
+<p class="text-label-caps font-label-caps text-on-surface-variant">PAGE TITLE</p>
+<p class="text-body-md text-on-surface truncate">Policy Update: Root Access</p>
+</div>
+<div class="w-full md:w-1/4 flex items-center justify-between">
+<div>
+<p class="text-label-caps font-label-caps text-on-surface-variant">START TIME</p>
+<p class="text-body-md text-on-surface">11:12:19</p>
+</div>
+<div class="text-right">
+<p class="text-label-caps font-label-caps text-on-surface-variant">DURATION</p>
+<p class="text-body-md font-bold text-on-surface">08m 10s</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Load More Button -->
+<div class="flex justify-center py-6">
+<button class="flex items-center gap-2 px-6 py-2 border border-outline-variant bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps rounded-lg hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined text-sm">expand_more</span>
+                        Load Historical Activity
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- Interactive Layer: Hover Effects and Micro-interactions -->
+<script>
+        document.querySelectorAll('.activity-row').forEach(row => {
+            row.addEventListener('click', () => {
+                row.classList.toggle('bg-surface-container-high');
+            });
+        });
+    </script>
+</body></html>

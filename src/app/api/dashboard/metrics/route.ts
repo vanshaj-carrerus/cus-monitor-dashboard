@@ -236,14 +236,31 @@ export async function GET(req: NextRequest) {
       .slice()
       .sort((a, b) => clampNonNeg(b.productive) - clampNonNeg(a.productive))
       .slice(0, 3)
-      .map(r => ({ name: usersById.get(r.uid)?.username || r.uid }));
+      .map((r) => ({
+        name: usersById.get(r.uid)?.username || r.uid,
+        productiveSeconds: r.productive,
+        activeSeconds: r.active,
+        pct:
+          r.active > 0
+            ? Math.round((clampNonNeg(r.productive) / clampNonNeg(r.active)) * 100)
+            : 0,
+      }));
 
     const lessMembers = userProdRows
-      .filter(r => clampNonNeg(r.active) > 0)
+      .filter((r) => clampNonNeg(r.active) > 0)
       .slice()
       .sort((a, b) => clampNonNeg(a.productive) - clampNonNeg(b.productive))
-      .slice(0, 2)
-      .map(r => ({ name: usersById.get(r.uid)?.username || r.uid }));
+      .slice(0, 3)
+      .map((r) => ({
+        name: usersById.get(r.uid)?.username || r.uid,
+        productiveSeconds: r.productive,
+        activeSeconds: r.active,
+        unproductiveSeconds: clampNonNeg(r.active) - clampNonNeg(r.productive),
+        pct:
+          r.active > 0
+            ? Math.round((clampNonNeg(r.productive) / clampNonNeg(r.active)) * 100)
+            : 0,
+      }));
 
     // Websites & Apps usage from ActivityLog
     const activityFilter: Record<string, unknown> = {

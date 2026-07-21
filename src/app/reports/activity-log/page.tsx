@@ -139,29 +139,27 @@ export default function ActivityLogPage() {
 
   return (
     <DashboardLayout>
-      {/* Header Controls */}
-      <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-end">
-        <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-2.5 shadow-sm">
-          <Search className="h-4 w-4 text-slate-400" />
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-end">
+        <div className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-2.5 shadow-sm">
+          <Search className="h-4 w-4 text-on-surface-variant" />
           <input
             type="text"
             placeholder="Search title, app, site"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="text-[13px] text-slate-600 outline-none min-w-[220px]"
+            className="min-w-[220px] text-sm text-on-surface outline-none"
           />
         </div>
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-slate-100 rounded-xl shadow-sm min-w-[320px]">
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-[13px] text-slate-600 outline-none" />
-          <span className="text-slate-300">—</span>
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-[13px] text-slate-600 outline-none" />
-          <Calendar className="h-5 w-5 text-slate-300" />
-          <Button size="sm" onClick={() => fetchLogs(1)} className="rounded-lg bg-[#5E35B1] text-white hover:bg-[#4527A0] px-3 py-1.5 h-auto">Apply</Button>
+        <div className="flex min-w-[320px] items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-2.5 shadow-sm">
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-sm text-on-surface outline-none" />
+          <span className="text-outline-variant">—</span>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-sm text-on-surface outline-none" />
+          <Calendar className="h-5 w-5 text-on-surface-variant" />
+          <Button size="sm" onClick={() => fetchLogs(1)} className="h-auto rounded-lg bg-primary px-3 py-1.5 text-white hover:bg-primary/90">Apply</Button>
         </div>
       </div>
 
-      {/* Main Content Card */}
-      <div className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest shadow-sm">
         {/* Legend and Actions Bar */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-end p-8 border-b border-slate-50">
           <div className="flex items-center gap-8 rounded-xl border border-blue-100 bg-white px-6 py-3 shadow-sm">
@@ -183,13 +181,13 @@ export default function ActivityLogPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3">
+                <th className="px-8 py-6 text-[13px] font-bold text-on-surface w-1/3">
                   Date / User / Activity
                 </th>
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3 text-center">
+                <th className="px-8 py-6 text-[13px] font-bold text-on-surface w-1/3 text-center">
                   Duration / Details
                 </th>
-                <th className="px-8 py-6 text-[13px] font-bold text-[#0D1B3E] w-1/3 text-right">
+                <th className="px-8 py-6 text-[13px] font-bold text-on-surface w-1/3 text-right">
                   Total Time
                 </th>
               </tr>
@@ -218,7 +216,7 @@ export default function ActivityLogPage() {
                           ) : (
                             <ChevronRight className="h-5 w-5 text-slate-400" />
                           )}
-                          <span className="text-[14px] font-bold text-[#0D1B3E]">{dayLog.date}</span>
+                          <span className="text-[14px] font-bold text-on-surface">{dayLog.date}</span>
                         </div>
                       </td>
                       <td className="px-8 py-6 text-center text-slate-500 text-[13px]">
@@ -247,7 +245,7 @@ export default function ActivityLogPage() {
                                 <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs uppercase">
                                   {user.userName.substring(0, 2)}
                                 </div>
-                                <span className="text-[14px] font-semibold text-[#0D1B3E]">{user.userName}</span>
+                                <span className="text-[14px] font-semibold text-on-surface">{user.userName}</span>
                               </div>
                             </div>
                           </td>
@@ -270,7 +268,7 @@ export default function ActivityLogPage() {
                                   {log.site ? <Globe className="h-4 w-4 text-blue-400" /> : <Monitor className="h-4 w-4 text-slate-400" />}
                                 </div>
                                 <div>
-                                  <p className="text-[13px] font-medium text-[#0D1B3E] truncate" title={log.title}>
+                                  <p className="text-[13px] font-medium text-on-surface truncate" title={log.title}>
                                     {log.title}
                                   </p>
                                   <p className="text-[12px] text-slate-500 mt-0.5">
@@ -340,7 +338,7 @@ function DurationItem({ color, value }: { color: string, value: string }) {
   return (
     <div className="flex items-center gap-2">
       <div className={cn("h-3.5 w-3.5 rounded-full", color)}></div>
-      <span className="text-[12px] font-bold text-[#0D1B3E]">{value}</span>
+      <span className="text-[12px] font-bold text-on-surface">{value}</span>
     </div>
   );
 }

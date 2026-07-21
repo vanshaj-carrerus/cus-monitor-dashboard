@@ -5,22 +5,16 @@ import {
   Calendar,
   User,
   Clock,
-  TrendingUp,
   Users,
   XCircle,
   Check,
   X,
-  Search,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   ArrowUp,
   BarChart3,
-  Info,
-  MoreVertical,
   Users2,
-  Activity,
 } from 'lucide-react';
 import {
   LineChart,
@@ -30,9 +24,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from 'recharts';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
@@ -49,8 +40,8 @@ type DashboardMetrics = {
   series: SeriesPoint[];
   websites: PieItem[];
   apps: PieItem[];
-  topMembers: { name: string; dept?: string }[];
-  lessMembers: { name: string; dept?: string }[];
+  topMembers: { name: string; dept?: string; pct?: number; productiveSeconds?: number }[];
+  lessMembers: { name: string; dept?: string; pct?: number; productiveSeconds?: number; unproductiveSeconds?: number }[];
 };
 
 const EMPTY_METRICS: DashboardMetrics = {
@@ -62,10 +53,6 @@ const EMPTY_METRICS: DashboardMetrics = {
   topMembers: [],
   lessMembers: [],
 };
-
-function toPieData(items: PieItem[]) {
-  return items.map(i => ({ ...i, value: parseFloat(i.pct) }));
-}
 
 function secondsToHms(totalSeconds: number) {
   const s = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
@@ -88,11 +75,26 @@ function addDaysYmd(ymd: string, deltaDays: number) {
 
 // ── Shared Sub-components ─────────────────────────────────────────────────────
 
+function formatHoursShort(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  if (hours >= 1000) return `${(hours / 1000).toFixed(1)}k hrs`;
+  return `${hours}h`;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-1.5">
-      <div className={cn('h-2 w-2 rounded-full', color)} />
-      <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+      <div className={cn('h-2.5 w-2.5 rounded-full', color)} />
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">{label}</span>
     </div>
   );
 }
@@ -107,52 +109,143 @@ function Dot({ label, color }: { label: string; color: string }) {
 }
 
 function StatCard({
-  icon, value, label, iconBg,
-}: { icon: React.ReactNode; value: string; label: string; iconBg: string }) {
+  icon, value, label, badge, iconColor = 'text-primary',
+}: { icon: React.ReactNode; value: string; label: string; badge?: string; iconColor?: string }) {
   return (
-    <Card className="relative flex flex-col items-start gap-8 p-6 overflow-hidden border-none shadow-sm">
-      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform', iconBg)}>
-        {icon}
+    <Card className="flex flex-col justify-between border-outline-variant p-5 shadow-sm">
+      <div className="mb-2 flex items-start justify-between">
+        <span className={iconColor}>{icon}</span>
+        {badge && (
+          <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+            {badge}
+          </span>
+        )}
       </div>
       <div>
-        <h4 className="text-[22px] font-bold text-slate-900 leading-tight">{value}</h4>
-        <p className="text-[12px] text-slate-400 font-medium">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{label}</p>
+        <h3 className="mt-1 text-3xl font-bold text-on-surface">{value}</h3>
       </div>
-      <Info className="absolute top-4 right-4 h-4 w-4 text-slate-200 cursor-help" />
     </Card>
   );
 }
 
-function SideMiniStat({
-  label, value, color, icon,
-}: { label: string; value: string; color: 'blue' | 'green' | 'pink' | 'orange'; icon: React.ReactNode }) {
-  const themes = {
-    blue: { bg: 'bg-blue-50' },
-    green: { bg: 'bg-green-50' },
-    pink: { bg: 'bg-pink-50' },
-    orange: { bg: 'bg-orange-50' },
-  };
+function HourClassificationCard({ metrics }: { metrics: DashboardMetrics }) {
+  const { totals } = metrics;
+  const total = totals.activeSeconds || 1;
+  const productivePct = Math.round((totals.productiveSeconds / total) * 100);
+  const unproductivePct = Math.round((totals.unproductiveSeconds / total) * 100);
+  const neutralPct = Math.max(0, 100 - productivePct - unproductivePct);
+
+  const rows = [
+    { label: 'Productive', seconds: totals.productiveSeconds, pct: productivePct, color: 'bg-primary' },
+    { label: 'Unproductive', seconds: totals.unproductiveSeconds, pct: unproductivePct, color: 'bg-error' },
+    { label: 'Neutral', seconds: totals.neutralSeconds, pct: neutralPct, color: 'bg-on-tertiary-container' },
+  ];
+
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-white border border-slate-100 p-3 shadow-sm">
-      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', themes[color].bg)}>
-        {icon}
+    <Card className="flex flex-col border-outline-variant p-5 shadow-sm">
+      <div className="mb-4 flex justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Hour Classification</p>
+        <BarChart3 className="h-5 w-5 text-on-surface-variant" />
       </div>
-      <div>
-        <p className="text-[13px] font-bold text-slate-900 leading-tight">{value}</p>
-        <p className="text-[10px] text-slate-400 font-medium">{label}</p>
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <div key={row.label}>
+            <div className="mb-1 flex justify-between text-sm">
+              <span className="font-bold text-on-surface">{row.label}</span>
+              <span className="text-on-surface-variant">{formatHoursShort(row.seconds)}</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high">
+              <div className={cn('h-full rounded-full', row.color)} style={{ width: `${row.pct}%` }} />
+            </div>
+          </div>
+        ))}
       </div>
+    </Card>
+  );
+}
+
+function UsageBarList({ items, variant }: { items: PieItem[]; variant: 'productive' | 'unproductive' }) {
+  const filtered = items.filter((i) => i.name !== 'Other');
+  const maxPct = Math.max(...filtered.map((i) => parseFloat(i.pct)), 1);
+
+  return (
+    <div className="space-y-6">
+      {filtered.slice(0, 3).map((item) => (
+        <div key={item.name}>
+          <div className="mb-2 flex items-end justify-between">
+            <span className="text-sm font-bold text-on-surface">{item.name}</span>
+            <div className="text-right">
+              <span className="font-bold text-on-surface">{item.pct}</span>
+              {item.time && (
+                <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">
+                  {item.time}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-surface-container">
+            <div
+              className={cn('h-full rounded-full', variant === 'productive' ? 'bg-primary' : 'bg-error')}
+              style={{ width: `${(parseFloat(item.pct) / maxPct) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function MemberItem({ name, dept }: { name: string; dept?: string }) {
+function MemberItem({
+  name,
+  dept,
+  pct,
+  hoursLabel,
+  variant = 'top',
+}: {
+  name: string;
+  dept?: string;
+  pct?: number;
+  hoursLabel?: string;
+  variant?: 'top' | 'low';
+}) {
   return (
-    <div className="flex items-center justify-between group">
-      <div>
-        <p className="text-[13px] font-semibold text-slate-800">{name}</p>
-        {dept && <p className="text-[11px] text-slate-400">{dept}</p>}
+    <div className="flex items-center justify-between p-5 transition-colors hover:bg-surface-container-low">
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold',
+            variant === 'top'
+              ? 'border-primary bg-surface-container text-primary'
+              : 'border-outline-variant bg-surface-container-low text-on-surface-variant',
+          )}
+        >
+          {getInitials(name)}
+        </div>
+        <div>
+          <p className="text-sm font-bold text-on-surface">{name}</p>
+          {dept && (
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{dept}</p>
+          )}
+        </div>
       </div>
-      <MoreVertical className="h-4 w-4 text-slate-200 cursor-pointer transition-colors" />
+      <div className="text-right">
+        {pct !== undefined && (
+          <p className={cn('text-lg font-bold', variant === 'top' ? 'text-primary' : 'text-error')}>
+            {pct}%
+          </p>
+        )}
+        {hoursLabel && (
+          <p
+            className={cn(
+              'text-[10px] font-bold uppercase tracking-wider',
+              variant === 'top' ? 'text-emerald-600' : 'text-error',
+            )}
+          >
+            {hoursLabel}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -190,173 +283,21 @@ function WebAppsSection({
   webData: PieItem[];
   appData: PieItem[];
 }) {
-  const [activeWebIndex, setActiveWebIndex] = useState<number | null>(null);
-  const [activeAppIndex, setActiveAppIndex] = useState<number | null>(null);
-
-  const wPie = toPieData(webData);
-  const aPie = toPieData(appData);
-
-  type PieLabelProps = {
-    cx: number;
-    cy: number;
-    midAngle: number;
-    innerRadius: number;
-    outerRadius: number;
-    percent?: number;
-    index: number;
-  };
-
-  const renderCustomLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius,
-    outerRadius,
-    pct,
-    index,
-    activeIndex,
-  }: PieLabelProps & { pct: string; activeIndex: number | null }) => {
-    const isExploded = index === activeIndex;
-    const offset = isExploded ? 6 : 0;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5 + offset;
-    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
-    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
-    return (
-      <text
-        x={x}
-        y={y}
-        fill="white"
-        textAnchor="middle"
-        dominantBaseline="central"
-        className={cn("text-[10px] font-bold pointer-events-none drop-shadow-sm", isExploded && "text-[11px]")}
-      >
-        {pct}
-      </text>
-    );
-  };
-
-  const PieComponent = Pie as unknown as React.ComponentType<Record<string, unknown>>;
-
   return (
-    <Card className="p-6 border-none shadow-sm">
-      <div className="mb-8 flex items-center justify-between">
+    <Card className="border-outline-variant p-5 shadow-sm">
+      <h3 className="mb-6 text-lg font-semibold text-on-surface">App &amp; Web Resource Analysis</h3>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div>
-          <h3 className="text-[15px] font-bold text-slate-900">Web &amp; Apps</h3>
-          <p className="text-[11px] text-slate-400">View the most used websites &amp; apps</p>
+          <h4 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+            Most Used Productive Assets
+          </h4>
+          <UsageBarList items={appData} variant="productive" />
         </div>
-        <ExternalLink className="h-5 w-5 text-slate-300 cursor-pointer" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Websites */}
-        <div className="rounded-2xl border-none bg-white p-8 flex flex-col items-center shadow-sm">
-          <h4 className="mb-8 text-sm font-bold text-slate-900">Websites</h4>
-          <div className="h-[200px] w-full mb-8">
-            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-              <PieChart>
-                <PieComponent
-                  data={wPie}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  dataKey="value"
-                  paddingAngle={0}
-                  labelLine={false}
-                  label={(props: unknown) => {
-                    const p = props as PieLabelProps & { percent?: number };
-                    const pct = `${Math.round((p.percent ?? 0) * 100)}%`;
-                    return renderCustomLabel({ ...p, pct, activeIndex: activeWebIndex });
-                  }}
-                  activeIndex={activeWebIndex ?? undefined}                >
-                  {wPie.map((e, i) => (
-                    <Cell
-                      key={i}
-                      fill={e.color}
-                      stroke="white"
-                      strokeWidth={activeWebIndex === i ? 0 : 1}
-                      style={{ transition: 'all 0.2s' }}
-                    />
-                  ))}
-                </PieComponent>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="w-full space-y-4">
-            {webData.filter(i => i.name !== 'Other').map((item, idx) => (
-              <div
-                key={item.name}
-                className={cn(
-                  "flex items-center justify-between text-[12px] transition-all rounded-lg p-1",
-                  activeWebIndex === idx ? "bg-slate-50" : "bg-transparent"
-                )}
-                onMouseEnter={() => setActiveWebIndex(idx)}
-                onMouseLeave={() => setActiveWebIndex(null)}
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="h-6 w-1 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className={cn("text-slate-500 truncate max-w-[200px] font-medium", activeWebIndex === idx && "text-slate-900")}>{item.name}</span>
-                </div>
-                <span className={cn("text-slate-700 font-bold ml-4", activeWebIndex === idx && "text-slate-900")}>{item.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Applications */}
-        <div className="rounded-2xl border-none bg-white p-8 flex flex-col items-center shadow-sm">
-          <h4 className="mb-8 text-sm font-bold text-slate-900">Applications</h4>
-          <div className="h-[200px] w-full mb-8">
-            <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-              <PieChart>
-                <PieComponent
-                  data={aPie}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  dataKey="value"
-                  paddingAngle={0}
-                  labelLine={false}
-                  label={(props: unknown) => {
-                    const p = props as PieLabelProps & { percent?: number };
-                    const pct = `${Math.round((p.percent ?? 0) * 100)}%`;
-                    return renderCustomLabel({ ...p, pct, activeIndex: activeAppIndex });
-                  }}
-                  activeIndex={activeAppIndex ?? undefined}
-                >
-                  {aPie.map((e, i) => (
-                    <Cell
-                      key={i}
-                      fill={e.color}
-                      stroke="white"
-                      strokeWidth={activeAppIndex === i ? 0 : 1}
-                      style={{ transition: 'all 0.2s' }}
-                    />
-                  ))}
-                </PieComponent>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="w-full space-y-4">
-            {appData.filter(i => i.name !== 'Other').map((item, idx) => (
-              <div
-                key={item.name}
-                className={cn(
-                  "flex items-center justify-between text-[12px] transition-all rounded-lg p-1",
-                  activeAppIndex === idx ? "bg-slate-50" : "bg-transparent"
-                )}
-                onMouseEnter={() => setActiveAppIndex(idx)}
-                onMouseLeave={() => setActiveAppIndex(null)}
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="h-6 w-1 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className={cn("text-slate-500 truncate max-w-[200px] font-medium", activeAppIndex === idx && "text-slate-900")}>{item.name}</span>
-                </div>
-                <span className={cn("text-slate-700 font-bold ml-4", activeAppIndex === idx && "text-slate-900")}>{item.time}</span>
-              </div>
-            ))}
-          </div>
+        <div>
+          <h4 className="mb-4 text-[10px] font-bold uppercase tracking-widest text-error">
+            Time Sink &amp; Leisure Assets
+          </h4>
+          <UsageBarList items={webData} variant="unproductive" />
         </div>
       </div>
     </Card>
@@ -367,35 +308,31 @@ function WebAppsSection({
 
 function ProductiveGraph({ data }: { data: SeriesPoint[] }) {
   return (
-    <Card className="p-6 border-none shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-[15px] font-bold text-slate-900">Productive vs Unproductive Graph</h3>
-          <p className="text-[11px] text-slate-400">Overview of the time spent by the members for the selected date range</p>
+    <Card className="border-outline-variant p-5 shadow-sm">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-on-surface">Productivity Over Time</h3>
+        <div className="flex items-center gap-4">
+          <LegendDot color="bg-primary" label="Current Period" />
+          <LegendDot color="bg-outline-variant" label="Breakdown" />
         </div>
-        <ExternalLink className="h-5 w-5 text-slate-300 cursor-pointer" />
       </div>
       <div className="mb-4 flex gap-5">
-        <LegendDot color="bg-green-400" label="Productive" />
-        <LegendDot color="bg-red-400" label="Unproductive" />
-        <LegendDot color="bg-orange-400" label="Neutral" />
+        <LegendDot color="bg-emerald-500" label="Productive" />
+        <LegendDot color="bg-error" label="Unproductive" />
+        <LegendDot color="bg-amber-500" label="Neutral" />
       </div>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dy={8} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 10 }} dx={-8} />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-            <Line type="monotone" dataKey="productive" stroke="#4ADE80" strokeWidth={2.5} dot={{ r: 4, fill: '#4ADE80', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="unproductive" stroke="#F87171" strokeWidth={2.5} dot={{ r: 4, fill: '#F87171', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="neutral" stroke="#FB923C" strokeWidth={2.5} dot={{ r: 4, fill: '#FB923C', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 10 }} dy={8} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 10 }} dx={-8} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #c6c6cd', boxShadow: '0 4px 12px rgb(0 0 0 / 0.08)' }} />
+            <Line type="monotone" dataKey="productive" stroke="#0058be" strokeWidth={2.5} dot={{ r: 3, fill: '#0058be', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="unproductive" stroke="#ba1a1a" strokeWidth={2} dot={{ r: 3, fill: '#ba1a1a', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+            <Line type="monotone" dataKey="neutral" stroke="#F59E0B" strokeWidth={2} dot={{ r: 3, fill: '#F59E0B', strokeWidth: 0 }} activeDot={{ r: 5 }} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-      <div className="mt-3 flex justify-end gap-2">
-        <button className="rounded-full bg-slate-50 p-1.5 text-slate-400 hover:bg-slate-100"><ChevronLeft className="h-3.5 w-3.5" /></button>
-        <button className="rounded-full bg-slate-50 p-1.5 text-slate-400 hover:bg-slate-100"><ChevronRight className="h-3.5 w-3.5" /></button>
       </div>
     </Card>
   );
@@ -406,34 +343,56 @@ function ProductiveGraph({ data }: { data: SeriesPoint[] }) {
 function ProductivitySideCards({
   topMembers, lessMembers,
 }: {
-  topMembers: { name: string; dept?: string }[];
-  lessMembers: { name: string; dept?: string }[];
+  topMembers: DashboardMetrics['topMembers'];
+  lessMembers: DashboardMetrics['lessMembers'];
 }) {
   return (
-    <div className="space-y-5">
-      <Card className="p-5 border-none shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ArrowUp className="h-4 w-4 text-green-500" />
-            <h3 className="text-[13px] font-bold text-slate-900">Top Productive</h3>
-          </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card className="overflow-hidden border-outline-variant p-0 shadow-sm">
+        <div className="flex items-center justify-between border-b border-outline-variant bg-surface-container-low px-5 py-4">
+          <h3 className="text-lg font-semibold text-on-surface">Top Productive Members</h3>
         </div>
-        <div className="space-y-4">
-          {topMembers.map((m) => <MemberItem key={m.name} name={m.name} dept={m.dept} />)}
+        <div className="divide-y divide-outline-variant">
+          {topMembers.length === 0 ? (
+            <p className="p-5 text-sm text-on-surface-variant">No data available</p>
+          ) : (
+            topMembers.map((m) => (
+              <MemberItem
+                key={m.name}
+                name={m.name}
+                dept={m.dept}
+                pct={m.pct}
+                hoursLabel={m.productiveSeconds ? `${formatHoursShort(m.productiveSeconds)} Productive` : undefined}
+                variant="top"
+              />
+            ))
+          )}
         </div>
       </Card>
 
-      <Card className="p-5 border-none shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ArrowUp className="h-4 w-4 text-red-500 rotate-180" />
-            <h3 className="text-[13px] font-bold text-slate-900">Less Productive</h3>
-          </div>
-          <ChevronRight className="h-4 w-4 text-slate-300" />
+      <Card className="overflow-hidden border-outline-variant p-0 shadow-sm">
+        <div className="flex items-center justify-between border-b border-outline-variant bg-surface-container-low px-5 py-4">
+          <h3 className="text-lg font-semibold text-on-surface">Underperforming Pulse</h3>
         </div>
-        <div className="space-y-4">
-          {lessMembers.map((m) => <MemberItem key={m.name} name={m.name} dept={m.dept} />)}
+        <div className="divide-y divide-outline-variant">
+          {lessMembers.length === 0 ? (
+            <p className="p-5 text-sm text-on-surface-variant">No data available</p>
+          ) : (
+            lessMembers.map((m) => (
+              <MemberItem
+                key={m.name}
+                name={m.name}
+                dept={m.dept}
+                pct={m.pct}
+                hoursLabel={
+                  m.unproductiveSeconds
+                    ? `${formatHoursShort(m.unproductiveSeconds)} Unproductive`
+                    : undefined
+                }
+                variant="low"
+              />
+            ))
+          )}
         </div>
       </Card>
     </div>
@@ -442,86 +401,44 @@ function ProductivitySideCards({
 
 
 function OrganizationView({ metrics }: { metrics: DashboardMetrics }) {
+  const activePct =
+    metrics.connectedNow.total > 0
+      ? Math.round((metrics.connectedNow.active / metrics.connectedNow.total) * 100)
+      : 0;
+
   return (
     <div className="space-y-6">
-      {/* Connected Now + Side Stats */}
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 ">
-        <div className="lg:col-span-9 bg-white p-5 rounded-xl shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <h3 className="text-[14px] font-bold text-slate-900">Connected Now</h3>
-            <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value={`${metrics.connectedNow.total} members`} label="All Devices" iconBg="bg-purple-50" />
-            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value={`${metrics.connectedNow.active} members`} label="Active Signal" iconBg="bg-green-50" />
-            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value={`${metrics.connectedNow.inactive} members`} label="No Signal" iconBg="bg-slate-100" />
-          </div>
-        </div>
-        <div className="lg:col-span-3 space-y-2.5">
-          <SideMiniStat label="Total Active hours" value={`${secondsToHms(metrics.totals.activeSeconds)} hrs`} color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
-          <SideMiniStat label="Total Productive hours" value={`${secondsToHms(metrics.totals.productiveSeconds)} hrs`} color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
-          <SideMiniStat label="Total Unproductive hours" value={`${secondsToHms(metrics.totals.unproductiveSeconds)} hrs`} color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
-          <SideMiniStat label="Total Neutral hours" value={`${secondsToHms(metrics.totals.neutralSeconds)} hrs`} color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          icon={<Users2 className="h-5 w-5" />}
+          value={String(metrics.connectedNow.total)}
+          label="Total Members"
+        />
+        <StatCard
+          icon={<Check className="h-5 w-5" />}
+          value={String(metrics.connectedNow.active)}
+          label="Active Members"
+          badge={`${activePct}% Active`}
+        />
+        <StatCard
+          icon={<Clock className="h-5 w-5 text-on-surface-variant" />}
+          value={formatHoursShort(metrics.totals.activeSeconds)}
+          label="Total Active Hours"
+          badge="This Week"
+          iconColor="text-on-surface-variant"
+        />
+        <HourClassificationCard metrics={metrics} />
       </div>
 
-      {/* Graph + Top/Less Productive */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-9">
-          <ProductiveGraph data={metrics.series} />
-        </div>
-        <div className="lg:col-span-3">
-          <ProductivitySideCards
-            topMembers={metrics.topMembers}
-            lessMembers={metrics.lessMembers}
-          />
-        </div>
-      </div>
-
+      <ProductiveGraph data={metrics.series} />
+      <ProductivitySideCards topMembers={metrics.topMembers} lessMembers={metrics.lessMembers} />
       <WebAppsSection webData={metrics.websites} appData={metrics.apps} />
     </div>
   );
 }
 
 function TeamView({ metrics }: { metrics: DashboardMetrics }) {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-9">
-          <div className="mb-3 flex items-center gap-2">
-            <h3 className="text-[14px] font-bold text-slate-900">Connected Now</h3>
-            <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard icon={<Users2 className="h-5 w-5 text-purple-600" />} value={`${metrics.connectedNow.total} members`} label="All Devices" iconBg="bg-purple-50" />
-            <StatCard icon={<Check className="h-5 w-5 text-green-600" />} value={`${metrics.connectedNow.active} members`} label="Active Signal" iconBg="bg-green-50" />
-            <StatCard icon={<X className="h-5 w-5 text-slate-400" />} value={`${metrics.connectedNow.inactive} members`} label="No Signal" iconBg="bg-slate-100" />
-          </div>
-        </div>
-        <div className="lg:col-span-3 space-y-2.5">
-          <SideMiniStat label="Total Active hours" value={`${secondsToHms(metrics.totals.activeSeconds)} hrs`} color="blue" icon={<Clock className="h-4 w-4 text-blue-500" />} />
-          <SideMiniStat label="Total Productive hours" value={`${secondsToHms(metrics.totals.productiveSeconds)} hrs`} color="green" icon={<TrendingUp className="h-4 w-4 text-green-500" />} />
-          <SideMiniStat label="Total Unproductive hours" value={`${secondsToHms(metrics.totals.unproductiveSeconds)} hrs`} color="pink" icon={<Activity className="h-4 w-4 text-pink-500" />} />
-          <SideMiniStat label="Total Neutral hours" value={`${secondsToHms(metrics.totals.neutralSeconds)} hrs`} color="orange" icon={<XCircle className="h-4 w-4 text-orange-500" />} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="lg:col-span-9">
-          <ProductiveGraph data={metrics.series} />
-        </div>
-        <div className="lg:col-span-3">
-          <ProductivitySideCards
-            topMembers={metrics.topMembers}
-            lessMembers={metrics.lessMembers}
-          />
-        </div>
-      </div>
-
-      <WebAppsSection webData={metrics.websites} appData={metrics.apps} />
-    </div>
-  );
+  return <OrganizationView metrics={metrics} />;
 }
 
 function IndividualView() {
@@ -562,10 +479,9 @@ function IndividualView() {
           <Card className="flex h-[380px] flex-col p-6 border-none shadow-sm">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-[15px] font-bold text-slate-900">Productive vs Unproductive Graph</h3>
-                <p className="text-[11px] text-slate-400">Overview of the time spent by the members for the selected date range</p>
+                <h3 className="text-[15px] font-bold text-on-surface">Productive vs Unproductive Graph</h3>
+                <p className="text-[11px] text-on-surface-variant">Overview of time spent for the selected date range</p>
               </div>
-              <ExternalLink className="h-5 w-5 text-slate-300 cursor-pointer" />
             </div>
             <div className="flex flex-1 flex-col items-center justify-center">
               <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-slate-50">
@@ -647,14 +563,13 @@ function IndividualView() {
 
       {/* Time Tracker Report Table */}
       <Card className="overflow-hidden border-none shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-50 p-5">
+        <div className="flex items-center justify-between border-b border-outline-variant p-5">
           <div>
-            <h3 className="text-[15px] font-bold text-slate-900">Time Tracker Report</h3>
-            <p className="text-[11px] text-slate-400">
-              Total Productivity : <span className="font-bold text-slate-900">0hrs 0Min 0Sec</span>
+            <h3 className="text-[15px] font-bold text-on-surface">Time Tracker Report</h3>
+            <p className="text-[11px] text-on-surface-variant">
+              Total Productivity : <span className="font-bold text-on-surface">0hrs 0Min 0Sec</span>
             </p>
           </div>
-          <ExternalLink className="h-5 w-5 text-slate-300 cursor-pointer" />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[10px]">
@@ -755,53 +670,42 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      {/* View Switcher + Date Row */}
-      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-xl bg-slate-50 p-1 border border-slate-100 overflow-x-auto whitespace-nowrap w-full lg:w-auto relative">
-          {viewTabs.map(({ key, icon, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setActiveView(key)}
-              className={cn(
-                'flex items-center gap-2 rounded-lg px-4 py-2 text-[12px] font-bold transition-all',
-                activeView === key
-                  ? 'bg-white text-[#5E35B1] shadow-sm border border-[#5E35B1]/20'
-                  : 'text-slate-500 hover:text-slate-900',
-              )}
-            >
-              <span className={cn(
-                'flex h-5 w-5 items-center justify-center rounded-md transition-colors',
-                activeView === key ? 'text-[#5E35B1]' : 'text-slate-400',
-              )}>
-                {icon}
-              </span>
-              {label}
-            </button>
-          ))}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-on-surface">Productivity Overview</h2>
+          <p className="text-sm text-on-surface-variant">Real-time engagement and output analytics</p>
         </div>
 
-        {/* Date + Search */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full lg:w-auto">
-          {activeView !== 'org' && (
-            <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm cursor-pointer min-w-[170px]">
-              <Search className="h-3.5 w-3.5 text-slate-300" />
-              <span className="flex-1 text-[12px] text-slate-500">Yash sapkale</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-            </div>
-          )}
-          <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm cursor-pointer">
-            <span className="text-[12px] font-medium text-slate-600">{startDate}</span>
-            <span className="text-slate-300 text-xs">—</span>
-            <span className="text-[12px] font-medium text-slate-600">{endDate}</span>
-            <Calendar className="ml-1 h-3.5 w-3.5 text-slate-400" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex w-fit rounded-xl border border-outline-variant bg-surface-container p-1">
+            {viewTabs.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveView(key)}
+                className={cn(
+                  'rounded-lg px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all',
+                  activeView === key
+                    ? 'bg-secondary-container text-on-secondary-container'
+                    : 'text-on-surface-variant hover:text-on-surface',
+                )}
+              >
+                {label.replace(' View', '')}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 shadow-sm">
+            <span className="text-xs font-medium text-on-surface">{startDate}</span>
+            <span className="text-outline-variant">—</span>
+            <span className="text-xs font-medium text-on-surface">{endDate}</span>
+            <Calendar className="ml-1 h-4 w-4 text-on-surface-variant" />
           </div>
         </div>
       </div>
 
       {metricsLoading && activeView !== 'ind' && (
-        <div className="mb-4 text-[12px] text-slate-400 font-medium">Loading dashboard data…</div>
+        <div className="mb-4 text-xs font-medium text-on-surface-variant">Loading dashboard data…</div>
       )}
 
       {activeView === 'org' && <OrganizationView metrics={metrics} />}

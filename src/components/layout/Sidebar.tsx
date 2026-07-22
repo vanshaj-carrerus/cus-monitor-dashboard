@@ -13,6 +13,7 @@ import {
   Clock,
   KeyRound,
   UserPlus,
+  Shield,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { isMemberRole } from '@/components/auth-context';
@@ -74,6 +75,18 @@ function itemsForRole(role: string): Item[] {
         { label: 'Web And Apps', href: '/reports/web-apps' },
       ],
     },
+    ...((role === 'admin' || role === 'admin_compliance')
+      ? [
+          {
+            icon: Shield,
+            label: 'Security',
+            href: '/security/uninstall-otp',
+            subItems: [
+              { label: 'Uninstall OTP', href: '/security/uninstall-otp', adminOnly: true },
+            ],
+          } as Item,
+        ]
+      : []),
     { icon: User, label: 'Profile', href: '/profile' },
   ];
 }

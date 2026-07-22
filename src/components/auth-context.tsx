@@ -98,9 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user.role !== 'admin' &&
       user.role !== 'admin_compliance' &&
       pathname &&
-      (pathname.startsWith('/my-team/managers') || pathname.startsWith('/my-team/admins'))
+      (pathname.startsWith('/my-team/managers') ||
+        pathname.startsWith('/my-team/admins') ||
+        pathname.startsWith('/security'))
     ) {
-      router.replace('/my-team/members');
+      router.replace(pathname.startsWith('/security') ? '/' : '/my-team/members');
     }
   }, [user, loading, pathname, router, isPublic]);
 

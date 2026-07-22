@@ -291,10 +291,17 @@ function P2PVideoPlayer({
   const isFailed = phase === "failed" || connectionState === "failed" || Boolean(error);
 
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(() => {});
-    }
+    const el = videoRef.current;
+    if (!el || !stream) return;
+    el.srcObject = stream;
+    el.muted = true;
+    const play = () => {
+      el.play().catch(() => {});
+    };
+    play();
+    // Some browsers need a second play() after the first frame arrives.
+    const t = window.setTimeout(play, 500);
+    return () => window.clearTimeout(t);
   }, [stream]);
 
   if (!stream) {
@@ -354,7 +361,8 @@ function P2PVideoPlayer({
       ref={videoRef}
       autoPlay
       playsInline
-      className="h-full w-full object-contain"
+      muted
+      className="h-full w-full bg-black object-contain"
     />
   );
 }
@@ -390,6 +398,11 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
   const toggleStream = async (start: boolean) => {
     setLoading(true);
     setError(null);
+    console.log("[P2P UI] toggleStream", {
+      start,
+      userId: user.username,
+      controlEnabled: isControlMode,
+    });
     try {
       const res = await fetch(`/api/stream?action=toggle`, {
         method: "POST",
@@ -407,21 +420,32 @@ function StreamModal({ user, onClose }: { user: User; onClose: () => void }) {
         }),
       });
       const data = await res.json();
+      console.log("[P2P UI] toggle API response", {
+        ok: res.ok,
+        status: res.status,
+        data,
+      });
 
       if (data.success) {
         if (start) {
           const identity = `admin_${Math.random().toString(36).substring(7)}`;
+          console.log("[P2P UI] session start — adminId assigned", identity);
           setAdminIdentity(identity);
           setIsActive(true);
           setStatusLabel(isControlMode ? "control-active" : "view-only");
         } else {
+          console.log("[P2P UI] session stop");
           setIsActive(false);
           setIsControlMode(false);
           setStatusLabel("view-only");
           setAdminIdentity("");
         }
+      } else {
+        console.error("[P2P UI] toggle failed — success=false", data);
+        setError(data.error || "Failed to toggle stream");
       }
-    } catch {
+    } catch (err) {
+      console.error("[P2P UI] toggle network error", err);
       setError("Failed to communicate with server.");
     } finally {
       setLoading(false);

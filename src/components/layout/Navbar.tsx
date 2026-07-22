@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, LogOut, Search, Settings } from 'lucide-react';
 import { useAuth } from '@/components/auth-context';
+import Link from 'next/link';
 
 export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
   const [mounted, setMounted] = useState(false);
@@ -142,12 +143,14 @@ export function Navbar({ onMenuClick }: { onMenuClick?: () => void }) {
         >
           <Bell className="h-5 w-5" />
         </button>
+        <Link href="/profile">
         <button
           type="button"
           className="hidden rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-low sm:block"
-        >
+          >
           <Settings className="h-5 w-5" />
         </button>
+          </Link>
         <div className="hidden h-8 w-px bg-outline-variant sm:block" />
         <span className="hidden max-w-[140px] truncate text-sm text-on-surface-variant md:inline">
           {user?.email}

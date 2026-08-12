@@ -2,11 +2,21 @@ import { NextResponse } from "next/server";
 import DBConnect from "../../../../../../lib/DB_Connect";
 import UninstallOtp from "@/models/uninstall_otp";
 
+const COMPANY_PASSWORD = "CUS@878806";
+
 export async function POST(request: Request) {
   try {
     await DBConnect();
     const body = await request.json().catch(() => ({}));
+    const password = typeof body.password === "string" ? body.password.trim() : "";
     const otp = typeof body.otp === "string" ? body.otp.trim() : "";
+
+    if (!password || password !== COMPANY_PASSWORD) {
+      return NextResponse.json(
+        { success: false, error: "Incorrect company password." },
+        { status: 401 }
+      );
+    }
 
     if (!otp || otp.length !== 8) {
       return NextResponse.json(

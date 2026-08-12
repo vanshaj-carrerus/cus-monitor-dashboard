@@ -881,15 +881,15 @@ export default function EmployeesPage() {
             <form onSubmit={handleInvite} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                <input required type="text" value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+                <input required type="text" value={inviteForm.name} onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-100 focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                <input required type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none" />
+                <input required type="email" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-100 focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Role</label>
-                <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
+                <select value={inviteForm.role} onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-100 focus:border-primary focus:outline-none">
                   <option value="common">Common User</option>
                   <option value="team_leader">Team Leader</option>
                   <option value="manager">Manager</option>
@@ -901,7 +901,7 @@ export default function EmployeesPage() {
               {inviteForm.role === 'common' && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Team Leader *</label>
-                  <select required value={inviteForm.teamLeaderId} onChange={e => setInviteForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
+                  <select required value={inviteForm.teamLeaderId} onChange={e => setInviteForm(f => ({ ...f, teamLeaderId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-100 focus:border-primary focus:outline-none">
                     <option value="">Select a Team Leader</option>
                     {teamLeaders.map((tl: any) => (<option key={tl._id} value={tl._id}>{tl.username || tl.email}</option>))}
                   </select>
@@ -909,14 +909,14 @@ export default function EmployeesPage() {
               )}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department {(inviteForm.role === 'common' || inviteForm.role === 'common_compliance') && '*'}</label>
-                <select required={inviteForm.role === 'common' || inviteForm.role === 'common_compliance'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
+                <select required={inviteForm.role === 'common' || inviteForm.role === 'common_compliance'} value={inviteForm.departmentId} onChange={e => setInviteForm(f => ({ ...f, departmentId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary text-slate-100 focus:outline-none">
                   <option value="">Select Department</option>
                   {departments.map((d: any) => (<option key={d._id} value={d._id}>{d.name}</option>))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Location</label>
-                <select value={inviteForm.locationId} onChange={e => setInviteForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
+                <select value={inviteForm.locationId} onChange={e => setInviteForm(f => ({ ...f, locationId: e.target.value }))} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-100 focus:border-primary focus:outline-none">
                   <option value="">None</option>
                   {locations.map((l: any) => (<option key={l._id} value={l._id}>{l.name}</option>))}
                 </select>

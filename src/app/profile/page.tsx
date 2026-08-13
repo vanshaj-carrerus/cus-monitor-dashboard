@@ -224,7 +224,7 @@ export default function ProfilePage() {
             </p>
             <div className="relative z-10 space-y-2">
               <Link
-                href="/CUS.Monitor_2.1.1setup.exe"
+                href="/CUS.Monitor_2.1.3_x64-setup.exe"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/10 px-4 py-3 transition-colors hover:bg-white/20"

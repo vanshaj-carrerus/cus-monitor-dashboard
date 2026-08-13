@@ -499,12 +499,6 @@ export default function EmployeesPage() {
                   />
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <button className="flex items-center gap-3 px-5 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm text-slate-400 font-medium min-w-45 justify-between">
-                      All Departments
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </div>
                   <Button onClick={() => setIsAddMemberOpen(true)} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 rounded-xl px-6 py-3 h-auto font-bold">
                     <Plus className="h-5 w-5" />
                     Add Member
@@ -528,10 +522,6 @@ export default function EmployeesPage() {
                       Bulk Upload
                     </Button>
                   </div>
-                  <Button variant="secondary" className="flex items-center gap-2 text-slate-400 border-none rounded-xl bg-slate-100/50 px-6 py-3 h-auto font-bold">
-                    <Download className="h-5 w-5 rotate-180" />
-                    Export
-                  </Button>
                 </div>
               </div>
 
@@ -557,10 +547,6 @@ export default function EmployeesPage() {
                     Disable
                   </button>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-400">
-                  Bulk Action
-                  <ChevronDown className="h-4 w-4" />
-                </button>
               </div>
 
               {/* Members Table */}

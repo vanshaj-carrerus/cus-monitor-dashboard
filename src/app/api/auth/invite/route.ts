@@ -22,9 +22,6 @@ export async function GET() {
         }
 
         let query: any = { status: "pending" };
-        if (actor.role === "admin_compliance") {
-            query.role = { $in: ["common_compliance", "admin_compliance"] };
-        }
 
         // If manager or team leader, filter by what they can see
         if (actor.role === "manager") {
@@ -69,13 +66,11 @@ export async function POST(request: Request) {
 
         const r = String(role).toLowerCase();
 
-        const allowedRoles = actor.role === "admin_compliance"
-            ? ["common_compliance", "admin_compliance"]
-            : actor.role === "admin"
-                ? ["common", "team_leader", "manager", "admin"]
-                : actor.role === "manager"
-                    ? ["common", "team_leader"]
-                    : ["common"];
+        const allowedRoles = (actor.role === "admin" || actor.role === "admin_compliance")
+            ? ["common", "team_leader", "manager", "admin", "common_compliance", "admin_compliance"]
+            : actor.role === "manager"
+                ? ["common", "team_leader"]
+                : ["common"];
 
         if (!allowedRoles.includes(r)) {
             return NextResponse.json({ success: false, error: "Invalid role or permission denied." }, { status: 403 });

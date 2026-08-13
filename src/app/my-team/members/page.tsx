@@ -879,9 +879,9 @@ export default function EmployeesPage() {
                   <option value="common">Common User</option>
                   <option value="team_leader">Team Leader</option>
                   <option value="manager">Manager</option>
-                  {user?.role === 'admin' && <option value="admin">Admin</option>}
-                  {user?.role === 'admin_compliance' && <option value="common_compliance">Compliance User</option>}
-                  {user?.role === 'admin_compliance' && <option value="admin_compliance">Compliance Admin</option>}
+                  {(user?.role === 'admin' || user?.role === 'admin_compliance') && <option value="admin">Admin</option>}
+                  {(user?.role === 'admin' || user?.role === 'admin_compliance') && <option value="common_compliance">Compliance User</option>}
+                  {(user?.role === 'admin' || user?.role === 'admin_compliance') && <option value="admin_compliance">Compliance Admin</option>}
                 </select>
               </div>
               {inviteForm.role === 'common' && (

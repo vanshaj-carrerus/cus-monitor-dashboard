@@ -5,9 +5,6 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
     domains: ["res.cloudinary.com", "ik.imagekit.io"],
-    remotePatterns: [
-      { protocol: "https", hostname: "**.sirv.com" },
-    ],
   },
 };
 

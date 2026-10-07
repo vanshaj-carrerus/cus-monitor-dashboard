@@ -1,6 +1,7 @@
 // src/app/api/track/upload-screenshot/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import DBConnect from "../../../../../lib/DB_Connect";
 import Screenshot from "@/models/screenshot";
 import { getCloudinaryUploadErrorMessage } from "../../../../../lib/cloudinary";
@@ -42,6 +43,13 @@ export async function POST(req: NextRequest) {
         if (!image || !userId) {
             return NextResponse.json(
                 { error: "Missing required fields: image or userId" },
+                { status: 400, headers: getCorsHeaders(origin) }
+            );
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return NextResponse.json(
+                { error: "Invalid userId" },
                 { status: 400, headers: getCorsHeaders(origin) }
             );
         }

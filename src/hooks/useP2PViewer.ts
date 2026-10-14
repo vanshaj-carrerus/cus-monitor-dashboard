@@ -93,26 +93,6 @@ export function useP2PViewer({
     controlEnabledRef.current = controlEnabled;
   }, [controlEnabled]);
 
-  // If control is enabled after connect, ensure a data channel exists.
-  useEffect(() => {
-    if (!enabled || !controlEnabled) return;
-    const pc = pcRef.current;
-    if (!pc || pc.connectionState !== "connected") return;
-    const existing = dataChannelRef.current;
-    if (
-      existing &&
-      (existing.readyState === "open" || existing.readyState === "connecting")
-    ) {
-      return;
-    }
-    log("creating data channel remote-control (control enabled mid-session)");
-    const dc = pc.createDataChannel("remote-control", { ordered: true });
-    dc.onopen = () => log("datachannel open (mid-session)");
-    dc.onclose = () => log("datachannel closed (mid-session)");
-    dc.onerror = (ev) => logError("datachannel error (mid-session)", ev);
-    dataChannelRef.current = dc;
-  }, [enabled, controlEnabled, connectionState]);
-
   const setPhaseStatus = useCallback((next: P2PPhase, message: string) => {
     log(`phase → ${next}:`, message);
     setPhase(next);
@@ -259,15 +239,10 @@ export function useP2PViewer({
           remoteDescriptionSetRef.current = true;
           await flushPendingIce(pc);
 
-          // Always negotiate the data channel up front; commands are gated client-side.
-          if (!dataChannelRef.current) {
-            log("creating data channel remote-control");
-            const dc = pc.createDataChannel("remote-control", { ordered: true });
-            dc.onopen = () => log("datachannel open");
-            dc.onclose = () => log("datachannel closed");
-            dc.onerror = (ev) => logError("datachannel error", ev);
-            dataChannelRef.current = dc;
-          }
+          // The agent (offerer) always negotiates the "remote-control" data
+          // channel up front as part of the offer; we just receive it via
+          // pc.ondatachannel (set up in start()). Commands are gated
+          // client-side by controlEnabled in sendCommand().
 
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -339,6 +314,16 @@ export function useP2PViewer({
         const pc = new RTCPeerConnection(rtcConfig);
         pcRef.current = pc;
         log("RTCPeerConnection created");
+
+        pc.ondatachannel = (event) => {
+          const dc = event.channel;
+          log("ondatachannel", { label: dc.label, readyState: dc.readyState });
+          if (dc.label !== "remote-control") return;
+          dc.onopen = () => log("datachannel open");
+          dc.onclose = () => log("datachannel closed");
+          dc.onerror = (ev) => logError("datachannel error", ev);
+          dataChannelRef.current = dc;
+        };
 
         pc.ontrack = (event) => {
           log("ontrack", {
